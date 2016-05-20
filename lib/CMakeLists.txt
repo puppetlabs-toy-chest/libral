@@ -18,7 +18,7 @@ leatherman_logging_namespace("puppetlabs.libral")
 include_directories(inc ${Boost_INCLUDE_DIRS} ${LEATHERMAN_INCLUDE_DIRS})
 
 set(PROJECT_SOURCES "src/libral.cc" "src/augeas.cc" "src/ral.cc"
-                    "src/type.cc" "src/provider.cc" "src/resource.cc")
+                    "src/type.cc" "src/mount.cc" "src/resource.cc")
 
 ## An object target is generated that can be used by both the library and test executable targets.
 ## Without the intermediate target, unexported symbols can't be tested.

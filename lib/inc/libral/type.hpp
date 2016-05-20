@@ -10,7 +10,7 @@ namespace libral {
   class type {
   public:
     type(const std::string name) : _name(name) { }
-    const std::string name(void) { return _name; }
+    const std::string& name(void) const { return _name; }
     virtual std::vector<std::unique_ptr<resource>> instances(void);
     virtual std::string id() { return "type/" + name(); }
     resource instance(const std::string& name);

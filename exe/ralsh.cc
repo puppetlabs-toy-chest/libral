@@ -41,6 +41,14 @@ void help(po::options_description& desc)
     "\n" << endl;
 }
 
+static void print_resource(lib::type& type, lib::resource& res) {
+  cout << type.name() << " { '" << res.name() << "':" << endl;
+  for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
+    cout << "  " << a->first << " => '" << a->second << "'," << endl;
+  }
+  cout << "}" << endl;
+}
+
 int main(int argc, char **argv) {
   try {
     // Fix args on Windows to be UTF-8
@@ -102,8 +110,18 @@ int main(int argc, char **argv) {
 
     if (vm.count("type")) {
       auto type_name = vm["type"].as<std::string>();
+      auto opt_type = ral.find_type(type_name);
+      if (opt_type == boost::none) {
+        boost::nowide::cout << "Unknown type: " << type_name << endl;
+        return EXIT_FAILURE;
+      }
+
+      auto& type = *opt_type;
+      auto insts = type->instances();
+
       if (vm.count("name")) {
-        boost::nowide::cout << "Name: " << vm["name"].as<std::string>() << endl;
+        auto name = vm["name"].as<std::string>();
+        boost::nowide::cout << "Name: " << name << endl;
         if (vm.count("attr-value")) {
           auto av = vm["attr-value"].as<std::vector<std::string>>();
           for (auto arg = av.begin(); arg != av.end(); arg++) {
@@ -115,29 +133,15 @@ int main(int argc, char **argv) {
             }
           }
         } else {
-          boost::nowide::cout << "Dump resource" << endl;
+          for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
+            if ((*inst)->name() == name) {
+              print_resource(*type, **inst);
+            }
+          }
         }
       } else {
-        auto types = ral.types();
-        auto type_it = std::find_if(types.begin(), types.end(),
-                                    [type_name](std::unique_ptr<lib::type> &t)
-                                    { return type_name == t->name(); });
-        if (type_it == types.end()) {
-          boost::nowide::cout << "Unknown type: " << type_name << endl;
-          return EXIT_FAILURE;
-        } else {
-          auto &type = *type_it;
-          auto insts = type->instances();
-          for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
-            auto& res = *inst;
-            cout << type->name() << " { '" << res->name() << "':" << endl;
-            for (auto a = res->attr_begin(); a != res->attr_end(); ++a) {
-              if (a->first != "name") {
-                cout << "  " << a->first << " => '" << a->second << "'," << endl;
-              }
-            }
-            cout << "}" << endl;
-          }
+        for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
+          print_resource(*type, **inst);
         }
       }
     } else {

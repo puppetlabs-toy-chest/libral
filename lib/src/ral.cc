@@ -10,4 +10,16 @@ namespace libral {
     result.push_back(std::unique_ptr<type>(new type("user")));
     return result;
   }
+
+  boost::optional<std::unique_ptr<type>> ral::find_type(const std::string& name) {
+    auto types_vec = types();
+    auto type_it = std::find_if(types_vec.begin(), types_vec.end(),
+                                [name](std::unique_ptr<type> &t)
+                                { return name == t->name(); });
+    if (type_it == types_vec.end()) {
+      return boost::none;
+    } else {
+      return std::move(*type_it);
+    }
+  }
 }

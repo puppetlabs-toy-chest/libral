@@ -10,8 +10,8 @@ namespace libral {
 
   class resource {
   public:
-    resource(const std::string name) { _values["name"] = name; }
-    const std::string& name() { return _values["name"]; }
+    resource(const std::string name) : _name(name){ }
+    const std::string& name() { return _name; }
 
     /* Return the current state of attribute ATTR */
     const std::string& operator[](const std::string& attr) const;
@@ -21,20 +21,9 @@ namespace libral {
 
     // @todo lutter 2016-05-16: noop for now
     virtual void destroy() {};
-    virtual void modify(const attr_map& should) {};
+    virtual void update(const attr_map& should) {};
   private:
+    std::string _name;
     attr_map _values;
-  };
-
-  class mount_resource : public resource {
-  public:
-    mount_resource(std::shared_ptr<mount_provider>& prov, const aug::node& base)
-      : resource(base["file"]), _prov(prov), _base(base) { extract_base(); }
-  private:
-    // Copy values from _base into _values
-    void extract_base();
-
-    std::shared_ptr<mount_provider> _prov;
-    aug::node                       _base;
   };
 }

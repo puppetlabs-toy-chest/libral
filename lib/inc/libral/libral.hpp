@@ -8,6 +8,7 @@
 #include "export.h"
 
 #include <libral/ral.hpp>
+#include <libral/type.hpp>
 
 namespace libral {
 

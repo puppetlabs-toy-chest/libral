@@ -1,6 +1,4 @@
-#include <libral/provider.hpp>
-
-#include <libral/resource.hpp>
+#include <libral/mount.hpp>
 
 #include <iostream>
 
@@ -47,5 +45,17 @@ namespace libral {
       result.push_back(std::move(pair->second));
     }
     return result;
+  }
+
+  void mount_resource::extract_base() {
+    auto& self = *this;
+    self["device"] = _base["spec"];
+    self["fstype"] = _base["vfstype"];
+    self["options"] = _base["options"];
+    self["dump"] = _base["dump"];
+    self["pass"] = _base["passno"];
+    self["ensure"] = "unmounted";
+    // @todo lutter 2016-05-20: we actually need to pay attention to target
+    self["target"] = "/etc/fstab";
   }
 }

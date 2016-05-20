@@ -28,15 +28,4 @@ namespace libral {
     /* Retrieve all resources managed by this provider */
     virtual std::vector<std::unique_ptr<resource>> instances() = 0;
   };
-
-  class mount_provider : public provider {
-  public:
-    mount_provider() : aug(nullptr) { };
-
-    void prepare();
-    void flush();
-    std::vector<std::unique_ptr<resource>> instances();
-  private:
-    std::unique_ptr<aug::handle> aug;
-  };
 }
