@@ -35,6 +35,9 @@ include(leatherman)
 # Add other dependencies
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
+include(cmake/FindAugeas.cmake)
+add_definitions(${LIBAUGEAS_DEFINITIONS})
+
 # Display a summary of the features
 include(FeatureSummary)
 feature_summary(WHAT ALL)

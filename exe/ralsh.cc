@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace leatherman::logging;
+namespace lib = libral;
 namespace po = boost::program_options;
 
 void help(po::options_description& desc)
@@ -96,8 +97,11 @@ int main(int argc, char **argv) {
       return EXIT_SUCCESS;
     }
 
+    // Do the actual work
+    auto ral = lib::open();
+
     if (vm.count("type")) {
-      boost::nowide::cout << "Type: " << vm["type"].as<std::string>() << endl;
+      auto type_name = vm["type"].as<std::string>();
       if (vm.count("name")) {
         boost::nowide::cout << "Name: " << vm["name"].as<std::string>() << endl;
         if (vm.count("attr-value")) {
@@ -114,12 +118,36 @@ int main(int argc, char **argv) {
           boost::nowide::cout << "Dump resource" << endl;
         }
       } else {
-        boost::nowide:: cout << "List instances" << endl;
+        auto types = ral.types();
+        auto type_it = std::find_if(types.begin(), types.end(),
+                                    [type_name](std::unique_ptr<lib::type> &t)
+                                    { return type_name == t->name(); });
+        if (type_it == types.end()) {
+          boost::nowide::cout << "Unknown type: " << type_name << endl;
+          return EXIT_FAILURE;
+        } else {
+          auto &type = *type_it;
+          auto insts = type->instances();
+          for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
+            auto& res = *inst;
+            cout << type->name() << " { '" << res->name() << "':" << endl;
+            for (auto a = res->attr_begin(); a != res->attr_end(); ++a) {
+              if (a->first != "name") {
+                cout << "  " << a->first << " => '" << a->second << "'," << endl;
+              }
+            }
+            cout << "}" << endl;
+          }
+        }
       }
     } else {
-      boost::nowide:: cout << "List types" << endl;
+      auto types = ral.types();
+      boost::nowide:: cout << "Known types" << endl;
+      for (auto t = types.begin(); t != types.end(); ++t) {
+        boost::nowide::cout << " - " << (*t)->name() << endl;
+      }
     }
-  } catch (exception& ex) {
+  } catch (domain_error& ex) {
     colorize(boost::nowide::cerr, log_level::fatal);
     boost::nowide::cerr << "unhandled exception: " << ex.what() << "\n" << endl;
     colorize(boost::nowide::cerr);

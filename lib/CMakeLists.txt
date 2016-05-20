@@ -17,7 +17,8 @@ leatherman_logging_namespace("puppetlabs.libral")
 # Setup compiling the library.
 include_directories(inc ${Boost_INCLUDE_DIRS} ${LEATHERMAN_INCLUDE_DIRS})
 
-set(PROJECT_SOURCES "src/libral.cc")
+set(PROJECT_SOURCES "src/libral.cc" "src/augeas.cc" "src/ral.cc"
+                    "src/type.cc" "src/provider.cc" "src/resource.cc")
 
 ## An object target is generated that can be used by both the library and test executable targets.
 ## Without the intermediate target, unexported symbols can't be tested.
@@ -29,6 +30,7 @@ set_target_properties(libral PROPERTIES VERSION "${PROJECT_VERSION_MAJOR}.${PROJ
 target_link_libraries(libral
     ${LEATHERMAN_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${LIBAUGEAS_LIBRARIES}
 )
 
 symbol_exports(libral "${CMAKE_CURRENT_LIST_DIR}/inc/libral/export.h")

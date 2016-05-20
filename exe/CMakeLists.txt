@@ -16,6 +16,7 @@ target_link_libraries(ralsh
     libral
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${LEATHERMAN_LIBRARIES}
+    ${LIBAUGEAS_LIBRARIES}
 )
 
 leatherman_install(ralsh)
