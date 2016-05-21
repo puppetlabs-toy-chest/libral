@@ -1,7 +1,6 @@
 #pragma once
 
 #include <libral/provider.hpp>
-#include <libral/resource.hpp>
 
 namespace libral {
   /* A provider here consists of two separate classes, since we can't do
@@ -16,18 +15,11 @@ namespace libral {
   */
 
   class mount_provider : public provider {
-  public: mount_provider() : aug(nullptr) { };
-
-    void prepare();
-    void flush();
-    std::vector<std::unique_ptr<resource>> instances();
-  private:
-    std::unique_ptr<aug::handle> aug;
-  };
-
-  class mount_resource : public resource {
   public:
-    mount_resource(std::shared_ptr<mount_provider>& prov, const aug::node& base)
+
+    class mount_resource : public resource {
+    public:
+      mount_resource(std::shared_ptr<mount_provider>& prov, const aug::node& base)
       : resource(base["file"]), _prov(prov), _base(base) { extract_base(); }
   private:
     // Copy values from _base into _values
@@ -35,6 +27,15 @@ namespace libral {
 
     std::shared_ptr<mount_provider> _prov;
     aug::node                       _base;
+  };
+
+    mount_provider() : aug(nullptr) { };
+
+    void prepare();
+    void flush();
+    std::vector<std::unique_ptr<resource>> instances();
+  private:
+    std::unique_ptr<aug::handle> aug;
   };
 
 }

@@ -3,6 +3,7 @@
 #include <iostream>
 
 namespace libral {
+
   void mount_provider::prepare() {
     // @todo lutter 2016-05-16: pass in the directory with our lenses
     this->aug = std::unique_ptr<aug::handle>(new aug::handle(NULL, "/home/lutter/code/libral/lenses", AUG_NO_MODL_AUTOLOAD));
@@ -47,7 +48,7 @@ namespace libral {
     return result;
   }
 
-  void mount_resource::extract_base() {
+  void mount_provider::mount_resource::extract_base() {
     auto& self = *this;
     self["device"] = _base["spec"];
     self["fstype"] = _base["vfstype"];

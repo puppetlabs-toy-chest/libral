@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "resource.hpp"
+#include "provider.hpp"
 
 namespace libral {
   class type {
