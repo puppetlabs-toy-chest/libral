@@ -19,7 +19,7 @@ to use many of the libraries in
 
 ## Todo list
 
-- [ ] finish mount provider
+- [X] finish mount provider
 - [ ] add a shell provider
 - [ ] add a remote provider (using an HTTP API)
 - [ ] adapt providers to multiple OS (maybe using mount)
