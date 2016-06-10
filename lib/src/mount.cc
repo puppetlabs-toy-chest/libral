@@ -124,8 +124,6 @@ namespace libral {
        Valid values are defined (also called present),
        unmounted, absent, mounted.
     */
-    // @todo lutter 2016-06-03: attr_map needs to become a class and offer
-    // a method get(key, default) or some such to abbreviate this insanity
     auto state = lookup("ensure", "absent");
     update_values(should);
     auto ensure = lookup("ensure", "absent");
