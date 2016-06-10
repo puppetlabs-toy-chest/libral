@@ -13,7 +13,7 @@ namespace libral {
     return LIBRAL_VERSION_WITH_COMMIT;
   }
 
-  ral open() {
-    return ral();
+  ral open(const std::string& data_dir) {
+    return ral(data_dir);
   }
 }  // libral

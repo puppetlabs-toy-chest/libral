@@ -1,13 +1,19 @@
 #include <libral/ral.hpp>
+
+#include <libral/mount.hpp>
+
 namespace libral {
-  ral::ral(void) { }
+  ral::ral(const std::string& data_dir) : _data_dir(data_dir) { }
 
   std::vector<std::unique_ptr<type>> ral::types(void) {
     // @todo lutter 2016-05-10:
     //   Need more magic here: need to find and register all types
     std::vector<std::unique_ptr<type>> result;
-    result.push_back(std::unique_ptr<type>(new mount_type()));
-    result.push_back(std::unique_ptr<type>(new type("user")));
+    auto mount_prov = std::shared_ptr<provider>(new mount_provider(_data_dir));
+    if (mount_prov->suitable()) {
+      auto mount_type = new type("mount", mount_prov);
+      result.push_back(std::unique_ptr<type>(mount_type));
+    }
     return result;
   }
 

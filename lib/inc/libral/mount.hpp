@@ -2,6 +2,8 @@
 
 #include <libral/provider.hpp>
 
+#include <libral/augeas.hpp>
+
 namespace libral {
   /* A provider here consists of two separate classes, since we can't do
      all the metaprogramming magic that Ruby does. The two classes are
@@ -14,28 +16,59 @@ namespace libral {
        resources the corresponding provider manages
   */
 
+  /* Mount type:
+     name        => # (namevar) The mount path for the mount.
+     ensure      => * { defined == present, unmounted, absent, mounted }
+     atboot      => * bool
+     blockdevice => * Solaris only
+     device      => * The device providing the mount.
+     dump        => * /(0|1)/
+     fstype      => * (required) The mount type.
+     options     => * A single string containing options
+     pass        => * The pass in which the mount is checked
+     provider    => # { parsed }
+     remounts    => # bool; Whether the mount can be remounted
+     target      => * The file in which to store the mount table
+  */
+
   class mount_provider : public provider {
   public:
 
     class mount_resource : public resource {
     public:
-      mount_resource(std::shared_ptr<mount_provider>& prov, const aug::node& base)
-      : resource(base["file"]), _prov(prov), _base(base) { extract_base(); }
-  private:
-    // Copy values from _base into _values
-    void extract_base();
+      mount_resource(std::shared_ptr<mount_provider>& prov, const std::string& name, const aug::node& base)
+        : resource(name), _prov(prov), _base(base) { extract_base(); }
 
-    std::shared_ptr<mount_provider> _prov;
-    aug::node                       _base;
-  };
+      void update(const attr_map& should);
+    private:
+      // Copy properties from _base into _values
+      void extract_base();
+      // Copy properties from _values into _base
+      void update_base();
+      void update_fstab(const attr_map& should);
+      void remove_from_fstab();
+      void unmount(const std::string& state);
+      void mount(const std::string& state);
 
-    mount_provider() : aug(nullptr) { };
+      std::shared_ptr<mount_provider> _prov;
+      aug::node                       _base;
+    };
 
+    mount_provider(const std::string& data_dir)
+      : aug(nullptr), _data_dir(data_dir), _seq(1) { };
+
+    bool suitable();
     void prepare();
     void flush();
     std::vector<std::unique_ptr<resource>> instances();
+    std::unique_ptr<resource> create(const std::string& name);
   private:
     std::unique_ptr<aug::handle> aug;
+    std::string                  _cmd_mount;
+    std::string                  _cmd_umount;
+    std::string                  _data_dir;
+    // We use this to create new paths in the augeas tree when creating entries
+    int                          _seq;
   };
 
 }

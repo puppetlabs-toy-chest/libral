@@ -2,6 +2,7 @@
 #include <boost/nowide/iostream.hpp>
 #include <boost/nowide/args.hpp>
 #include <leatherman/logging/logging.hpp>
+#include <leatherman/util/environment.hpp>
 
 // boost includes are not always warning-clean. Disable warnings that
 // cause problems before including the headers, then re-enable the warnings.
@@ -44,7 +45,9 @@ void help(po::options_description& desc)
 static void print_resource(lib::type& type, lib::resource& res) {
   cout << type.name() << " { '" << res.name() << "':" << endl;
   for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
-    cout << "  " << a->first << " => '" << a->second << "'," << endl;
+    if (a->second) {
+      cout << "  " << a->first << " => '" << *(a->second) << "'," << endl;
+    }
   }
   cout << "}" << endl;
 }
@@ -105,10 +108,18 @@ int main(int argc, char **argv) {
       return EXIT_SUCCESS;
     }
 
+    // @todo lutter 2016-06-09: find a non crappy way to get this, obviously
+    std::string data_dir;
+    if (! leatherman::util::environment::get("RALSH_DATA_DIR", data_dir)) {
+      boost::nowide::cerr << "Set the environment variable RALSH_DATA_DIR to the path to the data/ directory in your source checkout" << endl;
+      return EXIT_FAILURE;
+    }
+
     // Do the actual work
-    auto ral = lib::open();
+    auto ral = lib::open(data_dir);
 
     if (vm.count("type")) {
+      // We have a type name
       auto type_name = vm["type"].as<std::string>();
       auto opt_type = ral.find_type(type_name);
       if (opt_type == boost::none) {
@@ -120,19 +131,27 @@ int main(int argc, char **argv) {
       auto insts = type->instances();
 
       if (vm.count("name")) {
+        // We have a resource name
         auto name = vm["name"].as<std::string>();
-        boost::nowide::cout << "Name: " << name << endl;
         if (vm.count("attr-value")) {
+          // We have attributes, modify resource
           auto av = vm["attr-value"].as<std::vector<std::string>>();
+          lib::attr_map attrs;
+
+          attrs["name"] = name;
           for (auto arg = av.begin(); arg != av.end(); arg++) {
             auto found = arg->find("=");
             if (found != string::npos) {
               auto attr = arg->substr(0, found);
               auto value = arg->substr(found+1);
-              boost::nowide::cout << attr << " : " << value << endl;
+              attrs[attr] = value;
             }
           }
+          auto res = type->update(name, attrs);
+          type->flush();
+          print_resource(*type, *res);
         } else {
+          // No attributes, dump the resource
           for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
             if ((*inst)->name() == name) {
               print_resource(*type, **inst);
@@ -140,15 +159,16 @@ int main(int argc, char **argv) {
           }
         }
       } else {
+        // No resource name, dump all resources of the type
         for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
           print_resource(*type, **inst);
         }
       }
     } else {
+      // No type given, list known types
       auto types = ral.types();
-      boost::nowide:: cout << "Known types" << endl;
       for (auto t = types.begin(); t != types.end(); ++t) {
-        boost::nowide::cout << " - " << (*t)->name() << endl;
+        boost::nowide::cout << (*t)->name() << endl;
       }
     }
   } catch (domain_error& ex) {

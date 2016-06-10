@@ -2,11 +2,19 @@
 
 #include <iostream>
 
+#include <leatherman/execution/execution.hpp>
+
 namespace libral {
 
+  bool mount_provider::suitable() {
+    _cmd_mount = leatherman::execution::which("mount");
+    _cmd_umount = leatherman::execution::which("umount");
+    return !_cmd_mount.empty() && !_cmd_umount.empty();
+  }
+
   void mount_provider::prepare() {
-    // @todo lutter 2016-05-16: pass in the directory with our lenses
-    this->aug = std::unique_ptr<aug::handle>(new aug::handle(NULL, "/home/lutter/code/libral/lenses", AUG_NO_MODL_AUTOLOAD));
+    auto h = new aug::handle(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);
+    this->aug = std::unique_ptr<aug::handle>(h);
 
     aug->include("Mount_Fstab.lns", "/etc/fstab");
     aug->include("Mount_Fstab.lns", "/etc/mtab");
@@ -14,7 +22,7 @@ namespace libral {
   }
 
   void mount_provider::flush() {
-    // @todo lutter 2016-05-16: call aug->save() ?
+    aug->save();
   }
 
   std::vector<std::unique_ptr<resource>> mount_provider::instances() {
@@ -23,21 +31,27 @@ namespace libral {
 
     for(const auto& node
           : aug->match("/files/etc/fstab/*[label() != '#comment']")) {
-      auto mr = new mount_resource(shared_this, node);
-      auto res = std::unique_ptr<mount_resource>(mr);
-      resources.emplace(res->name(), std::move(res));
+      auto name = node["file"];
+      if (name) {
+        auto mr = new mount_resource(shared_this, *name, node);
+        auto res = std::unique_ptr<mount_resource>(mr);
+        resources.emplace(res->name(), std::move(res));
+      }
     }
 
     for(const auto& node
           : aug->match("/files/etc/mtab/*[label() != '#comment']")) {
       auto name = node["file"];
-      auto rsrc_iter = resources.find(name);
-      if (rsrc_iter != resources.end()) {
-        (*rsrc_iter->second)["ensure"] = "mounted";
-      } else {
-        auto res = std::unique_ptr<resource>(new mount_resource(shared_this, node));
-        (*res)["ensure"] = "ghost";
-        resources.emplace(res->name(), std::move(res));
+      if (name) {
+        auto rsrc_iter = resources.find(*name);
+        if (rsrc_iter != resources.end()) {
+          (*rsrc_iter->second)["ensure"] = "mounted";
+        } else {
+          auto mr = new mount_resource(shared_this, *name, node);
+          auto res = std::unique_ptr<resource>(mr);
+          (*res)["ensure"] = "ghost";
+          resources.emplace(res->name(), std::move(res));
+        }
       }
     }
 
@@ -48,15 +62,122 @@ namespace libral {
     return result;
   }
 
+  std::unique_ptr<resource> mount_provider::create(const std::string& name) {
+    auto shared_this = std::static_pointer_cast<mount_provider>(shared_from_this());
+    auto path = "/files/etc/fstab/0" + std::to_string(_seq++);
+    auto base = aug->make_node(path);
+    return std::unique_ptr<resource>(new mount_resource(shared_this, name, base));
+  }
+
+  static void extract(boost::optional<std::string>& to,
+                      const boost::optional<std::string>& from) {
+    if (from) {
+      to = *from;
+    }
+  }
+
+  static void extract(boost::optional<std::string>& to,
+                      const boost::optional<std::string>& from,
+                      const std::string& deflt) {
+    if (from) {
+      to = *from;
+    } else {
+      to = deflt;
+    }
+  }
+
   void mount_provider::mount_resource::extract_base() {
     auto& self = *this;
-    self["device"] = _base["spec"];
-    self["fstype"] = _base["vfstype"];
-    self["options"] = _base["options"];
-    self["dump"] = _base["dump"];
-    self["pass"] = _base["passno"];
+
+    extract(self["device"], _base["spec"]);
+    extract(self["fstype"], _base["vfstype"]);
+    extract(self["options"], _base["options"], "defaults");
+    extract(self["dump"], _base["dump"], "0");
+    extract(self["pass"], _base["passno"], "0");
     self["ensure"] = "unmounted";
     // @todo lutter 2016-05-20: we actually need to pay attention to target
     self["target"] = "/etc/fstab";
+  }
+
+  void mount_provider::mount_resource::update_base() {
+    auto& self = *this;
+    _base.erase();
+    _base.set_maybe("spec", self["device"]);
+    _base.set_maybe("file", name());
+    _base.set_maybe("vfstype", self["fstype"]);
+    _base.set("options", self["options"], "defaults");
+    _base.set("dump", self["dump"], "0");
+    _base.set("passno", self["pass"], "0");
+  }
+
+  void mount_provider::mount_resource::update(const attr_map& should) {
+    /* Possible values for ensure:
+
+       Control what to do with this mount. Set this attribute to unmounted
+       to make sure the filesystem is in the filesystem table but not
+       mounted (if the filesystem is currently mounted, it will be
+       unmounted). Set it to absent to unmount (if necessary) and remove
+       the filesystem from the fstab. Set to mounted to add it to the fstab
+       and mount it. Set to present to add to fstab but not change
+       mount/unmount status.
+
+       Valid values are defined (also called present),
+       unmounted, absent, mounted.
+    */
+    // @todo lutter 2016-06-03: attr_map needs to become a class and offer
+    // a method get(key, default) or some such to abbreviate this insanity
+    auto state = lookup("ensure", "absent");
+    update_values(should);
+    auto ensure = lookup("ensure", "absent");
+    if (ensure == "present") {
+      // make sure entry in fstab
+      update_fstab(should);
+    } else if (ensure == "absent") {
+      // unmount, remove from fstab
+      unmount(state);
+      remove_from_fstab();
+    } else if (ensure == "unmounted") {
+      // unmount, make sure in fstab
+      unmount(state);
+      update_fstab(should);
+    } else if (ensure == "mounted") {
+      // mount, make sure in fstab
+      update_fstab(should);
+      mount(state);
+    } else {
+      // raise "illegal value error"
+    }
+  }
+
+  void mount_provider::mount_resource::update_fstab(const attr_map& should) {
+    auto& self = *this;
+
+    for (auto prop : { "device", "fstype", "options", "dump", "pass"}) {
+      auto value = should.find(prop);
+      if (value == should.end()) {
+        self.erase(prop);
+      } else if (self[prop] != value->second) {
+        self[prop] = value->second;
+      }
+    }
+    update_base();
+  }
+
+  void mount_provider::mount_resource::remove_from_fstab() {
+    _base.rm();
+  }
+
+  void mount_provider::mount_resource::unmount(const std::string& state) {
+    _prov->flush();
+    if (state != "unmounted" && state != "absent") {
+      leatherman::execution::execute(_prov->_cmd_umount, { this->name() });
+    }
+  }
+
+  void mount_provider::mount_resource::mount(const std::string& state) {
+    _prov->flush();
+    if (state != "mounted") {
+      leatherman::execution::execute(_prov->_cmd_mount, { this->name() });
+    }
   }
 }

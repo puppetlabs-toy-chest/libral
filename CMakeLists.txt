@@ -19,7 +19,7 @@ endif()
 enable_testing()
 
 # Leatherman setup
-SET(LEATHERMAN_COMPONENTS locale catch nowide logging)
+SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution)
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 
 # Now that we have leatherman, we can pull in its options file, which
