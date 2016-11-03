@@ -7,8 +7,7 @@ platform/framework. The goals of this are
 * Serve as the basis for Puppet's provider system
 * Avoid being Puppet specific as much as possible to make it useful for
   other uses
-* Reduce the overhead of writing providers as much as possible, Ansible
-  seems to have struck a chord in that area
+* Make writing providers very easy
 
 ## Required packages
 
@@ -41,6 +40,11 @@ Naming things is hard; here's the terms libral uses:
   closely tied both to what is being managed and how it is being
   managed. The important thing is that resources expose a desired-state
   interface and therefore abstract away the details of how changes are made
+
+**FIXME**: we need some conventions around some special resource
+properties; especially, namevar should always be 'name' and the primary key
+for all resources from this provider, and 'ensure' should have a special
+meaning (or should it?)
 
 ### Open questions
 - Do we need types at all at this level ?
@@ -98,72 +102,24 @@ like this:
   about system details (like facts) and some settings; would be cool to use
   that to change the idea of where the root of the FS is, for example.
 
-## External provider
+## External providers
 
-Providers can be scripts; a script called `sc` needs to support the
-following invocations:
+What resources `libral` can manage is determined by what providers are
+available. Some providers are built in and implemented in C++, but doing
+that is of course labor-intensive and should only be done for good
+reason. It is much simpler, and recommended, that new providers first be
+implemented as external providers. External providers are nothing more than
+scripts or other executables that follow one of `libral`'s calling
+conventions. The different calling conventions trade off implementation
+complexity for expressive power.
 
-* `sc describe` - describe the script, including whether it is suitable
-* `sc list` - list all instances
-* `sc find NAME` (optional) - find the instance named `NAME`
-* `sc destroy NAME` - destroy the instance with name `NAME`
-* `sc update NAME A1=V1 ... AN=VN` - update (or create) resource
-* `sc flush`
+The following calling conventions are available. If you are just getting
+started with `libral`, you should write your first providers using hte
+`simple` calling convention.
 
-### Output from describe
-
-The output from describe must be a list of key/value pairs, with a starting
-line that is `# simple`:
-
-    # simple
-    suitable: 1
-    type: great_type
-    attributes: attr1,attr2,attr3
-
-The output can contain the following keys:
-
-* `suitable`: anything other than one of `1`, `yes`, or `true` means
-              `false` and the provider is ignored.
-* `attributes`:  a comma-separated list of permissible attributes
-                 (do we need it ?)
-* `type`: defaults to the name of the script
-
-### Output from list
-
-List must produce the following:
-
-    # simple
-    name: first_name
-    attr1: value1
-    ...
-    attrN: valueN
-    name: second_name
-    attr1: value1
-    ...
-    attrN: valueN
-    name: third_name
-    ...
-
-### Output from find
-
-    # simple
-    name: the_name
-    attr1: value1
-    ...
-    attrN: valueN
-
-### Output from destroy
-
-success/failure
-
-### Output from update
-
-Events ?
-
-### Output from flush
-
-success/failure
-
-### Error reporting
-
-Yo, dawg
+* [simple](doc/invoke-simple.md)
+* `augeas` (planned): when you mostly need to twiddle entries in a file,
+and maybe run a command
+* `ansible` (planned): use your Ansible 2 modules as an external provider
+* `json` (planned,maybe): input/output via JSON, with the possibility of
+  batching operations

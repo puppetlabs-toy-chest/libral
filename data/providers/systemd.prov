@@ -1,0 +1,170 @@
+#! /bin/bash
+
+# A provider for managing services with systemd. The main point of this is
+# to illustrate what the 'simple' callling convention looks like. See
+# https://github.com/puppetlabs/libral/blob/master/doc/invoke-simple.md for
+# the full specification.
+
+# Very important so that sorting goes right
+export LANG=C
+
+# die MESSAGE
+# Print an error message and exit
+die() {
+    echo "ral_error: $1"
+    echo "ral_eom"
+    exit 0
+}
+
+describe() {
+    type -p systemctl > /dev/null && suitable=true || suitable=false
+
+    cat <<EOF
+---
+meta:
+  type: service
+  invoke: simple
+  actions: [list,find,update]
+  suitable: ${suitable}
+    - command(systemctl)
+  default:
+    - osfamily = 'archlinux'
+    - osfamily = 'redhat' and operatingsystemmajrelease = '7'
+    - osfamily = 'redhat' and operatingsystem = 'fedora'
+    - osfamily = 'suse'
+    - bla bla bla
+parameters:
+  binary:
+    desc: really needed ?
+  control:
+    desc: really needed ?
+properties:
+  name:
+  ensure:
+    values: stopped, running
+  enable:
+    values: true, false, manual, mask
+EOF
+}
+
+list() {
+    echo '# simple'
+    # This looks super-hairy, but is actually quite simple:
+    #     - the systemctl list-unit-files tells us what units are
+    #       enabled/disabled, and we filter to only get
+    #       enabled/disabled/masked units
+    #     - the systemctl list-units gives us all running units and we
+    #       translate active/inactive to running/stopped
+    #     - we then use join to put those two files together and
+    #       extract only the columns we are interested in
+    join -j 1 -o 1.1,1.2,2.3 \
+         <(systemctl list-unit-files --type service --full --all \
+                     --no-pager --no-legend \
+               | egrep '\<(disabled|enabled|masked)[[:space:]]*$' \
+               | sed -r -e 's/\<disabled\>/false/;s/\<enabled\>/true/' \
+                        -e 's/\<masked\>/mask/' \
+               | sort) \
+         <(systemctl list-units --type service --all --no-pager  --no-legend \
+               | sed -r -e 's/\<inactive\>/stopped/;s/\<active\>/running/' \
+               | sort) \
+  | while read svc enable ensure
+    do
+        echo "name: $svc"
+        echo "ensure: $ensure"
+        echo "enable: $enable"
+    done
+}
+
+find_state() {
+    [ -z "$name" ] && die "find: missing a name"
+
+    e=$(systemctl is-enabled $name 2>&1)
+    rc=$?
+    if [ $rc != 0 ]; then
+        die "$e"
+    fi
+    case $e
+    in
+        enabled)  is_enable=true;;
+        masked)   is_enable=mask;;
+        *)        is_enable=false;;
+    esac
+
+    systemctl is-active -q $name && is_ensure=running || is_ensure=stopped
+}
+
+find() {
+    find_state
+    echo "# simple"
+    echo "name: $name"
+    echo "enable: $is_enable"
+    echo "ensure: $is_ensure"
+}
+
+run() {
+    if [ -z "$ral_noop" ]
+    then
+        msg=$("$@" 2>&1)
+        rc=$?
+        if [ $rc != 0 ]; then
+            die "$msg"
+        fi
+    fi
+}
+
+update() {
+    find_state
+
+    echo '# simple'
+    # Check enablement
+    if [ -n "$enable" -a "$enable" != "$is_enable" ]
+    then
+        case $enable
+        in
+            true)
+                run systemctl enable $name
+                ;;
+            false)
+                run systemctl disable $name
+                ;;
+            mask)
+                run systemctl mask $name
+                ;;
+            *) die "illegal value for enable: '$enable'"
+               ;;
+        esac
+        echo "enable: $enable"
+        echo "ral_was: $is_enable"
+    fi
+
+    if [ -n "$ensure" -a "$ensure" != "$is_ensure" ]
+    then
+        case $ensure
+        in
+            running)
+                run systemctl start $name
+                ;;
+            stopped)
+                run systemctl stop $name
+                ;;
+            *)
+                die "illegal value for ensure: '$ensure'"
+                ;;
+        esac
+        echo "ensure: $ensure"
+        echo "ral_was: $is_ensure"
+    fi
+}
+
+eval "$@"
+resource="service/systemd[$name]"
+
+case "$ral_action"
+in
+    list) list;;
+    find) find;;
+    update) update;;
+    describe) describe;;
+    *)
+        die "Unknown action: $ral_action"
+esac
