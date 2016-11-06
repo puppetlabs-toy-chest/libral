@@ -28,9 +28,9 @@ namespace libral {
     /* Return the current state of attribute ATTR */
     const value operator[](const std::string& key) const;
     value& operator[](const std::string& attr);
-    void erase(const std::string attr) { _values.erase(attr); }
-    attr_map::iterator attr_begin() { return _values.begin(); }
-    attr_map::iterator attr_end() { return _values.end(); }
+    void erase(const std::string attr) { _attrs.erase(attr); }
+    attr_map::iterator attr_begin() { return _attrs.begin(); }
+    attr_map::iterator attr_end() { return _attrs.end(); }
     /* Return the string value for KEY or DEFLT if that is not set
        or is boost::none */
     const std::string& lookup(const std::string& key,
@@ -40,10 +40,10 @@ namespace libral {
     virtual void destroy() {};
     virtual void update(const attr_map& should) {};
   protected:
-    void update_values(const attr_map& should);
+    void set_attrs(const attr_map& should);
   private:
     std::string _name;
-    attr_map _values;
+    attr_map _attrs;
   };
 
 

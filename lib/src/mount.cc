@@ -125,7 +125,7 @@ namespace libral {
        unmounted, absent, mounted.
     */
     auto state = lookup("ensure", "absent");
-    update_values(should);
+    set_attrs(should);
     auto ensure = lookup("ensure", "absent");
     if (ensure == "present") {
       // make sure entry in fstab

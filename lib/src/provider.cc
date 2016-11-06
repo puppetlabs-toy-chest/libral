@@ -14,8 +14,8 @@ namespace libral {
         "The name can not be accessed with operator[]" };
     }
 
-    auto v = _values.find(key);
-    if (v == _values.end()) {
+    auto v = _attrs.find(key);
+    if (v == _attrs.end()) {
       return boost::none;
     } else {
       return v->second;
@@ -27,21 +27,21 @@ namespace libral {
       throw std::invalid_argument {
         "The name can not be accessed with operator[]" };
     }
-    return _values[key];
+    return _attrs[key];
   }
 
   const std::string& resource::lookup(const std::string& key,
                                       const std::string& deflt) const {
-    auto it = _values.find(key);
-    if (it == _values.end() || !it->second) {
+    auto it = _attrs.find(key);
+    if (it == _attrs.end() || !it->second) {
       return deflt;
     } else {
       return *it->second;
     }
   }
 
-  void resource::update_values(const attr_map& should) {
-    _values = should;
+  void resource::set_attrs(const attr_map& should) {
+    _attrs = should;
   }
 
   boost::optional<std::unique_ptr<resource>> provider::find(const std::string &name) {
