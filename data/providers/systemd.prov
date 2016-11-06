@@ -75,30 +75,43 @@ list() {
     done
 }
 
+# Check the state of service NAME. Sets IS_ENSURE and IS_ENABLE if there
+# even is a unit file for NAME. If no unit file exists, sets IS_UNKNOWN to
+# 'true'. If there is a unit file, IS_UNKNOWN is not set at all.
 find_state() {
     [ -z "$name" ] && die "find: missing a name"
 
-    e=$(systemctl is-enabled $name 2>&1)
-    rc=$?
-    if [ $rc != 0 ]; then
-        die "$e"
-    fi
-    case $e
-    in
-        enabled)  is_enable=true;;
-        masked)   is_enable=mask;;
-        *)        is_enable=false;;
-    esac
+    # See if we even have a unit file
+    [[ "$name" == *.service ]] && svc="$name" || svc="${name}.service"
+    out=$(systemctl list-unit-files -t service --no-pager --no-legend "$svc")
 
-    systemctl is-active -q $name && is_ensure=running || is_ensure=stopped
+    if [ -n "$out" ]
+    then
+        e=$(systemctl is-enabled $name 2>&1)
+        case $e
+        in
+            enabled)  is_enable=true;;
+            masked)   is_enable=mask;;
+            *)        is_enable=false;;
+        esac
+
+        systemctl is-active -q $name && is_ensure=running || is_ensure=stopped
+    else
+        is_unknown=true
+    fi
 }
 
 find() {
     find_state
     echo "# simple"
     echo "name: $name"
-    echo "enable: $is_enable"
-    echo "ensure: $is_ensure"
+    if [ -z "$is_unknown" ]
+    then
+        echo "enable: $is_enable"
+        echo "ensure: $is_ensure"
+    else
+        echo "ral_unknown: true"
+    fi
 }
 
 run() {
@@ -116,6 +129,12 @@ update() {
     find_state
 
     echo '# simple'
+    if [ -n "$is_unknown" ]
+    then
+        echo "ral_unknown: true"
+        exit 0
+    fi
+
     # Check enablement
     if [ -n "$enable" -a "$enable" != "$is_enable" ]
     then
