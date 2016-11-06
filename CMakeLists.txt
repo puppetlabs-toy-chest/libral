@@ -18,6 +18,11 @@ endif()
 
 enable_testing()
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
+option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" OFF)
+find_package(YAMLCPP REQUIRED)
+
 # Leatherman setup
 SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution)
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})

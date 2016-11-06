@@ -15,7 +15,15 @@ set(CMAKE_CXX_FLAGS ${${PROJECT_NAME_UPPER}_CXX_FLAGS})
 leatherman_logging_namespace("puppetlabs.libral")
 
 # Setup compiling the library.
-include_directories(inc ${Boost_INCLUDE_DIRS} ${LEATHERMAN_INCLUDE_DIRS})
+include_directories(
+  inc
+  ${Boost_INCLUDE_DIRS}
+  ${YAMLCPP_INCLUDE_DIRS}
+  ${LEATHERMAN_INCLUDE_DIRS})
+
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+  ${YAMLCPP_LIBRARY_DIRS})
 
 set(PROJECT_SOURCES "src/libral.cc" "src/augeas.cc" "src/ral.cc"
                     "src/type.cc" "src/mount.cc" "src/provider.cc")
@@ -28,9 +36,10 @@ set_target_properties(libprojectsrc PROPERTIES POSITION_INDEPENDENT_CODE true)
 add_library(libral $<TARGET_OBJECTS:libprojectsrc>)
 set_target_properties(libral PROPERTIES VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 target_link_libraries(libral
-    ${LEATHERMAN_LIBRARIES}
-    ${Boost_LIBRARIES}
-    ${LIBAUGEAS_LIBRARIES}
+  ${LEATHERMAN_LIBRARIES}
+  ${YAMLCPP_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${LIBAUGEAS_LIBRARIES}
 )
 
 symbol_exports(libral "${CMAKE_CURRENT_LIST_DIR}/inc/libral/export.h")

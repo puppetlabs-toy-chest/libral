@@ -19,6 +19,10 @@ target_link_libraries(ralsh
     ${LIBAUGEAS_LIBRARIES}
 )
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+  ${YAMLCPP_LIBRARY_DIRS})
+
 leatherman_install(ralsh)
 
 # Tests for the executable. These don't verify behavior, simply that the executable runs
