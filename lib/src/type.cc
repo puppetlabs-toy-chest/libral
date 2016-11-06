@@ -9,6 +9,13 @@
 #include <typeinfo>
 
 namespace libral {
+
+  boost::optional<std::unique_ptr<resource>>
+  type::find(const std::string &name) {
+    _prov->prepare();
+    return _prov->find(name);
+  }
+
   std::vector<std::unique_ptr<resource>> type::instances(void) {
     _prov->prepare();
     auto result = _prov->instances();

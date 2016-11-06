@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <boost/optional.hpp>
 
 #include "provider.hpp"
 
@@ -16,8 +17,8 @@ namespace libral {
     type(const std::string name, std::shared_ptr<provider> prov)
       : _name(name), _prov(prov) { }
     const std::string& name(void) const { return _name; }
+    boost::optional<std::unique_ptr<resource>> find(const std::string &name);
     std::vector<std::unique_ptr<resource>> instances(void);
-    resource instance(const std::string& name);
     // @todo lutter 2016-06-08: some error indication might be nice
     std::unique_ptr<resource> update(const std::string& name,
                                      const attr_map& attrs);

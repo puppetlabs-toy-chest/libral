@@ -128,7 +128,6 @@ int main(int argc, char **argv) {
       }
 
       auto& type = *opt_type;
-      auto insts = type->instances();
 
       if (vm.count("name")) {
         // We have a resource name
@@ -152,14 +151,14 @@ int main(int argc, char **argv) {
           print_resource(*type, *res);
         } else {
           // No attributes, dump the resource
-          for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
-            if ((*inst)->name() == name) {
-              print_resource(*type, **inst);
-            }
+          auto inst = type->find(name);
+          if (inst) {
+            print_resource(*type, **inst);
           }
         }
       } else {
         // No resource name, dump all resources of the type
+        auto insts = type->instances();
         for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
           print_resource(*type, **inst);
         }
