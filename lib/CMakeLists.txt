@@ -12,7 +12,7 @@ configure_file("namespaces.dox.in" "${CMAKE_CURRENT_LIST_DIR}/docs/namespaces.do
 set(CMAKE_CXX_FLAGS ${${PROJECT_NAME_UPPER}_CXX_FLAGS})
 
 # Set prefix for logging messages.
-leatherman_logging_namespace("puppetlabs.libral")
+leatherman_logging_namespace("ral")
 
 # Setup compiling the library.
 include_directories(
