@@ -36,8 +36,6 @@ namespace libral {
     const std::string& lookup(const std::string& key,
                               const std::string& deflt) const;
 
-    // @todo lutter 2016-05-16: noop for now
-    virtual void destroy() {};
     /* Update this resource's properties to the values in SHOULD. Only the
      * attributes mentioned in SHOULD should be modified, all others need
      * to be left alone. It is safe to assume that the current attributes
