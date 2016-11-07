@@ -32,9 +32,10 @@ namespace libral {
     boost::optional<std::unique_ptr<resource>> find(const std::string &name);
     std::vector<std::unique_ptr<resource>> instances();
   private:
-    bool run_action(const std::string& action,
-           std::function<bool(std::string&, std::string&)> entry_callback,
-                    std::vector<std::string> args = {});
+    result<bool>
+    run_action(const std::string& action,
+               std::function<bool(std::string&, std::string&)> entry_callback,
+               std::vector<std::string> args = {});
 
     std::string _path;
     YAML::Node _node;

@@ -6,9 +6,11 @@
 #include <boost/algorithm/string.hpp>
 #include <leatherman/execution/execution.hpp>
 
-#include <leatherman/logging/logging.hpp>
+#include <leatherman/locale/locale.hpp>
 
 #include <libral/result.hpp>
+
+using namespace leatherman::locale;
 
 namespace libral {
 
@@ -82,21 +84,23 @@ namespace libral {
     return result;
   }
 
-  bool simple_provider::run_action(const std::string& action,
+  result<bool>
+  simple_provider::run_action(const std::string& action,
          std::function<bool(std::string&, std::string&)> entry_callback,
          std::vector<std::string> args) {
     int line_cnt = 0;
     bool in_error = false;
+    result<bool> rslt = true;
     std::string errmsg;
 
     args.push_back("ral_action=" + action);
-    auto cb = [&line_cnt,&in_error,&errmsg,&entry_callback](std::string &line) {
+    auto cb = [&line_cnt,&in_error,&errmsg,&entry_callback,&rslt](std::string &line) {
       line_cnt +=1;
       if (line_cnt == 1) {
         if (line == "# simple") {
           return true;
         } else {
-          LOG_ERROR("invalid line: '%s'. Expected '# simple'", line);
+          rslt = error(_("invalid line: '%s'. Expected '# simple'", line));
           return false;
         }
       } else if (in_error) {
@@ -109,7 +113,7 @@ namespace libral {
       } else {
         size_t pos = line.find_first_of(":");
         if (pos == std::string::npos) {
-          LOG_ERROR("invalid line: '%s'. Expected '<KEY>: <VALUE>' but couldn't find a ':'", line);
+          rslt = error(_("invalid line: '%s'. Expected '<KEY>: <VALUE>' but couldn't find a ':'", line));
           return true;
         }
         auto key = line.substr(0, pos);
@@ -124,10 +128,10 @@ namespace libral {
         return true;
       }
     };
-    auto result = leatherman::execution::each_line(_path, args, cb);
-    if (! result) {
-      LOG_ERROR("Something went wrong running %s ral_action=%s", _path, action);
+    auto r = leatherman::execution::each_line(_path, args, cb);
+    if (! r && rslt.is_ok()) {
+      rslt = error(_("Something went wrong running %s ral_action=%s", _path, action));
     }
-    return result;
+    return rslt;
   }
 }
