@@ -38,7 +38,12 @@ namespace libral {
 
     // @todo lutter 2016-05-16: noop for now
     virtual void destroy() {};
-    virtual void update(const attr_map& should) {};
+    /* Update this resource's properties to the values in SHOULD. Only the
+     * attributes mentioned in SHOULD should be modified, all others need
+     * to be left alone. It is safe to assume that the current attributes
+     * of the resource represent the 'is' state.
+     */
+    virtual void update(const attr_map& should) = 0;
   protected:
     void set_attrs(const attr_map& should);
   private:

@@ -102,9 +102,12 @@ namespace libral {
   void mount_provider::mount_resource::update_base() {
     auto& self = *this;
     _base.erase();
-    _base.set_maybe("spec", self["device"]);
-    _base.set_maybe("file", name());
-    _base.set_maybe("vfstype", self["fstype"]);
+    // FIXME: spec, file, and vfstype are mandatory, but we don't have a
+    // way to report that they are missing right now, so we just make up
+    // default values
+    _base.set("spec", self["device"], "NODEVICE");
+    _base.set("file", name(), "NONAME");
+    _base.set("vfstype", self["fstype"], "NOFSTYPE");
     _base.set("options", self["options"], "defaults");
     _base.set("dump", self["dump"], "0");
     _base.set("passno", self["pass"], "0");
@@ -152,9 +155,7 @@ namespace libral {
 
     for (auto prop : { "device", "fstype", "options", "dump", "pass"}) {
       auto value = should.find(prop);
-      if (value == should.end()) {
-        self.erase(prop);
-      } else if (self[prop] != value->second) {
+      if (value != should.end() && self[prop] != value->second) {
         self[prop] = value->second;
       }
     }
