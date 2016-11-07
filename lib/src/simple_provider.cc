@@ -8,10 +8,14 @@
 
 #include <leatherman/logging/logging.hpp>
 
+#include <libral/result.hpp>
+
 namespace libral {
 
-  void simple_provider::simple_resource::update(const attr_map &should) {
+  std::unique_ptr<result<changes>>
+  simple_provider::simple_resource::update(const attr_map &should) {
     // Run the script with ral_action = 'update' and attrs should
+    return std::unique_ptr<result<changes>>(new result<changes>(changes()));
   }
 
   bool simple_provider::suitable() {

@@ -24,18 +24,22 @@ namespace libral {
     return result;
   }
 
-  std::unique_ptr<resource> type::update(const std::string& name,
-                                         const attr_map& attrs) {
+  std::pair<std::unique_ptr<resource>,std::unique_ptr<result<changes>>>
+  type::update(const std::string& name,
+               const attr_map& attrs) {
     _prov->prepare();
     auto opt_rsrc = _prov->find(name);
-    std::unique_ptr<resource> result;
+    std::unique_ptr<resource> res;
 
     if (opt_rsrc) {
-      result = std::move(*opt_rsrc);
+      res = std::move(*opt_rsrc);
     } else {
-      result = _prov->create(name);
+      res = _prov->create(name);
     }
-    result->update(attrs);
-    return result;
+    auto ch = res->update(attrs);
+    return
+      std::pair<std::unique_ptr<resource>,
+                std::unique_ptr<result<changes>>>(std::move(res),
+                                                  std::move(ch));
   }
 }

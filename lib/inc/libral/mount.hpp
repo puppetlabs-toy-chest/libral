@@ -39,13 +39,13 @@ namespace libral {
       mount_resource(std::shared_ptr<mount_provider>& prov, const std::string& name, const aug::node& base)
         : resource(name), _prov(prov), _base(base) { extract_base(); }
 
-      void update(const attr_map& should);
+      std::unique_ptr<result<changes>> update(const attr_map& should);
     private:
       // Copy properties from _base into _values
       void extract_base();
       // Copy properties from _values into _base
       void update_base();
-      void update_fstab(const attr_map& should);
+      void update_fstab(const attr_map& should, changes &changes);
       void remove_from_fstab();
       void unmount(const std::string& state);
       void mount(const std::string& state);

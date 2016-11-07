@@ -113,7 +113,11 @@ namespace libral {
     _base.set("passno", self["pass"], "0");
   }
 
-  void mount_provider::mount_resource::update(const attr_map& should) {
+  std::unique_ptr<result<changes>>
+  mount_provider::mount_resource::update(const attr_map& should) {
+    auto res = std::unique_ptr<result<changes>>(new result<changes>(changes()));
+    changes& changes = *res->ok();
+
     /* Possible values for ensure:
 
        Control what to do with this mount. Set this attribute to unmounted
@@ -128,11 +132,15 @@ namespace libral {
        unmounted, absent, mounted.
     */
     auto state = lookup("ensure", "absent");
-    set_attrs(should);
-    auto ensure = lookup("ensure", "absent");
+    // Why is there no simple way to say "give me an existing entry, or a
+    // default value otherwise" ?
+    auto ensure_it = should.find("ensure");
+    auto ensure = (ensure_it != should.end() && ensure_it->second)
+      ? *ensure_it->second : state;
+
     if (ensure == "present") {
       // make sure entry in fstab
-      update_fstab(should);
+      update_fstab(should, changes);
     } else if (ensure == "absent") {
       // unmount, remove from fstab
       unmount(state);
@@ -140,22 +148,25 @@ namespace libral {
     } else if (ensure == "unmounted") {
       // unmount, make sure in fstab
       unmount(state);
-      update_fstab(should);
+      update_fstab(should, changes);
     } else if (ensure == "mounted") {
       // mount, make sure in fstab
-      update_fstab(should);
+      update_fstab(should, changes);
       mount(state);
     } else {
       // raise "illegal value error"
     }
+    return res;
   }
 
-  void mount_provider::mount_resource::update_fstab(const attr_map& should) {
+  void mount_provider::mount_resource::update_fstab(const attr_map& should,
+                                                    changes& changes) {
     auto& self = *this;
 
     for (auto prop : { "device", "fstype", "options", "dump", "pass"}) {
       auto value = should.find(prop);
       if (value != should.end() && self[prop] != value->second) {
+        changes.push_back(change(prop, value->second, self[prop]));
         self[prop] = value->second;
       }
     }
@@ -169,6 +180,7 @@ namespace libral {
   void mount_provider::mount_resource::unmount(const std::string& state) {
     _prov->flush();
     if (state != "unmounted" && state != "absent") {
+      // FIXME: check results and return update_res
       leatherman::execution::execute(_prov->_cmd_umount, { this->name() });
     }
   }
@@ -176,6 +188,7 @@ namespace libral {
   void mount_provider::mount_resource::mount(const std::string& state) {
     _prov->flush();
     if (state != "mounted") {
+      // FIXME: check results and return update_res
       leatherman::execution::execute(_prov->_cmd_mount, { this->name() });
     }
   }

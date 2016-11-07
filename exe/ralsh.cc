@@ -52,6 +52,23 @@ static void print_resource(lib::type& type, lib::resource& res) {
   cout << "}" << endl;
 }
 
+static void print_update(lib::type& type, lib::resource& res,
+                         const lib::result<lib::changes>& rslt) {
+  if (auto events = rslt.ok()) {
+    print_resource(type, res);
+    for (auto ev: *events) {
+      auto was = ev.was ? *ev.was : "(none)";
+      auto is = ev.is ? *ev.is : "(none)";
+      cout << ev.attr << "(" << was << "->" << is << ")" << endl;
+    }
+  } else if (auto fail = rslt.err()) {
+    cout << "Failed: " << fail->detail << endl;
+  } else {
+    cerr << "surprising update_res variant!" << endl;
+    abort();
+  }
+}
+
 int main(int argc, char **argv) {
   try {
     // Fix args on Windows to be UTF-8
@@ -148,7 +165,7 @@ int main(int argc, char **argv) {
           }
           auto res = type->update(name, attrs);
           type->flush();
-          print_resource(*type, *res);
+          print_update(*type, *(res.first), *(res.second));
         } else {
           // No attributes, dump the resource
           auto inst = type->find(name);

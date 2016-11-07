@@ -16,7 +16,7 @@ namespace libral {
                       const std::string& name)
         : resource(name), _prov(prov) { }
 
-      void update(const attr_map &should);
+      std::unique_ptr<result<changes>> update(const attr_map &should);
     private:
       std::shared_ptr<simple_provider> _prov;
       attr_map                         _attrs;

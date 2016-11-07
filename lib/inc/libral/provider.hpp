@@ -5,6 +5,9 @@
 #include <map>
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
+
+#include <libral/result.hpp>
 
 namespace libral {
   /* Nomenclature warning: a provider here is the thing that knows how to
@@ -19,10 +22,29 @@ namespace libral {
   // This should probably be its own class
   typedef std::map<std::string, value> attr_map;
 
+  /* Record the change of attribute ATTR from WAS to IS */
+  struct change {
+    change(const std::string &a, const value &i, const value &w)
+      : attr(a), is(i), was(w) {};
+    std::string attr;
+    value is;
+    value was;
+  };
+
+  // Will probably become its own class sooner or later
+  typedef std::vector<change> changes;
+
   /* An individual thing that we manage */
+  /* The resource only has one set of attributes, therefore it's not clear
+     whether those represent 'should' or 'is' state; that information is
+     contextual but might need to get incorporated into the notion of a
+     resource. Maybe. */
   class resource {
-  public:
+  protected:
+    /* Resources are created by one of the provider methods: create, find,
+       or instances, but should not be instantiated directly. */
     resource(const std::string name) : _name(name){ }
+  public:
     const std::string& name() { return _name; }
 
     /* Return the current state of attribute ATTR */
@@ -41,7 +63,7 @@ namespace libral {
      * to be left alone. It is safe to assume that the current attributes
      * of the resource represent the 'is' state.
      */
-    virtual void update(const attr_map& should) = 0;
+    virtual std::unique_ptr<result<changes>> update(const attr_map& should) = 0;
   protected:
     void set_attrs(const attr_map& should);
   private:
