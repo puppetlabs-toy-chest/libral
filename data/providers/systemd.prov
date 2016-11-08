@@ -102,8 +102,8 @@ find_state() {
 }
 
 find() {
-    find_state
     echo "# simple"
+    find_state
     echo "name: $name"
     if [ -z "$is_unknown" ]
     then
@@ -126,9 +126,9 @@ run() {
 }
 
 update() {
+    echo '# simple'
     find_state
 
-    echo '# simple'
     if [ -n "$is_unknown" ]
     then
         echo "ral_unknown: true"
