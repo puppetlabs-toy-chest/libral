@@ -41,23 +41,22 @@ namespace libral {
 
   boost::optional<std::unique_ptr<resource>>
   simple_provider::find(const std::string &name) {
-    bool unknown = false;
     std::unique_ptr<resource> rsrc;
 
-    auto cb = [this, &unknown, &rsrc](std::string key, std::string value) {
+    auto cb = [this, &rsrc, &name](std::string key, std::string value) -> result<bool> {
       if (key == "name") {
         rsrc = create(value);
         return true;
       } else if (key == "ral_unknown") {
-        unknown=true;
-        return false;
+        return error(_("unknown resource %s", name));
       } else {
         (*rsrc)[key] = value;
         return true;
       }
     };
-    run_action("find", cb, { "name='" + name + "'" });
-    if (unknown) {
+    auto r = run_action("find", cb, { "name='" + name + "'" });
+    if (r.is_err()) {
+      // FIXME: don't swallow the error
       return boost::none;
     } else {
       return std::move(rsrc);
@@ -86,7 +85,7 @@ namespace libral {
 
   result<bool>
   simple_provider::run_action(const std::string& action,
-         std::function<bool(std::string&, std::string&)> entry_callback,
+         std::function<result<bool>(std::string&, std::string&)> entry_cb,
          std::vector<std::string> args) {
     int line_cnt = 0;
     bool in_error = false;
@@ -94,28 +93,22 @@ namespace libral {
     std::string errmsg;
 
     args.push_back("ral_action=" + action);
-    auto cb = [&line_cnt,&in_error,&errmsg,&entry_callback,&rslt](std::string &line) {
+    auto cb = [&line_cnt,&in_error,&errmsg,&entry_cb,&rslt](std::string &line) {
       line_cnt +=1;
       if (line_cnt == 1) {
-        if (line == "# simple") {
-          return true;
-        } else {
+        if (line != "# simple") {
           rslt = error(_("invalid line: '%s'. Expected '# simple'", line));
-          return false;
         }
       } else if (in_error) {
         if (line != "ral_eom") {
           errmsg += line;
-          return true;
         } else {
           rslt = error(errmsg);
-          return false;
         }
       } else {
         size_t pos = line.find_first_of(":");
         if (pos == std::string::npos) {
           rslt = error(_("invalid line: '%s'. Expected '<KEY>: <VALUE>' but couldn't find a ':'", line));
-          return true;
         }
         auto key = line.substr(0, pos);
         auto value = line.substr(pos+1);
@@ -124,10 +117,13 @@ namespace libral {
           in_error = true;
           errmsg = value;
         } else {
-          return entry_callback(key, value);
+          auto r = entry_cb(key, value);
+          if (r.is_err()) {
+            rslt = r;
+          }
         }
-        return true;
       }
+      return rslt.is_ok();
     };
     auto r = leatherman::execution::each_line(_path, args, cb);
     if (! r && rslt.is_ok()) {

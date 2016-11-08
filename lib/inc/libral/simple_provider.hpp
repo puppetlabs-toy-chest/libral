@@ -34,7 +34,7 @@ namespace libral {
   private:
     result<bool>
     run_action(const std::string& action,
-               std::function<bool(std::string&, std::string&)> entry_callback,
+               std::function<result<bool>(std::string&, std::string&)> entry_cb,
                std::vector<std::string> args = {});
 
     std::string _path;
