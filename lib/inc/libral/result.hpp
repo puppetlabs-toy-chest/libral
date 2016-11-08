@@ -45,7 +45,11 @@ namespace libral {
     };
 
     boost::optional<error&> err() {
-      return is_err() ? boost::get<error>(*this) : boost::none;
+      if (is_err()) {
+        return boost::get<error>(*this);
+      } else {
+        return boost::none;
+      }
     };
 
     boost::optional<const error&> err() const {
@@ -61,6 +65,10 @@ namespace libral {
 
     static std::unique_ptr<result<R>> make_unique() {
       return std::unique_ptr<result<R>>(new result<R>(R()));
+    };
+
+    static std::unique_ptr<result<R>> make_unique(const error& e) {
+      return std::unique_ptr<result<R>>(new result<R>(e));
     };
   };
 }
