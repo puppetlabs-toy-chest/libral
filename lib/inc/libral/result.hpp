@@ -23,10 +23,10 @@ namespace libral {
   public:
     result(R& ok) : base(ok) {};
     result(const R& ok) : base(ok) {};
-    result(R&& ok) : base(ok) {};
+    result(R&& ok) : base(std::move(ok)) {};
     result(error& err) : base(err) {};
     result(const error& err) : base(err) {};
-    result(error&& err) : base(err) {};
+    result(error&& err) : base(std::move(err)) {};
 
     boost::optional<R&> ok() {
       if (is_ok()) {
@@ -58,5 +58,9 @@ namespace libral {
 
     bool is_ok()  const { return base::which() == 1; }
     bool is_err() const { return base::which() == 0; }
+
+    static std::unique_ptr<result<R>> make_unique() {
+      return std::unique_ptr<result<R>>(new result<R>(R()));
+    };
   };
 }
