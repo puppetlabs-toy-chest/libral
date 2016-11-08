@@ -24,7 +24,7 @@ namespace libral {
 
   /* Record the change of attribute ATTR from WAS to IS */
   struct change {
-    change(const std::string &a, const value &i, const value &w)
+    change(const std::string &a, const value &i, const value &w = boost::none)
       : attr(a), is(i), was(w) {};
     std::string attr;
     value is;

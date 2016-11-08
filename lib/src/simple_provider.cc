@@ -10,14 +10,45 @@
 
 #include <libral/result.hpp>
 
+#include <cstdio>
+
 using namespace leatherman::locale;
 
 namespace libral {
 
   std::unique_ptr<result<changes>>
   simple_provider::simple_resource::update(const attr_map &should) {
-    // Run the script with ral_action = 'update' and attrs should
-    return std::unique_ptr<result<changes>>(new result<changes>(changes()));
+    std::vector<std::string> args;
+    auto rslt = result<changes>::make_unique();
+    auto& chgs = *rslt->ok();
+
+    auto cb = [this, &chgs](std::string& key, std::string& value)
+      -> result<bool> {
+      if (key == "name") {
+        if (value != name()) {
+          return error(_("wrong name changed by update: '%s' instead of '%s'",
+                         value, name()));
+        }
+      } else if (key == "ral_was") {
+        chgs.back().was = value;
+      } else {
+        chgs.push_back(change(key, value));
+        (*this)[key] = value;
+      }
+      return true;
+    };
+
+    for (auto p : should) {
+      if (p.second) {
+        args.push_back(p.first + "='" + *(p.second) + "'");
+      }
+    }
+    auto r = _prov->run_action("update", cb, args);
+    if (auto e = r.err()) {
+      return result<changes>::make_unique(*e);
+    } else {
+      return rslt;
+    }
   }
 
   bool simple_provider::suitable() {
