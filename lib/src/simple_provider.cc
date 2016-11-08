@@ -108,6 +108,7 @@ namespace libral {
           errmsg += line;
           return true;
         } else {
+          rslt = error(errmsg);
           return false;
         }
       } else {
@@ -130,7 +131,8 @@ namespace libral {
     };
     auto r = leatherman::execution::each_line(_path, args, cb);
     if (! r && rslt.is_ok()) {
-      rslt = error(_("Something went wrong running %s ral_action=%s", _path, action));
+      rslt = error(_("Something went wrong running %s ral_action=%s",
+                     _path, action));
     }
     return rslt;
   }
