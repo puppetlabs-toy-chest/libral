@@ -63,6 +63,8 @@ namespace libral {
           }
         }
         files.push_back(path);
+      } else {
+        LOG_WARNING("file %s looks like a provider but is not executable", path);
       }
       return true;
     };
