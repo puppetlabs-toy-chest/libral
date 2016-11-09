@@ -7,6 +7,7 @@
 #include <leatherman/execution/execution.hpp>
 
 #include <leatherman/locale/locale.hpp>
+#include <leatherman/logging/logging.hpp>
 
 #include <libral/result.hpp>
 
@@ -87,7 +88,8 @@ namespace libral {
     };
     auto r = run_action("find", cb, { "name='" + name + "'" });
     if (r.is_err()) {
-      // FIXME: don't swallow the error
+      // FIXME: return error instead of logging it
+      LOG_ERROR(r.err()->detail);
       return boost::none;
     } else {
       return std::move(rsrc);
@@ -110,7 +112,11 @@ namespace libral {
       }
       return true;
     };
-    run_action("list", cb);
+    auto r = run_action("list", cb);
+    if (r.is_err()) {
+      // FIXME: this function needs to return a result<..>
+      LOG_ERROR(r.err()->detail);
+    };
     return result;
   }
 
