@@ -124,7 +124,11 @@ namespace libral {
     std::string errmsg;
 
     args.push_back("ral_action=" + action);
-    auto cb = [&line_cnt,&in_error,&errmsg,&entry_cb,&rslt](std::string &line) {
+    auto err_cb = [&errmsg](std::string &line) {
+      errmsg += line;
+      return true;
+    };
+    auto out_cb = [&line_cnt,&in_error,&errmsg,&entry_cb,&rslt](std::string &line) {
       line_cnt +=1;
       if (line_cnt == 1) {
         if (line != "# simple") {
@@ -156,10 +160,15 @@ namespace libral {
       }
       return rslt.is_ok();
     };
-    auto r = leatherman::execution::each_line(_path, args, cb);
+    auto r = leatherman::execution::each_line(_path, args, out_cb, err_cb);
     if (! r && rslt.is_ok()) {
-      rslt = error(_("Something went wrong running %s ral_action=%s",
-                     _path, action));
+      if (errmsg.empty()) {
+        rslt = error(_("Something went wrong running %s ral_action=%s",
+                       _path, action));
+      } else {
+        rslt = error(_("Something went wrong running %s ral_action=%s\n%s",
+                       _path, action, errmsg));
+      }
     }
     return rslt;
   }
