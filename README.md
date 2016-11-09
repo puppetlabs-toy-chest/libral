@@ -16,15 +16,46 @@ to use many of the libraries in
 [Leatherman](https://github.com/puppetlabs/leatherman). You will also need
 [Augeas](http://augeas.net/)
 
+Once you have `pl-build-tools`, leatherman, and `augeas-devel` installed,
+building libral should be a snap (*cough*):
+
+```bash
+    git clone https://github.com/puppetlabs/libral.git
+    cd libral
+    mkdir build
+    /opt/pl-build-tools/bin/cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_TOOLCHAIN_FILE=/opt/pl-build-tools/pl-build-toolchain.cmake \
+      -DCMAKE_PREFIX_PATH=/opt/pl-build-tools \
+      -DCMAKE_INSTALL_PREFIX=/opt/puppetlabs/puppet ..
+    make
+```
+
+## Usage
+
+After you built `libral` you can try things out by running `ralsh`:
+
+```bash
+    export LD_LIBRARY_PATH=/opt/pl-build-tools/lib
+    export RALSH_DATA_DIR=/home/lutter/code/libral/data
+    # list available types
+    ./bin/ralsh
+    # list all instances of a type
+    ./bin/ralsh mount
+    # list a specific instance
+    ./bin/ralsh service crond
+    # make a change for the better
+    ./bin/ralsh service crond ensure=stopped
+```
+
 ## Todo list
 
 - [X] finish mount provider
-- [ ] add a shell provider
+- [X] add a shell provider
 - [ ] add a remote provider (using an HTTP API)
 - [ ] adapt providers to multiple OS (maybe using mount)
 - [ ] more core providers
 - [ ] noop mode
-- [ ] event reporting
+- [X] event reporting
 
 ## Some language
 
@@ -58,6 +89,28 @@ meaning (or should it?)
   rather than making it part of the framework ?
 - Would it be better to make providers responsible for event generation
   rather than doing that in the framework ?
+
+## External providers
+
+What resources `libral` can manage is determined by what providers are
+available. Some providers are built in and implemented in C++, but doing
+that is of course labor-intensive and should only be done for good
+reason. It is much simpler, and recommended, that new providers first be
+implemented as external providers. External providers are nothing more than
+scripts or other executables that follow one of `libral`'s calling
+conventions. The different calling conventions trade off implementation
+complexity for expressive power.
+
+The following calling conventions are available. If you are just getting
+started with `libral`, you should write your first providers using hte
+`simple` calling convention.
+
+* [simple](doc/invoke-simple.md)
+* `augeas` (planned,maybe): when you mostly need to twiddle entries in a file,
+and maybe run a command
+* `ansible` (planned): use your Ansible 2 modules as an external provider
+* `json` (planned): input/output via JSON
+* `json_batch` (planned,maybe): input/output via JSON, can operate on multiple resources at once
 
 ## Provider lifecycle
 
@@ -101,25 +154,3 @@ like this:
 * At some point, we'll need a notion of a context that tells providers
   about system details (like facts) and some settings; would be cool to use
   that to change the idea of where the root of the FS is, for example.
-
-## External providers
-
-What resources `libral` can manage is determined by what providers are
-available. Some providers are built in and implemented in C++, but doing
-that is of course labor-intensive and should only be done for good
-reason. It is much simpler, and recommended, that new providers first be
-implemented as external providers. External providers are nothing more than
-scripts or other executables that follow one of `libral`'s calling
-conventions. The different calling conventions trade off implementation
-complexity for expressive power.
-
-The following calling conventions are available. If you are just getting
-started with `libral`, you should write your first providers using hte
-`simple` calling convention.
-
-* [simple](doc/invoke-simple.md)
-* `augeas` (planned): when you mostly need to twiddle entries in a file,
-and maybe run a command
-* `ansible` (planned): use your Ansible 2 modules as an external provider
-* `json` (planned,maybe): input/output via JSON, with the possibility of
-  batching operations
