@@ -27,7 +27,7 @@ link_directories(
 
 set(PROJECT_SOURCES "src/libral.cc" "src/augeas.cc" "src/ral.cc"
   "src/type.cc" "src/mount.cc" "src/provider.cc"
-  "src/simple_provider.cc")
+  "src/simple_provider.cc" "src/user.cc")
 
 ## An object target is generated that can be used by both the library and test executable targets.
 ## Without the intermediate target, unexported symbols can't be tested.

@@ -1,6 +1,8 @@
 #include <libral/ral.hpp>
 
 #include <libral/mount.hpp>
+#include <libral/user.hpp>
+
 #include <libral/simple_provider.hpp>
 #include <leatherman/file_util/directory.hpp>
 #include <leatherman/execution/execution.hpp>
@@ -23,6 +25,11 @@ namespace libral {
     if (mount_prov->suitable()) {
       auto mount_type = new type("mount", mount_prov);
       result.push_back(std::unique_ptr<type>(mount_type));
+    }
+    auto user_prov = std::shared_ptr<provider>(new user_provider(_data_dir));
+    if (user_prov->suitable()) {
+      auto user_type = new type("user", user_prov);
+      result.push_back(std::unique_ptr<type>(user_type));
     }
 
     // Find external providers
