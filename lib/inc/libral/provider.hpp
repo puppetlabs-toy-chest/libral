@@ -64,8 +64,6 @@ namespace libral {
      * of the resource represent the 'is' state.
      */
     virtual std::unique_ptr<result<changes>> update(const attr_map& should) = 0;
-  protected:
-    void set_attrs(const attr_map& should);
   private:
     std::string _name;
     attr_map _attrs;

@@ -40,10 +40,6 @@ namespace libral {
     }
   }
 
-  void resource::set_attrs(const attr_map& should) {
-    _attrs = should;
-  }
-
   boost::optional<std::unique_ptr<resource>> provider::find(const std::string &name) {
     for (auto& inst : instances()) {
       if (inst->name() == name)
