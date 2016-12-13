@@ -153,6 +153,12 @@ namespace libral {
     } else {
       // raise "illegal value error"
     }
+
+    if (state != ensure) {
+      changes.push_back(change("ensure", ensure, state));
+      (*this)["ensure"] = ensure;
+    }
+
     return res;
   }
 
