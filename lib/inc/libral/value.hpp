@@ -4,6 +4,7 @@
 #include <boost/none.hpp>
 
 #include <libral/cast.hpp>
+#include <libral/result.hpp>
 
 /* Heavily based on
    https://github.com/puppetlabs/puppetcpp/blob/master/lib/include/puppet/runtime/values/value.hpp
@@ -138,6 +139,15 @@ namespace libral {
 
     std::string to_string() const;
 
+    /**
+     * Turn a string into a value
+     * @param s The string representing the value
+     * @return Returns a new value containing the string
+     */
+    static result<value> read_string(std::string const &s) {
+      return result<value>(value(s));
+    }
+
 #if 0
     /**
      * Converts the value to an array; the value is returned as an array if already an array.
@@ -172,7 +182,4 @@ namespace libral {
    * @return Returns true if the two values are not equal or false if they are equal.
    */
   bool operator!=(value const& left, value const& right);
-
-  template <typename T>
-  T& parse(std::string const &s);
 }

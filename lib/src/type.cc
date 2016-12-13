@@ -40,4 +40,11 @@ namespace libral {
                 std::unique_ptr<result<changes>>>(std::move(res),
                                                   std::move(ch));
   }
+
+  result<value> type::parse(const std::string &name, const std::string &v) {
+    // Right now, this is pretty much a noop; in the future, we want to use
+    // attribute metadata to guide this conversion
+    return value::read_string(v);
+  }
+
 }

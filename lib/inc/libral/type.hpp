@@ -26,7 +26,7 @@ namespace libral {
 
     /* Turn a string into a value. Return an error message if that is not
        possible */
-    value parse(const std::string &name, const std::string &v);
+    result<value> parse(const std::string &name, const std::string &v);
 
   private:
     std::string _name;

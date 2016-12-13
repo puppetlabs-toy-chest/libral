@@ -157,8 +157,13 @@ int main(int argc, char **argv) {
             auto found = arg->find("=");
             if (found != string::npos) {
               auto attr = arg->substr(0, found);
-              auto value = arg->substr(found+1);
-              attrs[attr] = value;
+              auto value = type->parse(attr, arg->substr(found+1));
+              if (value.is_ok()) {
+                attrs[attr] = *value.ok();
+              } else {
+                boost::nowide::cout << "Failed to read attribute " << attr << ":" << (*value.err()).detail << endl;
+                return EXIT_FAILURE;
+              }
             }
           }
           auto res = type->update(name, attrs);
