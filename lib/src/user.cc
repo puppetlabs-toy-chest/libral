@@ -56,46 +56,44 @@ namespace libral {
     auto res = result<changes>::make_unique();
     changes& chgs = *res->ok();
 
-    auto state = lookup("ensure", "absent");
-    auto ensure_it = should.find("ensure");
-    auto ensure = (ensure_it != should.end() && ensure_it->second)
-      ? *ensure_it->second : state;
+    auto state = lookup<std::string>("ensure", "absent");
+    auto ensure = should.lookup<std::string>("ensure", state);
 
     if (ensure != state) {
       chgs.push_back(change("ensure", ensure, state));
     }
     self["ensure"] = ensure;
 
-    if (ensure=="present") {
+    if (ensure == "present") {
       for (auto prop : props) {
-        auto value = should.find(prop);
-        if (value != should.end() && self[prop] != value->second) {
-          chgs.push_back(change(prop, value->second, self[prop]));
-          self[prop] = value->second;
+        auto p = should.lookup<std::string>(prop);
+        if (p && self[prop] != value(*p)) {
+          chgs.push_back(change(prop, *p, self[prop]));
+          self[prop] = *p;
         }
       }
 
       if (!_exists || !chgs.empty()) {
         std::vector<std::string> args;
-        if (self["comment"]) {
+        if (self["comment"].is_present()) {
           args.push_back("-c");
-          args.push_back(*self["comment"]);
+          args.push_back(self["comment"].to_string());
         }
-        if (self["gid"]) {
+        if (self["gid"].is_present()) {
           args.push_back("-g");
-          args.push_back(*self["gid"]);
+          args.push_back(self["gid"].to_string());
         }
-        if (self["home"]) {
+        if (self["home"].is_present()) {
           args.push_back("-d");
-          args.push_back(*self["home"]);
+          args.push_back(self["home"].to_string());
         }
-        if (self["shell"]) {
+        if (self["shell"].is_present()) {
           args.push_back("-s");
-          args.push_back(*self["shell"]);
+          args.push_back(self["shell"].to_string());
         }
-        if (self["uid"]) {
+        if (self["uid"].is_present()) {
           args.push_back("-u");
-          args.push_back(*self["uid"]);
+          args.push_back(self["uid"].to_string());
         }
         args.push_back(name());
         // FIXME: handle errors from running these
@@ -106,9 +104,9 @@ namespace libral {
           leatherman::execution::execute(_prov->_cmd_useradd, args);
         }
       }
-    } else if (ensure=="absent") {
+    } else if (ensure == "absent") {
       leatherman::execution::execute(_prov->_cmd_userdel, { "-r", name() });
-    } else if (ensure=="role") {
+    } else if (ensure == "role") {
       return result<changes>::make_unique(error("can not ensure=role with this provider"));
     }
     return res;

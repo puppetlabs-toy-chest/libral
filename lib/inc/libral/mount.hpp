@@ -45,6 +45,12 @@ namespace libral {
       void extract_base();
       // Copy properties from _values into _base
       void update_base();
+      void extract(const std::string &attr,
+                   const boost::optional<std::string>& from,
+                   const std::string& deflt);
+      void extract(const std::string &attr,
+                   const boost::optional<std::string>& from);
+
       void update_fstab(const attr_map& should, changes &changes);
       void remove_from_fstab();
       void unmount(const std::string& state);

@@ -3,6 +3,28 @@
 namespace libral {
   static const std::string blank = std::string("");
 
+  template<typename T>
+  const T& attr_map::lookup(const std::string& key, const T& deflt) const {
+    auto it = find(key);
+    if (it == end()) {
+      return deflt;
+    } else if (auto p = it->second.as<T>()) {
+      return *p;
+    } else {
+      return deflt;
+    }
+  }
+
+  template<typename T>
+  const T* attr_map::lookup(const std::string& key) const {
+    auto it = find(key);
+    if (it == end()) {
+      return nullptr;
+    } else {
+      return it->second.as<T>();
+    }
+  }
+
   static bool is_name(const std::string& key) {
     // This basically hardcodes namevar for now
     return key == "name";
@@ -30,15 +52,18 @@ namespace libral {
     return _attrs[key];
   }
 
-  const std::string& resource::lookup(const std::string& key,
-                                      const std::string& deflt) const {
-    auto it = _attrs.find(key);
-    if (it == _attrs.end() || !it->second) {
-      return deflt;
-    } else {
-      return *it->second;
-    }
+  template<typename T>
+  const T& resource::lookup(const std::string& key, const T& deflt) const {
+    return _attrs.lookup<T>(key, deflt);
   }
+
+  template<typename T>
+  const T* resource::lookup(const std::string& key) const {
+    return _attrs.lookup<T>(key);
+  };
+
+  template const std::string& resource::lookup(const std::string&, const std::string&) const;
+  template const std::string* resource::lookup(const std::string&) const;
 
   boost::optional<std::unique_ptr<resource>> provider::find(const std::string &name) {
     for (auto& inst : instances()) {

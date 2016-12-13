@@ -40,9 +40,7 @@ namespace libral {
     };
 
     for (auto p : should) {
-      if (p.second) {
-        args.push_back(p.first + "='" + *(p.second) + "'");
-      }
+      args.push_back(p.first + "='" + p.second.to_string() + "'");
     }
     auto r = _prov->run_action("update", cb, args);
     if (auto e = r.err()) {

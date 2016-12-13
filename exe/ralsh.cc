@@ -45,9 +45,7 @@ void help(po::options_description& desc)
 static void print_resource(lib::type& type, lib::resource& res) {
   cout << type.name() << " { '" << res.name() << "':" << endl;
   for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
-    if (a->second) {
-      cout << "  " << a->first << " => '" << *(a->second) << "'," << endl;
-    }
+    cout << "  " << a->first << " => '" << a->second << "'," << endl;
   }
   cout << "}" << endl;
 }
@@ -57,8 +55,8 @@ static void print_update(lib::type& type, lib::resource& res,
   if (auto events = rslt.ok()) {
     print_resource(type, res);
     for (auto ev: *events) {
-      auto was = ev.was ? *ev.was : "(none)";
-      auto is = ev.is ? *ev.is : "(none)";
+      auto was = ev.was.to_string();
+      auto is = ev.is.to_string();
       cout << ev.attr << "(" << was << "->" << is << ")" << endl;
     }
   } else if (auto fail = rslt.err()) {

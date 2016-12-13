@@ -69,31 +69,32 @@ namespace libral {
     return std::unique_ptr<resource>(new mount_resource(shared_this, name, base));
   }
 
-  static void extract(boost::optional<std::string>& to,
-                      const boost::optional<std::string>& from) {
+  void mount_provider::mount_resource::extract(const std::string& attr,
+                               const boost::optional<std::string>& from) {
     if (from) {
-      to = *from;
+      (*this)[attr] = *from;
     }
   }
 
-  static void extract(boost::optional<std::string>& to,
-                      const boost::optional<std::string>& from,
-                      const std::string& deflt) {
+  void mount_provider::mount_resource::extract(const std::string& attr,
+                               const boost::optional<std::string>& from,
+                               const std::string& deflt) {
+    auto& self = *this;
     if (from) {
-      to = *from;
+      self[attr] = *from;
     } else {
-      to = deflt;
+      self[attr] = deflt;
     }
   }
 
   void mount_provider::mount_resource::extract_base() {
     auto& self = *this;
 
-    extract(self["device"], _base["spec"]);
-    extract(self["fstype"], _base["vfstype"]);
-    extract(self["options"], _base["options"], "defaults");
-    extract(self["dump"], _base["dump"], "0");
-    extract(self["pass"], _base["passno"], "0");
+    extract("device", _base["spec"]);
+    extract("fstype", _base["vfstype"]);
+    extract("options", _base["options"], "defaults");
+    extract("dump", _base["dump"], "0");
+    extract("pass", _base["passno"], "0");
     self["ensure"] = "unmounted";
     // @todo lutter 2016-05-20: we actually need to pay attention to target
     self["target"] = "/etc/fstab";
@@ -105,12 +106,12 @@ namespace libral {
     // FIXME: spec, file, and vfstype are mandatory, but we don't have a
     // way to report that they are missing right now, so we just make up
     // default values
-    _base.set("spec", self["device"], "NODEVICE");
+    _base.set("spec", self["device"].to_string(), "NODEVICE");
     _base.set("file", name(), "NONAME");
-    _base.set("vfstype", self["fstype"], "NOFSTYPE");
-    _base.set("options", self["options"], "defaults");
-    _base.set("dump", self["dump"], "0");
-    _base.set("passno", self["pass"], "0");
+    _base.set("vfstype", self["fstype"].to_string(), "NOFSTYPE");
+    _base.set("options", self["options"].to_string(), "defaults");
+    _base.set("dump", self["dump"].to_string(), "0");
+    _base.set("passno", self["pass"].to_string(), "0");
   }
 
   std::unique_ptr<result<changes>>
@@ -131,12 +132,8 @@ namespace libral {
        Valid values are defined (also called present),
        unmounted, absent, mounted.
     */
-    auto state = lookup("ensure", "absent");
-    // Why is there no simple way to say "give me an existing entry, or a
-    // default value otherwise" ?
-    auto ensure_it = should.find("ensure");
-    auto ensure = (ensure_it != should.end() && ensure_it->second)
-      ? *ensure_it->second : state;
+    auto state = lookup<std::string>("ensure", "absent");
+    auto ensure = should.lookup<std::string>("ensure", state);
 
     if (ensure == "present") {
       // make sure entry in fstab
@@ -164,10 +161,10 @@ namespace libral {
     auto& self = *this;
 
     for (auto prop : { "device", "fstype", "options", "dump", "pass"}) {
-      auto value = should.find(prop);
-      if (value != should.end() && self[prop] != value->second) {
-        changes.push_back(change(prop, value->second, self[prop]));
-        self[prop] = value->second;
+      auto p = should.lookup<std::string>(prop);
+      if (p && self[prop] != value(*p)) {
+        changes.push_back(change(prop, *p, self[prop]));
+        self[prop] = *p;
       }
     }
     update_base();

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/variant.hpp>
+
 namespace libral {
   /*
      A poor man's emulation of Rust's Result construct. The basic idea is

@@ -23,6 +23,11 @@ namespace libral {
     std::pair<std::unique_ptr<resource>, std::unique_ptr<result<changes>>>
     update(const std::string& name, const attr_map& attrs);
     void flush() { _prov->flush(); }
+
+    /* Turn a string into a value. Return an error message if that is not
+       possible */
+    value parse(const std::string &name, const std::string &v);
+
   private:
     std::string _name;
     std::shared_ptr<provider> _prov;
