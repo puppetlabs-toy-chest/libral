@@ -25,6 +25,9 @@ namespace libral {
     }
   }
 
+  template const std::string& attr_map::lookup(const std::string&, const std::string&) const;
+  template const std::string* attr_map::lookup(const std::string&) const;
+
   static bool is_name(const std::string& key) {
     // This basically hardcodes namevar for now
     return key == "name";
