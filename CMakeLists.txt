@@ -20,11 +20,12 @@ enable_testing()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" OFF)
+option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ON)
 find_package(YAMLCPP REQUIRED)
 
 # Leatherman setup
 SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution)
+SET(BOOST_STATIC ON)
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 
 # Now that we have leatherman, we can pull in its options file, which
@@ -38,6 +39,8 @@ add_definitions(${LEATHERMAN_DEFINITIONS})
 include(leatherman)
 
 # Add other dependencies
+set(Boost_USE_STATIC_LIBS ON)
+#set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
 include(cmake/FindAugeas.cmake)

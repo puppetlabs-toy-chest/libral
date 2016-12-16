@@ -6,9 +6,9 @@ set(TEST_CASES ${PROJECT_NAME}.cc)
 
 add_executable(libral_test $<TARGET_OBJECTS:libprojectsrc> ${TEST_CASES} main.cc)
 target_link_libraries(libral_test
-    ${Boost_LIBRARIES}
-    ${YAMLCPP_LIBRARIES}
     ${LEATHERMAN_LIBRARIES}
+    ${YAMLCPP_LIBRARIES}
+    ${Boost_LIBRARIES}
     ${LIBAUGEAS_LIBRARIES}
 )
 
