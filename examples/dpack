@@ -1,0 +1,72 @@
+#! /bin/bash
+
+# Pack ralsh and supporting files so they can be copied into a Docker
+# container. This works on Fedora 25, provided you have the following
+# packages installed:
+#
+# dnf install upx glibc-static libxml2-static zlib-static xz-static libselinux-static
+#
+# Also, you need to install puppet-agent to build this (we only use that
+# for the static libs for augeas, since regrettably Fedora does not ship
+# augeas-static yet, see
+# https://bugzilla.redhat.com/show_bug.cgi?id=1405600)
+#
+
+topdir=$(realpath $(dirname $0)/..)
+
+# Build everything
+cd $topdir/build
+make
+
+# Special linker sauce to link statically except to some pretty innocuous
+# dependencies (like glibc)
+# This really needs to go into the CMakeLists
+cd exe
+/opt/pl-build-tools/bin/g++ \
+    -static-libstdc++ -static-libgcc \
+    -fPIC -pthread \
+    -Wno-maybe-uninitialized -std=c++11 \
+    -Wall -Werror -Wno-unused-parameter -Wno-unused-local-typedefs \
+    -Wno-unknown-pragmas -Wno-missing-field-initializers -Wextra \
+    -g   CMakeFiles/ralsh.dir/ralsh.cc.o  -o ../bin/ralsh \
+    -rdynamic ../lib/libral.a \
+    /opt/puppetlabs/puppet/lib/leatherman_execution.a \
+    /opt/puppetlabs/puppet/lib/leatherman_logging.a \
+    /opt/puppetlabs/puppet/lib/leatherman_locale.a \
+    -Wl,-Bstatic -lboost_locale -lboost_system -lboost_log -lboost_log_setup \
+    -lboost_thread -lboost_date_time -lboost_filesystem -lboost_chrono \
+    -lboost_regex -lboost_atomic \
+    /opt/puppetlabs/puppet/lib/leatherman_locale.a \
+    -Wl,-Bdynamic -lrt \
+    /opt/puppetlabs/puppet/lib/leatherman_util.a \
+    /opt/puppetlabs/puppet/lib/leatherman_logging.a \
+    /opt/puppetlabs/puppet/lib/leatherman_file_util.a \
+    -Wl,-Bstatic -lboost_program_options \
+    -Wl,-Bstatic -lyaml-cpp -lboost_system -lboost_log -lboost_log_setup \
+    -lboost_thread -lboost_date_time -lboost_filesystem -lboost_chrono \
+    -lboost_regex -lboost_atomic \
+    -Wl,-Bdynamic -lrt -Wl,-Bstatic \
+    -lboost_program_options \
+    -Wl,-Bstatic \
+    -L/opt/puppetlabs/puppet/lib -laugeas -lfa -lxml2 -lz -llzma -lm -lselinux \
+    -Wl,-Bdynamic
+
+# Reduce the executable as best we can
+cd ../bin
+strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s  ralsh
+upx ralsh
+
+cd ..
+rm -rf dpack
+mkdir -p dpack/bin
+cp ./bin/ralsh dpack/bin
+cp -pr ../data dpack
+# Snarf up some augeas lenses that we need
+lns_src=/usr/share/augeas/lenses/dist
+cp -p $lns_src/sep.aug $lns_src/util.aug $lns_src/rx.aug $lns_src/build.aug dpack/data/lenses
+
+echo
+echo To run ralsh inside the container, run
+echo
+echo   docker cp $PWD/dpack '<container>:/tmp'
+echo   docker exec '<container>' /bin/sh -c '"RALSH_DATA_DIR=/tmp/dpack/data /tmp/dpack/bin/ralsh"'

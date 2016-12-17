@@ -47,6 +47,19 @@ After you built `libral` you can try things out by running `ralsh`:
     ./bin/ralsh service crond ensure=stopped
 ```
 
+### Running inside a container
+
+The script `examples/dpack` produces a directory `build/dpack` that has a
+statically linked `ralsh` plus all supporting files in it. You can copy
+`build/dpack` into a container and then run it with commands like the
+following:
+
+```bash
+   CONTAINER=<some_container>
+   docker cp build/dpack $CONTAINER:/tmp
+   docker exec $CONTAINER /bin/sh -c "RALSH_DATA_DIR=/tmp/dpack/data /tmp/dpack/bin/ralsh"
+```
+
 ## Todo list
 
 - [X] finish mount provider
