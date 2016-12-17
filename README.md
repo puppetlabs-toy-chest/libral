@@ -66,7 +66,24 @@ following:
 - [X] add a shell provider
 - [ ] add a remote provider (using an HTTP API)
 - [ ] adapt providers to multiple OS (maybe using mount)
-- [ ] more core providers
+- more core providers
+  - [ ] cron
+  - [ ] file
+  - [ ] group
+  - [ ] host
+  - [ ] package
+  - [ ] service (besides systemd)
+  - [X] user (userXXX)
+- even more core providers
+  - [ ] interface
+  - [ ] k5login
+  - [ ] mailalias
+  - [ ] selboolean
+  - [ ] selmodule
+  - [ ] sshkey
+  - [ ] ssh-authorized-key
+  - [ ] vlan
+  - [ ] yumrepo
 - [ ] noop mode
 - [X] event reporting
 
@@ -121,7 +138,6 @@ started with `libral`, you should write your first providers using hte
 * [simple](doc/invoke-simple.md)
 * `augeas` (planned,maybe): when you mostly need to twiddle entries in a file,
 and maybe run a command
-* `ansible` (planned): use your Ansible 2 modules as an external provider
 * `json` (planned): input/output via JSON
 * `json_batch` (planned,maybe): input/output via JSON, can operate on multiple resources at once
 
