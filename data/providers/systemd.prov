@@ -26,24 +26,6 @@ meta:
   invoke: simple
   actions: [list,find,update]
   suitable: ${suitable}
-    - command(systemctl)
-  default:
-    - osfamily = 'archlinux'
-    - osfamily = 'redhat' and operatingsystemmajrelease = '7'
-    - osfamily = 'redhat' and operatingsystem = 'fedora'
-    - osfamily = 'suse'
-    - bla bla bla
-parameters:
-  binary:
-    desc: really needed ?
-  control:
-    desc: really needed ?
-properties:
-  name:
-  ensure:
-    values: stopped, running
-  enable:
-    values: true, false, manual, mask
 EOF
 }
 
