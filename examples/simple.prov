@@ -1,0 +1,106 @@
+#! /bin/bash
+
+# A skeleton/template for a simple provider written in bash. Make sure to
+# make this file executable when turning it into your 'real' provider
+
+# Very important so that sorting goes right
+export LANG=C
+
+# die MESSAGE
+# Print an error message and exit
+die() {
+    echo "ral_error: $1"
+    echo "ral_eom"
+    exit 0
+}
+
+describe() {
+    suitable=false # Add code here that determines whether this provider
+                   # can possible work or not
+
+    cat <<EOF
+---
+meta:
+  type: SOME_TYPE
+  invoke: simple
+  actions: [list,find,update]
+  suitable: ${suitable}
+EOF
+}
+
+list() {
+    echo '# simple'
+
+    # Get all the resources this provider can manage and print them out
+
+    # loop over all resources, and output each one
+    #   echo "name: $the_name"
+    #   echo "attr1: $value1"
+    #   echo "attr2: $value2"
+}
+
+# Determine the state of the resource with name $name
+find_state() {
+    [ -z "$name" ] && die "find: missing a name"
+
+    # lookup resource $name and set variables for each of its
+    # properties. By convention, call these variables is_property, i.e.,
+    # for property 'enable' use $is_enable
+
+    # If there is no property $name, set variable is_unknown
+}
+
+find() {
+    echo "# simple"
+    find_state
+    echo "name: $name"
+    if [ -z "$is_unknown" ]
+    then
+        echo "attr1: $is_prop1"
+        echo "attr2: $is_prop2"
+    else
+        echo "ral_unknown: true"
+    fi
+}
+
+# Convenience wrapper to make supporting noop easier
+run() {
+    if [ -z "$ral_noop" ]
+    then
+        msg=$("$@" 2>&1)
+        rc=$?
+        if [ $rc != 0 ]; then
+            die "$msg"
+        fi
+    fi
+}
+
+update() {
+    echo '# simple'
+    find_state
+
+    if [ -n "$is_unknown" ]
+    then
+        echo "ral_unknown: true"
+        exit 0
+    fi
+
+    # For each property prop, check whether $prop is different from
+    # $is_prop and change it if needed.
+    # If a change is made, output the following for each changed property:
+    #
+    #  echo "prop: $prop"
+    #  echo "ral_was: $is_prop"
+}
+
+eval "$@"
+
+case "$ral_action"
+in
+    list) list;;
+    find) find;;
+    update) update;;
+    describe) describe;;
+    *)
+        die "Unknown action: $ral_action"
+esac
