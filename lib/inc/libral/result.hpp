@@ -39,7 +39,11 @@ namespace libral {
       if (other.is_ok()) {
         _ok = other._ok;
       } else {
-        _err = other._err;
+        if (_tag == tag::err) {
+          _err = other._err;
+        } else {
+          new ((void*) &_err) error(other._err);
+        }
       }
     }
 
@@ -47,7 +51,11 @@ namespace libral {
       if (other.is_ok()) {
         _ok = other._ok;
       } else {
-        _err = other._err;
+        if (_tag == tag::err) {
+          _err = other._err;
+        } else {
+          new ((void*) &_err) error(other._err);
+        }
       }
       return *this;
     }
