@@ -17,25 +17,37 @@ namespace exe = leatherman::execution;
 namespace libral {
   ral::ral(const std::string& data_dir) : _data_dir(data_dir) { }
 
+  bool ral::add_type(std::vector<std::unique_ptr<type>>& types,
+                     const std::string& name, std::shared_ptr<provider> prov) {
+    auto res = prov->suitable();
+    if (res.is_ok()) {
+      if (*res.ok()) {
+        auto t = new type(name, prov);
+        types.push_back(std::move(std::unique_ptr<type>(t)));
+        return true;
+      } else {
+        LOG_INFO("provider for {1} is not suitable", name);
+      }
+    } else {
+      LOG_WARNING("failed to prepare provider for {1}: {2}", name, res.err()->detail);
+    }
+    return false;
+  }
+
   std::vector<std::unique_ptr<type>> ral::types(void) {
     // @todo lutter 2016-05-10:
     //   Need more magic here: need to find and register all types
     std::vector<std::unique_ptr<type>> result;
     auto mount_prov = std::shared_ptr<provider>(new mount_provider(_data_dir));
-    if (mount_prov->suitable()) {
-      auto mount_type = new type("mount", mount_prov);
-      result.push_back(std::unique_ptr<type>(mount_type));
-    }
+    add_type(result, "mount", mount_prov);
+
     auto user_prov = std::shared_ptr<provider>(new user_provider(_data_dir));
-    if (user_prov->suitable()) {
-      auto user_type = new type("user", user_prov);
-      result.push_back(std::unique_ptr<type>(user_type));
-    }
+    add_type(result, "user", user_prov);
 
     // Find external providers
     std::vector<std::string> files;
 
-    auto cb = [&files,&result](std::string const &path) {
+    auto cb = [&files,&result,this](std::string const &path) {
       if (access(path.c_str(), X_OK) == 0) {
         auto res = exe::execute(path, { "ral_action=describe" },
                      0, { exe::execution_options::trim_output,
@@ -48,12 +60,10 @@ namespace libral {
             if (meta["invoke"].as<std::string>() == "simple") {
               auto sprov = new simple_provider(path, node);
               auto prov = std::shared_ptr<provider>(sprov);
-              /* If there are errors in the metadata, tell us now */
-              prov->prepare();
               auto type_name = meta["type"].as<std::string>();
-              auto t = new type(type_name, prov);
-              result.push_back(std::unique_ptr<type>(t));
-              LOG_INFO("provider %s (simple) for %s loaded", path, type_name);
+              if (add_type(result, type_name, prov)) {
+                LOG_INFO("provider %s (simple) for %s loaded", path, type_name);
+              }
             } else {
               LOG_ERROR("provider %s uses unknown calling convention '%s'",
                         path, meta["invoke"].Scalar());

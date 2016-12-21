@@ -96,12 +96,14 @@ namespace libral {
   public:
     provider() { };
 
-    /* Return +true+ if the provider can be used on the system */
-    virtual bool suitable() = 0;
+    /* Returns +true+ if the provider can be used on the system. Returns
+       +false+ if the provider can not be used on the system.
 
-    /* Prepare using this provider; this is called once for each provider
-       class */
-    virtual void prepare() { };
+       If a problem is encountered that should be considered an error and
+       reported back to the user, return an error result. The provider will
+       be considered not suitable in that case.
+    */
+    virtual result<bool> suitable() = 0;
 
     /* Perform all changes that may have been queued up by the resources
        created by this provider */

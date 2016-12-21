@@ -149,9 +149,9 @@ like this:
 ```cpp
     some_provider prov();
 
+    // A call to suitable() must also initialize any provider internals.
+    // Once suitable() returns true, the provider must be ready to use.
     if (prov.suitable()) {
-      // initialize provider internals
-      prov.prepare();
 
       // Loop over all resources
       for (auto rsrc : prov.instances()) {

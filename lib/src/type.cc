@@ -10,12 +10,10 @@ namespace libral {
 
   boost::optional<std::unique_ptr<resource>>
   type::find(const std::string &name) {
-    _prov->prepare();
     return _prov->find(name);
   }
 
   std::vector<std::unique_ptr<resource>> type::instances(void) {
-    _prov->prepare();
     auto result = _prov->instances();
     _prov->flush();
 
@@ -25,7 +23,6 @@ namespace libral {
   std::pair<std::unique_ptr<resource>,std::unique_ptr<result<changes>>>
   type::update(const std::string& name,
                const attr_map& attrs) {
-    _prov->prepare();
     auto opt_rsrc = _prov->find(name);
     std::unique_ptr<resource> res;
 

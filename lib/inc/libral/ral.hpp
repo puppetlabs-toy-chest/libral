@@ -15,6 +15,8 @@ namespace libral {
     std::vector<std::unique_ptr<type>> types(void);
     boost::optional<std::unique_ptr<type>> find_type(const std::string& name);
   private:
+    bool add_type(std::vector<std::unique_ptr<type>>& types,
+                  const std::string& name, std::shared_ptr<provider> prov);
     std::string _data_dir;
   };
 }

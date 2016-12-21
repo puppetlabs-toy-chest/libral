@@ -62,8 +62,7 @@ namespace libral {
 
     user_provider(const std::string& data_dir) : _data_dir(data_dir) { };
 
-    bool suitable();
-    void prepare();
+    result<bool> suitable();
     void flush();
     std::vector<std::unique_ptr<resource>> instances();
     std::unique_ptr<resource> create(const std::string& name);

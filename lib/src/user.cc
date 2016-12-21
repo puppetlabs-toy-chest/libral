@@ -6,15 +6,12 @@
 #include <pwd.h>
 
 namespace libral {
-  bool user_provider::suitable() {
+  result<bool> user_provider::suitable() {
     _cmd_useradd = leatherman::execution::which("useradd");
     _cmd_usermod = leatherman::execution::which("usermod");
     _cmd_userdel = leatherman::execution::which("userdel");
-    return !_cmd_useradd.empty() && !_cmd_usermod.empty();;
-  }
-
-  void user_provider::prepare() {
-    return; // Noop
+    return !_cmd_useradd.empty() && !_cmd_usermod.empty()
+      && !_cmd_userdel.empty();
   }
 
   void user_provider::flush() {

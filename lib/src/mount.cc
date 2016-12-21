@@ -6,18 +6,18 @@
 
 namespace libral {
 
-  bool mount_provider::suitable() {
+  result<bool> mount_provider::suitable() {
+    if (this->aug == nullptr) {
+      this->aug = aug::handle::make(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);
+
+      aug->include("Mount_Fstab.lns", "/etc/fstab");
+      aug->include("Mount_Fstab.lns", "/etc/mtab");
+      aug->load();
+      // FIXME: Check for errors from load()
+    }
     _cmd_mount = leatherman::execution::which("mount");
     _cmd_umount = leatherman::execution::which("umount");
     return !_cmd_mount.empty() && !_cmd_umount.empty();
-  }
-
-  void mount_provider::prepare() {
-    aug = aug::handle::make(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);
-
-    aug->include("Mount_Fstab.lns", "/etc/fstab");
-    aug->include("Mount_Fstab.lns", "/etc/mtab");
-    aug->load();
   }
 
   void mount_provider::flush() {

@@ -27,7 +27,7 @@ namespace libral {
       -> result<bool> {
       if (key == "name") {
         if (value != name()) {
-          return error(_("wrong name changed by update: '%s' instead of '%s'",
+          return error(_("wrong name changed by update: '{1}' instead of '{2}'",
                          value, name()));
         }
       } else if (key == "ral_was") {
@@ -50,13 +50,12 @@ namespace libral {
     }
   }
 
-  bool simple_provider::suitable() {
-    // Return node["meta"]["suitable"]
-    return false;
-  }
-
-  void simple_provider::prepare() {
-    // Check/setup stuff
+  result<bool> simple_provider::suitable() {
+    auto s = _node["meta"]["suitable"].as<std::string>();
+    if (s != "true" && s != "false") {
+      return error(_("provider {1} (simple): metadata 'suitable' must be either 'true' or 'false' but was '{2}'", _path, s));
+    }
+    return (s == "true");
   }
 
   void simple_provider::flush() {

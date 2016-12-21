@@ -63,8 +63,7 @@ namespace libral {
     mount_provider(const std::string& data_dir)
       : aug(nullptr), _data_dir(data_dir), _seq(1) { };
 
-    bool suitable();
-    void prepare();
+    result<bool> suitable();
     void flush();
     std::vector<std::unique_ptr<resource>> instances();
     std::unique_ptr<resource> create(const std::string& name);
