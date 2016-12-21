@@ -69,7 +69,7 @@ namespace libral {
     std::vector<std::unique_ptr<resource>> instances();
     std::unique_ptr<resource> create(const std::string& name);
   private:
-    std::unique_ptr<aug::handle> aug;
+    std::shared_ptr<aug::handle>  aug;
     std::string                  _cmd_mount;
     std::string                  _cmd_umount;
     std::string                  _data_dir;

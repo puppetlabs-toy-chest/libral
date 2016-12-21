@@ -48,7 +48,7 @@ namespace aug {
 
   class handle : public std::enable_shared_from_this<handle> {
   public:
-    handle(const std::string& loadpath, unsigned int flags);
+    ~handle() { aug_close(_augeas); }
 
     /* Load all files matching the shell glob GLOB with LENS */
     void include(const std::string& lens, const std::string& glob);
@@ -86,12 +86,15 @@ namespace aug {
        is one */
     void check_error() const;
 
+    static std::shared_ptr<handle> make(const std::string& loadpath,
+                                        unsigned int flags) {
+      return std::shared_ptr<handle>(new handle(loadpath, flags));
+    }
+
   private:
+    handle(const std::string& loadpath, unsigned int flags)
+      : _augeas(aug_init(NULL, loadpath.c_str(), flags)) { };
+
     ::augeas* _augeas;
-    /* This is a kludge around the requirement that for shared_from_this to
-       work a shared_ptr to this must already exist. See
-       http://en.cppreference.com/w/cpp/memory/enable_shared_from_this/shared_from_this
-    */
-    std::shared_ptr<handle> _shared_this;
   };
 }

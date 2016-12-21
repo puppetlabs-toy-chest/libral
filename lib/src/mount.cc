@@ -13,8 +13,7 @@ namespace libral {
   }
 
   void mount_provider::prepare() {
-    auto h = new aug::handle(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);
-    this->aug = std::unique_ptr<aug::handle>(h);
+    aug = aug::handle::make(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);
 
     aug->include("Mount_Fstab.lns", "/etc/fstab");
     aug->include("Mount_Fstab.lns", "/etc/mtab");

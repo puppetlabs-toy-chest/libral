@@ -54,11 +54,6 @@ namespace aug {
     _aug->clear(_path);
   }
 
-  handle::handle(const std::string& loadpath,
-                 unsigned int flags)
-    : _augeas(aug_init(NULL, loadpath.c_str(), flags)),
-      _shared_this(std::shared_ptr<handle>(this)) { }
-
   void handle::include(const std::string& lens, const std::string& glob) {
     aug_transform(_augeas, lens.c_str(), glob.c_str(), 0);
     check_error();
