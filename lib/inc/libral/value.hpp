@@ -29,7 +29,7 @@ namespace libral {
     /**
      * Default constructor for value.
      */
-    value() = default;
+    value() : value_base(boost::none) { };
 
     /**
      * Constructs a value based on a variant type.
