@@ -12,10 +12,24 @@
 # https://bugzilla.redhat.com/show_bug.cgi?id=1405600)
 #
 
-topdir=$(realpath $(dirname $0)/..)
+topdir=$(dirname $0)/..
+
+# Where leatherman is installed
+lth_dir=${lth_dir:-/opt/puppetlabs/puppet}
+
+if [ ! -f "${lth_dir}/lib/leatherman_util.a" ]; then
+    echo "set lth_dir to the directory that contains static leatherman libraries"
+    exit 1
+fi
 
 # Build everything
-cd $topdir/build
+cd ${abs_top_builddir:-$topdir/build}
+
+if [ ! -f CMakeCache.txt ]; then
+    echo "set abs_top_builddir to the directory where libral is built"
+    exit 1
+fi
+
 make
 
 # Special linker sauce to link statically except to some pretty innocuous
@@ -30,17 +44,17 @@ cd exe
     -Wno-unknown-pragmas -Wno-missing-field-initializers -Wextra \
     -g   CMakeFiles/ralsh.dir/ralsh.cc.o  -o ../bin/ralsh \
     -rdynamic ../lib/libral.a \
-    /opt/puppetlabs/puppet/lib/leatherman_execution.a \
-    /opt/puppetlabs/puppet/lib/leatherman_logging.a \
-    /opt/puppetlabs/puppet/lib/leatherman_locale.a \
+    $lth_dir/lib/leatherman_execution.a \
+    $lth_dir/lib/leatherman_logging.a \
+    $lth_dir/lib/leatherman_locale.a \
     -Wl,-Bstatic -lboost_locale -lboost_system -lboost_log -lboost_log_setup \
     -lboost_thread -lboost_date_time -lboost_filesystem -lboost_chrono \
     -lboost_regex -lboost_atomic \
-    /opt/puppetlabs/puppet/lib/leatherman_locale.a \
+    $lth_dir/lib/leatherman_locale.a \
     -Wl,-Bdynamic -lrt \
-    /opt/puppetlabs/puppet/lib/leatherman_util.a \
-    /opt/puppetlabs/puppet/lib/leatherman_logging.a \
-    /opt/puppetlabs/puppet/lib/leatherman_file_util.a \
+    $lth_dir/lib/leatherman_util.a \
+    $lth_dir/lib/leatherman_logging.a \
+    $lth_dir/lib/leatherman_file_util.a \
     -Wl,-Bstatic -lboost_program_options \
     -Wl,-Bstatic -lyaml-cpp -lboost_system -lboost_log -lboost_log_setup \
     -lboost_thread -lboost_date_time -lboost_filesystem -lboost_chrono \
@@ -54,13 +68,13 @@ cd exe
 # Reduce the executable as best we can
 cd ../bin
 strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s  ralsh
-upx ralsh
+[ -x upx ] && upx ralsh
 
 cd ..
 rm -rf dpack
 mkdir -p dpack/bin
 cp ./bin/ralsh dpack/bin
-cp -pr ../data dpack
+cp -pr ${topdir}/data dpack
 # Snarf up some augeas lenses that we need
 lns_src=/usr/share/augeas/lenses/dist
 cp -p $lns_src/sep.aug $lns_src/util.aug $lns_src/rx.aug $lns_src/build.aug dpack/data/lenses
