@@ -51,9 +51,8 @@ namespace libral {
       if (access(path.c_str(), X_OK) == 0) {
         auto res = exe::execute(path, { "ral_action=describe" },
                      0, { exe::execution_options::trim_output,
-                          exe::execution_options::merge_environment,
-                          exe::execution_options::redirect_stderr_to_stdout });
-        if (res.success) {
+                          exe::execution_options::merge_environment });
+        if (res.success && res.error.empty()) {
           auto node = YAML::Load(res.output);
           auto meta = node["meta"];
           if (meta) {
@@ -77,6 +76,9 @@ namespace libral {
           } else {
             LOG_WARNING("ignoring provider %s as it exited with status %d. Output was '%s'",
                       path, res.exit_code, res.output);
+          }
+          if (! res.error.empty()) {
+            LOG_WARNING("provider produced stderr '%s'", res.error);
           }
         }
         files.push_back(path);
