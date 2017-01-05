@@ -12,12 +12,7 @@ include_directories(
 )
 
 add_executable(ralsh ralsh.cc)
-target_link_libraries(ralsh
-    libral
-    ${LEATHERMAN_LIBRARIES}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${AUGEAS_LIBRARIES}
-)
+target_link_libraries(ralsh libral)
 
 link_directories(
   ${Boost_LIBRARY_DIRS}
