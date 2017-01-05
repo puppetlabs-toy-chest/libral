@@ -9,7 +9,7 @@ target_link_libraries(libral_test
     ${LEATHERMAN_LIBRARIES}
     ${YAMLCPP_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${LIBAUGEAS_LIBRARIES}
+    ${AUGEAS_LIBRARIES}
 )
 
 add_test(NAME "unit_tests" COMMAND libral_test)

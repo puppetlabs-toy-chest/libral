@@ -17,6 +17,7 @@ leatherman_logging_namespace("ral")
 # Setup compiling the library.
 include_directories(
   inc
+  ${AUGEAS_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}
   ${LEATHERMAN_INCLUDE_DIRS})
@@ -40,7 +41,7 @@ target_link_libraries(libral
   ${LEATHERMAN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${LIBAUGEAS_LIBRARIES}
+  ${AUGEAS_LIBRARIES}
 )
 
 symbol_exports(libral "${CMAKE_CURRENT_LIST_DIR}/inc/libral/export.h")

@@ -16,7 +16,7 @@ target_link_libraries(ralsh
     libral
     ${LEATHERMAN_LIBRARIES}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${LIBAUGEAS_LIBRARIES}
+    ${AUGEAS_LIBRARIES}
 )
 
 link_directories(

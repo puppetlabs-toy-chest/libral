@@ -43,8 +43,8 @@ set(Boost_USE_STATIC_LIBS ON)
 #set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
-include(cmake/FindAugeas.cmake)
-add_definitions(${LIBAUGEAS_DEFINITIONS})
+find_package(Augeas REQUIRED)
+add_definitions(${AUGEAS_DEFINITIONS})
 
 # Display a summary of the features
 include(FeatureSummary)

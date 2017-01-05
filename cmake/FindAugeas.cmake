@@ -1,53 +1,24 @@
 # Finds augeas and its libraries
-# Uses the same semantics as pkg_check_modules, i.e. LIBAUGEAS{_FOUND,_INCLUDE_DIR,_LIBRARIES}
-#
-# This is an adapted version of FindSystemd.cmake:
-# Copyright: Red Hat, Inc. 2013
-# Author: Martin Briza <mbriza@redhat.com>
 #
 # Distributed under the BSD license. See COPYING-CMAKE-SCRIPTS for details.
 
-if (LIBAUGEAS_INCLUDE_DIR_X)
-  # in cache already
-  set (LIBAUGEAS_FOUND TRUE)
-else (LIBAUGEAS_INCLUDE_DIR_X)
+find_package(PkgConfig QUIET REQUIRED)
+pkg_check_modules(AUGEAS "augeas")
+set (AUGEAS_DEFINITIONS ${PC_AUGEAS_CFLAGS_OTHER})
 
-  # try to find libaugeas via pkg-config
-  find_package(PkgConfig)
+find_path (AUGEAS_INCLUDE_DIR augeas.h
+  HINTS ${PC_AUGEAS_INCLUDEDIR} ${PC_AUGEAS_INCLUDE_DIRS} )
 
-  if (PKG_CONFIG_FOUND)
-    pkg_check_modules(_LIBAUGEAS_PC QUIET "augeas")
-  endif (PKG_CONFIG_FOUND)
+find_library (AUGEAS_LIBRARY NAMES augeas
+  HINTS ${PC_AUGEAS_LIBDIR} ${PC_AUGEAS_LIBRARY_DIRS} )
 
-  find_path (LIBAUGEAS_INCLUDE_DIR augeas.h
-    ${_LIBAUGEAS_PC_INCLUDE_DIRS}
-    /usr/include
-    /usr/local/include
-  )
 
-  find_library (LIBAUGEAS_LIBRARIES NAMES augeas
-    PATHS
-    ${_LIBAUGEAS_PC_LIBDIR}
-  )
+include(FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set LIBXML2_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args(AUGEAS DEFAULT_MSG
+  AUGEAS_LIBRARY AUGEAS_INCLUDE_DIR)
 
-  set (LIBAUGEAS_DEFINITIONS ${_LIBAUGEAS_PC_CFLAGS})
-  if (LIBAUGEAS_INCLUDE_DIR AND LIBAUGEAS_LIBRARIES)
-    set (LIBAUGEAS_FOUND TRUE)
-  endif (LIBAUGEAS_INCLUDE_DIR AND LIBAUGEAS_LIBRARIES)
+mark_as_advanced(AUGEAS_INCLUDE_DIR AUGEAS_LIBRARY)
 
-  if (LIBAUGEAS_FOUND)
-    if (NOT LIBAUGEAS_FIND_QUIETLY)
-      message(STATUS "Found augeas: ${LIBAUGEAS_LIBRARIES}")
-      message(STATUS "  FOUND: ${LIBAUGEAS_FOUND}")
-      message(STATUS "  Inc: ${LIBAUGEAS_INCLUDE_DIR}")
-      message(STATUS "Cflags: ${_LIBAUGEAS_PC_LIBAUGEAS_CFLAGS}")
-    endif (NOT LIBAUGEAS_FIND_QUIETLY)
-  else (LIBAUGEAS_FOUND)
-    if (LIBAUGEAS_FIND_REQUIRED)
-      message(FATAL_ERROR "Could NOT find augeas")
-    endif (LIBAUGEAS_FIND_REQUIRED)
-  endif (LIBAUGEAS_FOUND)
-
-  mark_as_advanced(LIBAUGEAS_INCLUDE_DIR LIBAUGEAS_LIBRARIES LIBAUGEAS_DEFINITIONS)
-
-endif (LIBAUGEAS_INCLUDE_DIR_X)
+set(AUGEAS_LIBRARIES ${AUGEAS_LIBRARY} )
