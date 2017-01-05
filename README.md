@@ -9,26 +9,9 @@ platform/framework. The goals of this are
   other uses
 * Make writing providers very easy
 
-## Required packages
+## Building and installation
 
-You will need to install [Boost](http://boost.org) for program_options and
-to use many of the libraries in
-[Leatherman](https://github.com/puppetlabs/leatherman). You will also need
-[Augeas](http://augeas.net/)
-
-Once you have `pl-build-tools`, leatherman, and `augeas-devel` installed,
-building libral should be a snap (*cough*):
-
-```bash
-    git clone https://github.com/puppetlabs/libral.git
-    cd libral
-    mkdir build
-    /opt/pl-build-tools/bin/cmake -DCMAKE_BUILD_TYPE=Debug \
-      -DCMAKE_TOOLCHAIN_FILE=/opt/pl-build-tools/pl-build-toolchain.cmake \
-      -DCMAKE_PREFIX_PATH=/opt/pl-build-tools \
-      -DCMAKE_INSTALL_PREFIX=/opt/puppetlabs/puppet ..
-    make
-```
+Please see [this document](HACKING.md) for instructions.
 
 ## Usage
 
