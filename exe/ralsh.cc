@@ -79,14 +79,15 @@ int main(int argc, char **argv) {
     command_line_options.add_options()
       ("help,h", "produce help message")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
-      ("version,v", "print the version and exit");
+      ("version", "print the version and exit");
+
+    po::options_description all_options(command_line_options);
 
     /* Positional options */
-    command_line_options.add_options()
+    all_options.add_options()
       ("type", po::value<std::string>())
       ("name", po::value<std::string>())
       ("attr-value", po::value<std::vector<std::string>>());
-
 
     po::positional_options_description positional_options;
     positional_options.add("type", 1);
@@ -97,7 +98,7 @@ int main(int argc, char **argv) {
 
     try {
       po::store(po::command_line_parser(argc, argv).
-                options(command_line_options).
+                options(all_options).
                 positional(positional_options).run(), vm);
 
       if (vm.count("help")) {
