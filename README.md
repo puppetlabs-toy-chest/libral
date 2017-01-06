@@ -11,7 +11,15 @@ platform/framework. The goals of this are
 
 ## Building and installation
 
-Please see [this document](HACKING.md) for instructions.
+Please see [this document](HACKING.md) for instructions on building `libral`
+from source.
+
+If you just want to quickly try out `libral`, you can download a
+[precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
+([GPG signature](http://download.augeas.net/libral/ralsh-latest.tgz.sig))
+that should work on any Linux machine that has glibc 2.12 or later. (It
+might actually work with glibc 2.8 or later) If you succeed in that, please
+drop [me](mailto:lutter@puppet.com) a line.
 
 ## Usage
 
