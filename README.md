@@ -31,8 +31,7 @@ let [us](mailto:libral@googlegroups.com) know.
 After you built `libral` you can try things out by running `ralsh`:
 
 ```bash
-    export LD_LIBRARY_PATH=/opt/pl-build-tools/lib
-    export RALSH_DATA_DIR=/home/lutter/code/libral/data
+    export RALSH_DATA_DIR=$LIBRAL_CHECKOUT/data
     # list available types
     ./bin/ralsh
     # list all instances of a type
