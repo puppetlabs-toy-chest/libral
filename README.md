@@ -9,6 +9,11 @@ platform/framework. The goals of this are
   other uses
 * Make writing providers very easy
 
+## Getting in touch
+
+* Mailing list: [libral](https://groups.google.com/group/libral)
+* IRC: `irc.freenode.net:#libral`
+
 ## Building and installation
 
 Please see [this document](HACKING.md) for instructions on building `libral`
@@ -19,7 +24,7 @@ If you just want to quickly try out `libral`, you can download a
 ([GPG signature](http://download.augeas.net/libral/ralsh-latest.tgz.sig))
 that should work on any Linux machine that has glibc 2.12 or later. (It
 might actually work with glibc 2.8 or later) If you succeed in that, please
-drop [me](mailto:lutter@puppet.com) a line.
+let [us](mailto:libral@googlegroups.com) know.
 
 ## Usage
 
