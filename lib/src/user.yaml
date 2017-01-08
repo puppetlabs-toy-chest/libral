@@ -1,0 +1,36 @@
+R"yaml(
+---
+provider:
+  name: user
+  type: user
+  desc: |
+    Manage users with useradd/usermod/userdel
+  attributes:
+    name:
+      desc: the username
+    ensure:
+      type: enum[present, absent]
+      kind: rw
+    comment:
+      desc: human readable comment/user name
+      kind: rw
+    gid:
+      desc: the user's primary group id
+      kind: rw
+    groups:
+      desc: list of supplementary groups this user belongs to (not implemented)
+      type: array[string]
+      kind: rw
+    home:
+      desc: home directory
+      kind: rw
+    shell:
+      desc: default shell
+      kind: rw
+    system:
+      desc: whether this should be a system user (not implemented)
+      kind: w
+    uid:
+      desc: the user's id
+      kind: rw
+)yaml";

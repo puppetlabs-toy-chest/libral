@@ -6,6 +6,13 @@
 #include <pwd.h>
 
 namespace libral {
+  const std::string& user_provider::description() {
+    static const std::string desc =
+#include "user.yaml"
+      ;
+    return desc;
+  }
+
   result<bool> user_provider::suitable() {
     _cmd_useradd = leatherman::execution::which("useradd");
     _cmd_usermod = leatherman::execution::which("usermod");

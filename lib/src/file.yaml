@@ -1,0 +1,55 @@
+R"yaml(
+---
+provider:
+  name: file
+  type: file
+  desc: |
+    A provider to manage POSIX files.
+  attributes:
+    name:
+      desc: the (absolute) path to the file
+    ensure:
+      type: enum[present, absent, file, directory, link]
+      kind: rw
+    checksum:
+      type: enum[md5, md5lite, sha256, sha256lite, mtime, ctime, none]
+      kind: r
+    checksum_value:
+      type: string
+      kind: r
+    content:
+      type: string
+      kind: rw
+    ctime:
+      type: string
+      kind: r
+    force:
+      desc: |
+        any operation requiring removing a directory will only be performed
+        if this is set to 'true'
+      type: boolean
+      kind: w
+    group:
+      desc: group name or id
+      type: string
+      kind: rw
+    mode:
+      desc: file mode in octal notation
+      type: string
+      kind: rw
+    mtime:
+      type: string
+      kind: r
+    owner:
+      desc: user name or id
+      type: string
+      kind: rw
+    target:
+      desc: target of a link (when ensure == link)
+      type: string
+      kind: rw
+    type:
+      desc: indicate the type of file
+      type: enum[unknown, error, absent, file, directory, link, block, char, fifo, socket]
+      kind: r
+)yaml";

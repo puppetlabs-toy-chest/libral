@@ -6,6 +6,14 @@
 
 namespace libral {
 
+  const std::string& mount_provider::description() {
+    static const std::string desc =
+#include "mount.yaml"
+      ;
+    return desc;
+  }
+
+
   result<bool> mount_provider::suitable() {
     if (this->aug == nullptr) {
       this->aug = aug::handle::make(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);

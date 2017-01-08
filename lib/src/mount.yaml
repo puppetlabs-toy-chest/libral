@@ -1,0 +1,31 @@
+R"yaml(
+---
+provider:
+  name: mount
+  type: mount
+  desc: |
+    Manage mount points using the mount command on Linux.
+  attributes:
+    name:
+      desc: the mount point
+    ensure:
+      type: enum[defined, present, mounted, unmounted, absent, ghost]
+      kind: rw
+    device:
+      desc: the device to mount
+      kind: rw
+    dump:
+      # Eventually, we want this to be pattern[/[01]/]
+      type: string
+      kind: rw
+    fstype:
+      desc: the mount type
+      type: string
+      kind: rw
+    options:
+      desc: a single string containing options
+      kind: rw
+    pass:
+      desc: the pass in which the mount is checked
+      kind: rw
+)yaml";

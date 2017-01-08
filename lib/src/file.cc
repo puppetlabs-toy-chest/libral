@@ -77,6 +77,13 @@ namespace libral {
     return ftype_ensure[0];
   }
 
+  const std::string& prov::description() {
+    static const std::string desc =
+#include "file.yaml"
+      ;
+    return desc;
+  }
+
   std::vector<std::unique_ptr<resource>> prov::instances() {
     std::vector<std::unique_ptr<resource>> result;
 

@@ -50,6 +50,17 @@ namespace libral {
     }
   }
 
+  const std::string& simple_provider::description() {
+    static const std::string desc = R"yaml(
+---
+  desc: |
+    this requires us to turn the already parsed YAML back into a string.
+    that's not implemented yet
+)yaml";
+
+    return desc;
+  }
+
   result<bool> simple_provider::suitable() {
     auto s = _node["meta"]["suitable"].as<std::string>();
     if (s != "true" && s != "false") {

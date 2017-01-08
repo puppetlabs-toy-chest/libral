@@ -125,6 +125,13 @@ namespace libral {
   public:
     provider() { };
 
+    /* Returns the description for this provider as a string.
+     *
+     * The returned string must be valid YAML and adhere to the
+     * specification for provider documentation (yet to be written)
+     */
+    virtual const std::string& description() = 0;
+
     /* Returns +true+ if the provider can be used on the system. Returns
        +false+ if the provider can not be used on the system.
 

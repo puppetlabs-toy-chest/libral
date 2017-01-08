@@ -82,6 +82,8 @@ namespace libral {
 
     file_provider(const std::string& data_dir) { };
 
+    const std::string& description();
+
     result<bool> suitable() { return true; };
 
     /* Always returns an empty vector for now, can't list all files this
