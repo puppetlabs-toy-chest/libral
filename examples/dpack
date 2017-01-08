@@ -60,7 +60,11 @@ rm -rf ral/data/lenses/tests
 
 find ral/ -name \*~ -delete
 
-tar czf ralsh-$githash-$(date +%Y-%m-%dT%H.%M).tgz ral
+tarball=ralsh-$(date +%Y-%m-%dT%H.%M)-$githash.tgz
+tar czf $tarball ral
+echo
+echo Made $tarball
+echo
 
 echo
 echo To run ralsh inside a container, run
