@@ -2,6 +2,7 @@
 
 #include <libral/mount.hpp>
 #include <libral/user.hpp>
+#include <libral/file.hpp>
 
 #include <libral/simple_provider.hpp>
 #include <leatherman/file_util/directory.hpp>
@@ -43,6 +44,9 @@ namespace libral {
 
     auto user_prov = std::shared_ptr<provider>(new user_provider(_data_dir));
     add_type(result, "user", user_prov);
+
+    auto file_prov = std::shared_ptr<provider>(new file_provider(_data_dir));
+    add_type(result, "file", file_prov);
 
     // Find external providers
     std::vector<std::string> files;
