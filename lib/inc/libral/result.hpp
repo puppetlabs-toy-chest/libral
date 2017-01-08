@@ -23,6 +23,12 @@ namespace libral {
     std::string detail;
   };
 
+  // Indication that something is not implemented
+  struct not_implemented_error : public error {
+    not_implemented_error() : error("not implemented") { }
+  };
+
+
   /* A result is either an error or whatever we really wanted */
   template <class R>
   class result {
