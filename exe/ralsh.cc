@@ -4,6 +4,8 @@
 #include <leatherman/logging/logging.hpp>
 #include <leatherman/util/environment.hpp>
 
+#include <iomanip>
+
 // boost includes are not always warning-clean. Disable warnings that
 // cause problems before including the headers, then re-enable the warnings.
 #pragma GCC diagnostic push
@@ -44,8 +46,20 @@ void help(po::options_description& desc)
 
 static void print_resource(lib::type& type, lib::resource& res) {
   cout << type.name() << " { '" << res.name() << "':" << endl;
+  uint maxlen = 0;
   for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
-    cout << "  " << a->first << " => '" << a->second << "'," << endl;
+    if (a->first.length() > maxlen) maxlen = a->first.length();
+  }
+  auto ens = res.lookup<std::string>("ensure");
+  if (ens) {
+    cout << "  " << left << setw(maxlen) << "ensure"
+         << " => '" << (*ens) << "'," << endl;
+  }
+  for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
+    if (a->first == "ensure")
+      continue;
+    cout << "  " << left << setw(maxlen) << a->first
+         << " => '" << a->second << "'," << endl;
   }
   cout << "}" << endl;
 }
