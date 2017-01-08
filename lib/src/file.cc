@@ -74,7 +74,9 @@ namespace libral {
 
   std::unique_ptr<resource> prov::create(const std::string& name) {
     auto shared_this = std::static_pointer_cast<file_provider>(shared_from_this());
-    return std::unique_ptr<resource>(new file_resource(shared_this, name));
+    auto cname = fs::canonical(name);
+    auto res = new file_resource(shared_this, cname.native());
+    return std::unique_ptr<resource>(res);
   }
 
 
