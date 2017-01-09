@@ -2,7 +2,7 @@
 # the parent directory.
 include_directories(${LEATHERMAN_CATCH_INCLUDE})
 
-set(TEST_CASES ${PROJECT_NAME}.cc)
+set(TEST_CASES file.cc ${PROJECT_NAME}.cc)
 
 add_executable(libral_test $<TARGET_OBJECTS:libprojectsrc> ${TEST_CASES} main.cc)
 target_link_libraries(libral_test
