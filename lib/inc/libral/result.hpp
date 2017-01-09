@@ -42,26 +42,39 @@ namespace libral {
     result(const error& err) : _tag(tag::err), _err(err) {};
     result(error&& err) : _tag(tag::err), _err(std::move(err)) {};
     result(const result& other) {
+      _tag = other._tag;
       if (other.is_ok()) {
         _ok = other._ok;
       } else {
-        if (_tag == tag::err) {
-          _err = other._err;
-        } else {
-          new ((void*) &_err) error(other._err);
-        }
+        _err = other._err;
+      }
+    }
+
+    result(const result&& other) {
+      _tag = other._tag;
+      if (other.is_ok()) {
+        _ok = std::move(other._ok);
+      } else {
+        _err = std::move(other._err);
       }
     }
 
     result& operator=(const result& other) {
+      _tag = other._tag;
       if (other.is_ok()) {
         _ok = other._ok;
       } else {
-        if (_tag == tag::err) {
-          _err = other._err;
-        } else {
-          new ((void*) &_err) error(other._err);
-        }
+        _err = other._err;
+      }
+      return *this;
+    }
+
+    result& operator=(result&& other) {
+      _tag = other._tag;
+      if (other.is_ok()) {
+        _ok = std::move(other._ok);
+      } else {
+        _err = std::move(other._err);
       }
       return *this;
     }
