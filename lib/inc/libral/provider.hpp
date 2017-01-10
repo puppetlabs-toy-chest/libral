@@ -19,7 +19,17 @@ namespace libral {
   */
 
   /* A map of attribute names to values. */
+  // FIXME: we really need to combine attr_map and resource, maybe make
+  // resource a subclass of atr_map ?
   struct attr_map : std::map<std::string, value> {
+
+    /**
+     * Looks up the value associated with key. If no entry exists, returns
+     * boost::none.
+     */
+    const value operator[](const std::string& key) const;
+    value& operator[](const std::string& attr);
+
     /**
      * Looks up the value of a given attribute.
      * @param key The name of the attribute

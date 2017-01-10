@@ -3,6 +3,19 @@
 namespace libral {
   static const std::string blank = std::string("");
 
+  const value attr_map::operator[](const std::string& key) const {
+    auto v = find(key);
+    if (v == end()) {
+      return boost::none;
+    } else {
+      return v->second;
+    }
+  }
+
+  value& attr_map::operator[](const std::string& key) {
+    return std::map<std::string, value>::operator[](key);
+  }
+
   template<typename T>
   const T& attr_map::lookup(const std::string& key, const T& deflt) const {
     auto it = find(key);
@@ -39,12 +52,7 @@ namespace libral {
         "The name can not be accessed with operator[]" };
     }
 
-    auto v = _attrs.find(key);
-    if (v == _attrs.end()) {
-      return boost::none;
-    } else {
-      return v->second;
-    }
+    return _attrs[key];
   }
 
   value& resource::operator[](const std::string& key) {
