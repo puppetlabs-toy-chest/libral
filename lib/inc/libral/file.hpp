@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <ctime>
+#include <vector>
 
 #include <libral/result.hpp>
 #include <libral/provider.hpp>
@@ -59,14 +60,23 @@ namespace libral {
   public:
 
     using shared_provider_ptr = std::shared_ptr<file_provider>;
+    using change_result_uptr = std::unique_ptr<result<changes>>;
 
     class file_resource : public resource {
     public:
       file_resource(shared_provider_ptr& prov, const std::string& name)
         : resource(name), _prov(prov) { }
 
-      std::unique_ptr<result<changes>> update(const attr_map& should);
+      change_result_uptr update(const attr_map& should);
     private:
+      void update_metadata(result<changes>& res, const attr_map& should);
+      void update_content(result<changes>& res, const attr_map& should);
+      void update_target(result<changes>& res, std::string& state,
+                         const std::string& target);
+      void remove(result<changes>& res, std::string& state, bool force);
+      void create_file(result<changes>& res);
+      void create_directory(result<changes>& res);
+
       shared_provider_ptr _prov;
     };
 
@@ -81,6 +91,7 @@ namespace libral {
 
     std::unique_ptr<resource> create(const std::string& name);
   private:
+    void load(resource &res);
     void find_from_stat(resource &res);
     std::string time_as_iso_string(std::time_t *time);
   };
