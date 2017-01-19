@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/optional.hpp>
+#include <ostream>
 
 namespace libral {
   /*
@@ -79,12 +80,22 @@ namespace libral {
       return *this;
     }
 
+    result& operator=(const error& err) {
+      _tag = tag::err;
+      _err = err;
+      return *this;
+    }
+
     ~result() {
       if (is_ok()) {
         _ok.~R();
       } else {
         _err.~error();
       }
+    }
+
+    operator bool() const {
+      return _tag == tag::ok;
     }
 
     boost::optional<R&> ok() {
@@ -122,6 +133,18 @@ namespace libral {
     bool is_ok()  const { return _tag == tag::ok; }
     bool is_err() const { return _tag == tag::err; }
 
+    bool operator!() const noexcept { return is_err(); }
+
+    R& operator*() {
+      if (is_ok()) {
+        return this->_ok;
+      } else {
+        std::string msg = "attempt to get ok value from err: ";
+        msg += _err.detail;
+        throw std::logic_error(msg);
+      }
+    }
+
     static std::unique_ptr<result<R>> make_unique() {
       return std::unique_ptr<result<R>>(new result<R>(R()));
     };
@@ -136,4 +159,17 @@ namespace libral {
       R     _ok;
     };
   };
+
+  template<typename T>
+  std::ostream& operator<<(std::ostream& os, result<T> const& res) {
+    if (res.is_ok()) {
+      os << "tag:ok";
+    } else if (res.is_err()) {
+      os << "tag:err " << (*res.err()).detail;
+    } else {
+      os << "tag:???";
+    }
+    return os;
+  }
+
 }
