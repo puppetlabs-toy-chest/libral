@@ -104,7 +104,14 @@ namespace libral {
      * of the resource represent the 'is' state.
      */
     virtual std::unique_ptr<result<changes>> update(const attr_map& should) = 0;
-
+  protected:
+    /* Check if any of the attributes named in props differ between what we
+       have and what is in should. If they differ, add a change entry to
+       chgs. Nonexistant entries in should are ignored, and will never lead
+       to a change.
+     */
+    void check(changes& chgs, const attr_map& should,
+               const std::vector<std::string>& props);
   private:
     std::string _name;
     attr_map _attrs;

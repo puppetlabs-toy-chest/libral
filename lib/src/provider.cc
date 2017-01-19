@@ -116,4 +116,13 @@ namespace libral {
     return boost::none;
   }
 
+  void resource::check(changes& chgs, const attr_map& should,
+                       const std::vector<std::string>& props) {
+    auto& is = *this;
+    for (auto prop : props) {
+      if (should[prop].is_present() && (is[prop] != should[prop])) {
+        chgs.add(prop, should[prop], is[prop]);
+      }
+    }
+  }
 }
