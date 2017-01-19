@@ -68,6 +68,12 @@ namespace libral {
     }
 
     /**
+     * Constructs a value given a C string.
+     * @param string The string to construct the value with.
+     */
+    value(char const* string);
+
+    /**
      * Intentionally deleted constructor to prevent implicit conversion to a boolean value.
      */
     value(void const*) = delete;

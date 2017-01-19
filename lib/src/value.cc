@@ -10,6 +10,9 @@ namespace libral {
     return *this;
   }
 
+  value::value(char const* string) :
+    value_base(std::string(string)) { }
+
   /* to_string */
 
   struct to_string_visitor : boost::static_visitor<std::string> {
