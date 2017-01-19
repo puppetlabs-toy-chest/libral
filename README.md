@@ -63,7 +63,7 @@ following:
 - [ ] adapt providers to multiple OS (maybe using mount)
 - more core providers
   - [ ] cron
-  - [ ] file
+  - [X] file
   - [ ] group
   - [ ] host
   - [ ] package
