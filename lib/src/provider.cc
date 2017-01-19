@@ -1,7 +1,10 @@
 #include <libral/provider.hpp>
 
 namespace libral {
-  static const std::string blank = std::string("");
+
+  /*
+   * implementation for attr_map
+   */
 
   const value attr_map::operator[](const std::string& key) const {
     auto v = find(key);
@@ -46,6 +49,35 @@ namespace libral {
     return key == "name";
   }
 
+  /*
+   * implementation for changes
+   */
+
+  void changes::add(const std::string &attr, const value &is,
+                    const value &was) {
+    push_back(change(attr, is, was));
+  }
+
+  bool changes::exists(const std::string &attr) {
+    for (auto ch : (*this)) {
+      if (ch.attr == attr)
+        return true;
+    }
+    return false;
+  }
+
+  std::ostream& operator<<(std::ostream& os, changes const& chgs) {
+    for (auto chg: chgs) {
+      auto was = chg.was.to_string();
+      auto is = chg.is.to_string();
+      os << chg.attr << "(" << was << "->" << is << ")" << std::endl;
+    }
+    return os;
+  }
+
+  /*
+   * implementation for resource
+   */
   const value resource::operator[](const std::string& key) const {
     if (is_name(key)) {
       throw std::invalid_argument {

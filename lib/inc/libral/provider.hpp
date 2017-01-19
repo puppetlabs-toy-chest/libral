@@ -59,8 +59,20 @@ namespace libral {
     value was;
   };
 
-  // Will probably become its own class sooner or later
-  typedef std::vector<change> changes;
+  /* A list of changes */
+  struct changes : std::vector<change> {
+    void add(const std::string &attr, const value &is,
+             const value &was = boost::none);
+    bool exists(const std::string &attr);
+  };
+
+  /**
+   * Stream insertion operator for changes.
+   * @param os The output stream to write the changes to.
+   * @param chgs The changes to write.
+   * @return Returns the given output stream.
+   */
+  std::ostream& operator<<(std::ostream& os, changes const& chgs);
 
   /* An individual thing that we manage */
   /* The resource only has one set of attributes, therefore it's not clear

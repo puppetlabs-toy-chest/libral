@@ -68,11 +68,7 @@ static void print_update(lib::type& type, lib::resource& res,
                          const lib::result<lib::changes>& rslt) {
   if (auto events = rslt.ok()) {
     print_resource(type, res);
-    for (auto ev: *events) {
-      auto was = ev.was.to_string();
-      auto is = ev.is.to_string();
-      cout << ev.attr << "(" << was << "->" << is << ")" << endl;
-    }
+    cout << *events << endl;
   } else if (auto fail = rslt.err()) {
     cout << "Failed: " << fail->detail << endl;
   } else {
