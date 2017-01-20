@@ -57,19 +57,38 @@ namespace libral {
                      0, { exe::execution_options::trim_output,
                           exe::execution_options::merge_environment });
         if (res.success && res.error.empty()) {
-          auto node = YAML::Load(res.output);
+          YAML::Node node;
+          try {
+            node = YAML::Load(res.output);
+          } catch (YAML::Exception& e) {
+            LOG_ERROR("describing provider {1} produced invalid yaml: {2}",
+                      path, e.what());
+            return true;
+          }
+          if (!node) {
+            LOG_ERROR("describing provider {1} produced invalid yaml", path);
+            return true;
+          }
+          if (!node.IsMap()) {
+            LOG_ERROR("describing provider {1} did not produce a map", path);
+            return true;
+          }
           auto meta = node["meta"];
           if (meta) {
-            if (meta["invoke"].as<std::string>() == "simple") {
+            auto invoke = meta["invoke"].as<std::string>("(none)");
+            if (invoke == "simple") {
               auto sprov = new simple_provider(path, node);
               auto prov = std::shared_ptr<provider>(sprov);
               auto type_name = meta["type"].as<std::string>();
               if (add_type(result, type_name, prov)) {
                 LOG_INFO("provider %s (simple) for %s loaded", path, type_name);
               }
+            } else if (invoke == "(none)") {
+              LOG_ERROR("provider {1} does not specify a calling convention under 'meta.invoke'",
+                        path);
             } else {
-              LOG_ERROR("provider %s uses unknown calling convention '%s'",
-                        path, meta["invoke"].Scalar());
+              LOG_ERROR("provider {1} uses unknown calling convention '{2}'",
+                        path, invoke);
             }
           } else {
             LOG_ERROR("provider %s does not return proper metadata with 'ral_action=describe'", path);
