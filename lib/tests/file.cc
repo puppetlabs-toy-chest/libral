@@ -14,20 +14,20 @@ namespace libral {
   // We need to create a shared_ptr here because provider uses
   // shared_from_this and that only works if a shared_ptr already exists
   auto ptr = std::make_shared<file_provider>("");
-  auto& prov = *ptr;
+  auto& prv = *ptr;
 
   SCENARIO("instances() returns an empty vector") {
-    REQUIRE(prov.instances().empty());
+    REQUIRE(prv.instances().empty());
   }
 
   SCENARIO("suitable() is always true") {
-    auto s = prov.suitable();
+    auto s = prv.suitable();
     REQUIRE((s.is_ok() && *(s.ok())));
   }
 
   SCENARIO("find()") {
     SECTION("returns resource for nonexistent file") {
-      auto res = prov.find("/tmp/not_there");
+      auto res = prv.find("/tmp/not_there");
 
       REQUIRE(*res);
       auto& rsc = **res;
@@ -37,7 +37,7 @@ namespace libral {
     SECTION("finds an existing file") {
       auto tmp = temp_file("");
 
-      auto res = prov.find(tmp.get_file_name());
+      auto res = prv.find(tmp.get_file_name());
 
       REQUIRE(*res);
       auto& rsc = **res;
@@ -51,7 +51,7 @@ namespace libral {
     SECTION("create a new file") {
       auto tmp = unique_fixture_path();
       try {
-        auto res = prov.find(tmp.native());
+        auto res = prv.find(tmp.native());
         REQUIRE(*res);
         auto& rsc = **res;
         REQUIRE(rsc["ensure"] == value("absent"));
@@ -82,7 +82,7 @@ namespace libral {
       //     AA AF FF FD DF FA AD DD DL LD DA AL LF FL LL LA
       // Right now, we have tests for AF FL LD
       auto tmp = temp_file("original");
-      auto res = prov.find(tmp.get_file_name());
+      auto res = prv.find(tmp.get_file_name());
       REQUIRE(*res);
       auto& rsc = **res;
 

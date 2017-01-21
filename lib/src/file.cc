@@ -24,7 +24,7 @@ using namespace leatherman::locale;
 
 namespace libral {
 
-  using prov = file_provider;
+  using fprov = file_provider;
 
   /* A map from ftype to the strings we use for the ensure
    * and type attributes
@@ -77,20 +77,20 @@ namespace libral {
     return ftype_ensure[0];
   }
 
-  const std::string& prov::description() {
+  result<prov::spec> fprov::describe() {
     static const std::string desc =
 #include "file.yaml"
       ;
-    return desc;
+    return prov::spec::read("file", desc);
   }
 
-  std::vector<std::unique_ptr<resource>> prov::instances() {
+  std::vector<std::unique_ptr<resource>> fprov::instances() {
     std::vector<std::unique_ptr<resource>> result;
 
     return result;
   }
 
-  std::unique_ptr<resource> prov::create(const std::string& name) {
+  std::unique_ptr<resource> fprov::create(const std::string& name) {
     auto shared_this = std::static_pointer_cast<file_provider>(shared_from_this());
     boost::system::error_code ec;
     // FIXME: we really want to call lexically_normal() on the path to get
@@ -103,7 +103,7 @@ namespace libral {
 
 
   boost::optional<std::unique_ptr<resource>>
-  prov::find(const std::string &name) {
+  fprov::find(const std::string &name) {
     auto result = create(name);
     auto& res = *result;
 
@@ -113,7 +113,7 @@ namespace libral {
   }
 
   // Load file attributes into res from whatever is on disk
-  void prov::load(resource &res) {
+  void fprov::load(resource &res) {
     /* Look up file and fill in attributes */
     boost::system::error_code ec;
     auto st = fs::symlink_status(res.name(), ec);
@@ -157,7 +157,7 @@ namespace libral {
 
   /* Fill in attributes we can only get via stat(2) and not from
      boost::filesystem, most notably owner, group, and ctime */
-  void prov::find_from_stat(resource &res) {
+  void fprov::find_from_stat(resource &res) {
     struct stat buf;
     int r = lstat(res.name().c_str(), &buf);
     if (r < 0) {
@@ -212,8 +212,8 @@ namespace libral {
    *   same row
    * - 'metadata', 'content', 'target' are short for 'update_metadata' etc.
    */
-  prov::change_result_uptr
-  prov::file_resource::update(const attr_map& should) {
+  fprov::change_result_uptr
+  fprov::file_resource::update(const attr_map& should) {
     auto& is = *this;
     auto res = result<changes>::make_unique();
 
@@ -314,7 +314,7 @@ namespace libral {
   /*
    * Update owner, group, mode as needed
    */
-  void prov::file_resource::update_metadata(result<changes>& res,
+  void fprov::file_resource::update_metadata(result<changes>& res,
                                             const attr_map& should) {
     if (!res)
       return;
@@ -400,7 +400,7 @@ namespace libral {
     }
   }
 
-  void prov::file_resource::update_content(result<changes>& res,
+  void fprov::file_resource::update_content(result<changes>& res,
                                            const attr_map& should) {
     if (!res)
       return;
@@ -445,7 +445,7 @@ namespace libral {
     }
   }
 
-  void prov::file_resource::update_target(result<changes>& res,
+  void fprov::file_resource::update_target(result<changes>& res,
                                           std::string& state,
                                           const std::string& target) {
     if (!res)
@@ -474,7 +474,7 @@ namespace libral {
 
   // Remove the current file (precise type in 'state') and set 'state' to
   // 'absent'
-  void prov::file_resource::remove(result<changes>& res,
+  void fprov::file_resource::remove(result<changes>& res,
                                    std::string& state,
                                    bool force) {
     if (!res || state == s_absent)
@@ -499,7 +499,7 @@ namespace libral {
   }
 
   // Create an empty file
-  void prov::file_resource::create_file(result<changes>& res) {
+  void fprov::file_resource::create_file(result<changes>& res) {
     if (!res)
       return;
     boost::nowide::ofstream ofs(name());
@@ -509,7 +509,7 @@ namespace libral {
     ofs.close();
   }
 
-  void prov::file_resource::create_directory(result<changes>& res) {
+  void fprov::file_resource::create_directory(result<changes>& res) {
     if (!res)
       return;
     boost::system::error_code ec;
@@ -520,7 +520,7 @@ namespace libral {
     }
   }
 
-  std::string prov::time_as_iso_string(std::time_t *time) {
+  std::string fprov::time_as_iso_string(std::time_t *time) {
     char buf[100];
     strftime(buf, sizeof(buf), iso_8601_format.c_str(), std::localtime(time));
     return std::string(buf);

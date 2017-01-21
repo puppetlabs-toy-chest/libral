@@ -9,6 +9,7 @@
 
 #include <libral/result.hpp>
 #include <libral/value.hpp>
+#include <libral/prov/spec.hpp>
 
 namespace libral {
   /* Nomenclature warning: a provider here is the thing that knows how to
@@ -125,13 +126,6 @@ namespace libral {
   public:
     provider() { };
 
-    /* Returns the description for this provider as a string.
-     *
-     * The returned string must be valid YAML and adhere to the
-     * specification for provider documentation (yet to be written)
-     */
-    virtual const std::string& description() = 0;
-
     /* Returns +true+ if the provider can be used on the system. Returns
        +false+ if the provider can not be used on the system.
 
@@ -158,5 +152,29 @@ namespace libral {
 
     /* Retrieve all resources managed by this provider */
     virtual std::vector<std::unique_ptr<resource>> instances() = 0;
+
+    /**
+     * Reads the string representation v for attribute name and returns the
+     * corresponding value. If v is not a valid string for name's type,
+     * returns an error indicating the problem.
+     */
+    result<value> parse(const std::string& name, const std::string& v);
+
+  protected:
+    friend class ral;
+    /**
+     * Sets up internal data structures and is called after suitable() is
+     */
+    result<bool> prepare();
+
+    /**
+     * Returns the provider spec for this provider.
+     */
+    virtual result<prov::spec> describe() = 0;
+  private:
+    /* This gets only intitialized when we call prepare, and we therefore
+     * must allow for it to be none for a while
+     */
+    boost::optional<prov::spec> _spec;
   };
 }

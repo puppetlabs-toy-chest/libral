@@ -23,9 +23,15 @@ namespace libral {
     auto res = prov->suitable();
     if (res.is_ok()) {
       if (*res.ok()) {
-        auto t = new type(name, prov);
-        types.push_back(std::move(std::unique_ptr<type>(t)));
-        return true;
+        res = prov->prepare();
+        if (res && *res) {
+          auto t = new type(name, prov);
+          types.push_back(std::move(std::unique_ptr<type>(t)));
+          return true;
+        } else {
+          LOG_ERROR("preparing provider for {1} failed: {2}",
+                    name, (*res.err()).detail);
+        }
       } else {
         LOG_INFO("provider for {1} is not suitable", name);
       }

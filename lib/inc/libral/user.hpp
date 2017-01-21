@@ -67,6 +67,8 @@ namespace libral {
     void flush();
     std::vector<std::unique_ptr<resource>> instances();
     std::unique_ptr<resource> create(const std::string& name);
+  protected:
+    result<prov::spec> describe() override;
   private:
     std::string                  _cmd_useradd;
     std::string                  _cmd_usermod;

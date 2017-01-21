@@ -6,11 +6,11 @@
 #include <pwd.h>
 
 namespace libral {
-  const std::string& user_provider::description() {
+  result<prov::spec> user_provider::describe() {
     static const std::string desc =
 #include "user.yaml"
       ;
-    return desc;
+    return prov::spec::read("user", desc);
   }
 
   result<bool> user_provider::suitable() {

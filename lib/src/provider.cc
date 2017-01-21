@@ -1,5 +1,9 @@
 #include <libral/provider.hpp>
 
+#include <leatherman/locale/locale.hpp>
+
+using namespace leatherman::locale;
+
 namespace libral {
 
   /*
@@ -108,14 +112,6 @@ namespace libral {
   template const std::string& resource::lookup(const std::string&, const std::string&) const;
   template const std::string* resource::lookup(const std::string&) const;
 
-  boost::optional<std::unique_ptr<resource>> provider::find(const std::string &name) {
-    for (auto& inst : instances()) {
-      if (inst->name() == name)
-        return std::move(inst);
-    }
-    return boost::none;
-  }
-
   void resource::check(changes& chgs, const attr_map& should,
                        const std::vector<std::string>& props) {
     auto& is = *this;
@@ -124,5 +120,38 @@ namespace libral {
         chgs.add(prop, should[prop], is[prop]);
       }
     }
+  }
+
+  /*
+   * Implementation for provider
+   */
+  boost::optional<std::unique_ptr<resource>>
+  provider::find(const std::string &name) {
+    for (auto& inst : instances()) {
+      if (inst->name() == name)
+        return std::move(inst);
+    }
+    return boost::none;
+  }
+
+  result<value> provider::parse(const std::string& name, const std::string& v) {
+    if (!_spec) {
+      return error(_("internal error: spec was not initialized"));
+    }
+    auto spec = _spec->attr(name);
+    if (!spec) {
+      return error(_("there is no attribute '{1}'", name));
+    }
+
+    return spec->read_string(v);
+  }
+
+  result<bool> provider::prepare() {
+    auto res = describe();
+    if (!res) {
+      return *res.err();
+    }
+    _spec = *res;
+    return true;
   }
 }

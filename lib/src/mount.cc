@@ -6,11 +6,11 @@
 
 namespace libral {
 
-  const std::string& mount_provider::description() {
+  result<prov::spec> mount_provider::describe() {
     static const std::string desc =
 #include "mount.yaml"
       ;
-    return desc;
+    return prov::spec::read("mount", desc);
   }
 
 

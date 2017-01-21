@@ -26,6 +26,13 @@ provider:
   invoke: simple
   actions: [list,find,update]
   suitable: ${suitable}
+  attributes:
+    name:
+      type: string
+    ensure:
+      type: enum[running, stopped]
+    enable:
+      type: enum[true, false, mask]
 EOF
 }
 

@@ -82,8 +82,6 @@ namespace libral {
 
     file_provider(const std::string& data_dir) { };
 
-    const std::string& description();
-
     result<bool> suitable() { return true; };
 
     /* Always returns an empty vector for now, can't list all files this
@@ -92,6 +90,8 @@ namespace libral {
     boost::optional<std::unique_ptr<resource>> find(const std::string &name);
 
     std::unique_ptr<resource> create(const std::string& name);
+  protected:
+    result<prov::spec> describe() override;
   private:
     void load(resource &res);
     void find_from_stat(resource &res);

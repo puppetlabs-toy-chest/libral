@@ -58,7 +58,7 @@ add_subdirectory(lib)
 add_subdirectory(exe)
 
 # Add cpplint and cppcheck targets
-file(GLOB_RECURSE ALL_SOURCES lib/src/*.cc lib/inc/*.hpp exe/*.cc)
+file(GLOB_RECURSE ALL_SOURCES lib/src/**/*.cc lib/inc/*.hpp exe/*.cc)
 add_cpplint_files(${ALL_SOURCES})
 enable_cpplint()
 
