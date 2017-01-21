@@ -86,6 +86,8 @@ namespace libral {
        or instances, but should not be instantiated directly. */
     resource(const std::string name) : _name(name){ }
   public:
+    virtual ~resource() = default;
+
     const std::string& name() { return _name; }
 
     /* Return the current state of attribute ATTR */
@@ -125,6 +127,7 @@ namespace libral {
   class provider : public std::enable_shared_from_this<provider> {
   public:
     provider() { };
+    virtual ~provider() = default;
 
     /* Returns +true+ if the provider can be used on the system. Returns
        +false+ if the provider can not be used on the system.
