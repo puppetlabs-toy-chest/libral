@@ -73,7 +73,7 @@ namespace libral { namespace attr {
 
     auto kind = kind::create(kind_str);
     if (!kind)
-      return *kind.err();
+      return kind.err();
 
     std::string ts = type_str;
     boost::trim(ts);

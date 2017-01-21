@@ -124,7 +124,7 @@ namespace libral {
   std::unique_ptr<result<changes>>
   mount_provider::mount_resource::update(const attr_map& should) {
     auto res = std::unique_ptr<result<changes>>(new result<changes>(changes()));
-    changes& changes = *res->ok();
+    changes& changes = res->ok();
 
     /* Possible values for ensure:
 

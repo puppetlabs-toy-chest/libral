@@ -22,7 +22,7 @@ namespace libral {
                      const std::string& name, std::shared_ptr<provider> prov) {
     auto res = prov->suitable();
     if (res.is_ok()) {
-      if (*res.ok()) {
+      if (*res) {
         res = prov->prepare();
         if (res && *res) {
           auto t = new type(name, prov);
@@ -30,13 +30,13 @@ namespace libral {
           return true;
         } else {
           LOG_ERROR("preparing provider for {1} failed: {2}",
-                    name, (*res.err()).detail);
+                    name, res.err().detail);
         }
       } else {
         LOG_INFO("provider for {1} is not suitable", name);
       }
     } else {
-      LOG_WARNING("failed to prepare provider for {1}: {2}", name, res.err()->detail);
+      LOG_WARNING("provider for {1} failed to report its suitability: {2}", name, res.err().detail);
     }
     return false;
   }

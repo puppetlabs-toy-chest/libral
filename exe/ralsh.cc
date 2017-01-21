@@ -66,14 +66,11 @@ static void print_resource(lib::type& type, lib::resource& res) {
 
 static void print_update(lib::type& type, lib::resource& res,
                          const lib::result<lib::changes>& rslt) {
-  if (auto events = rslt.ok()) {
+  if (rslt) {
     print_resource(type, res);
-    cout << *events << endl;
-  } else if (auto fail = rslt.err()) {
-    cout << "Failed: " << fail->detail << endl;
+    cout << rslt.ok() << endl;
   } else {
-    cerr << "surprising update_res variant!" << endl;
-    abort();
+    cout << "Failed: " << rslt.err().detail << endl;
   }
 }
 
@@ -169,10 +166,10 @@ int main(int argc, char **argv) {
             if (found != string::npos) {
               auto attr = arg->substr(0, found);
               auto value = type->parse(attr, arg->substr(found+1));
-              if (value.is_ok()) {
-                attrs[attr] = *value.ok();
+              if (value) {
+                attrs[attr] = value.ok();
               } else {
-                boost::nowide::cout << "Failed to read attribute " << attr << ":" << (*value.err()).detail << endl;
+                boost::nowide::cout << "Failed to read attribute " << attr << ":" << value.err().detail << endl;
                 return EXIT_FAILURE;
               }
             }

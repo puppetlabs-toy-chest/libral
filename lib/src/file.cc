@@ -253,7 +253,7 @@ namespace libral {
         }
       }
 
-      changes& chgs = *res->ok();
+      changes& chgs = res->ok();
       is["ensure"] = ensure;
       chgs.add("ensure", ensure, state);
     }
@@ -284,7 +284,7 @@ namespace libral {
       *res = error(_("Illegal ensure value '{1}'", ensure));
     }
 
-    if (*res && (*res->ok()).size() > 0) {
+    if (*res && res->ok().size() > 0) {
       // If we made any changes, just restat all metadata
       _prov->load(is);
     }
@@ -333,7 +333,7 @@ namespace libral {
       if (owner) {
         auto uid_res = owner_to_uid(*owner);
         if (!uid_res) {
-          res = *uid_res.err();
+          res = uid_res.err();
           return;
         }
         uid = *uid_res;
@@ -341,7 +341,7 @@ namespace libral {
       if (group) {
         auto gid_res = group_to_gid(*group);
         if (!gid_res) {
-          res = *gid_res.err();
+          res = gid_res.err();
           return;
         }
         gid = *gid_res;
@@ -468,7 +468,7 @@ namespace libral {
     state = s_link;
 
     auto& is = *this;
-    (*res.ok()).add("target", target, is["target"]);
+    res.ok().add("target", target, is["target"]);
     is["target"] = target;
   }
 

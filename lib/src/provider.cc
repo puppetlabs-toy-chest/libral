@@ -149,7 +149,7 @@ namespace libral {
   result<bool> provider::prepare() {
     auto res = describe();
     if (!res) {
-      return *res.err();
+      return res.err();
     }
     _spec = *res;
     return true;

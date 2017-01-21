@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/optional.hpp>
 #include <ostream>
 #include <memory>
 
@@ -29,7 +28,6 @@ namespace libral {
   struct not_implemented_error : public error {
     not_implemented_error() : error("not implemented") { }
   };
-
 
   /* A result is either an error or whatever we really wanted */
   template <class R>
@@ -70,48 +68,19 @@ namespace libral {
       }
     }
 
+    /**
+     * Returns true if the result is ok
+     */
     operator bool() const {
       return _tag == tag::ok;
     }
 
-    boost::optional<R&> ok() {
-      if (is_ok()) {
-        return this->_ok;
-      } else {
-        return boost::none;
-      }
-    };
-
-    boost::optional<const R&> ok() const {
-      if (is_ok()) {
-        return this->_ok;
-      } else {
-        return boost::none;
-      }
-    };
-
-    boost::optional<error&> err() {
-      if (is_err()) {
-        return this->_err;
-      } else {
-        return boost::none;
-      }
-    };
-
-    boost::optional<const error&> err() const {
-      if (is_err()) {
-        return this->_err;
-      } else {
-        return boost::none;
-      }
-    };
-
-    bool is_ok()  const { return _tag == tag::ok; }
-    bool is_err() const { return _tag == tag::err; }
-
-    bool operator!() const noexcept { return is_err(); }
-
-    R& operator*() {
+    /**
+     * Returns the ok value.
+     *
+     * @throws std::logic_error if the result is an error and not ok
+     */
+    R& ok() {
       if (is_ok()) {
         return this->_ok;
       } else {
@@ -119,11 +88,77 @@ namespace libral {
         msg += _err.detail;
         throw std::logic_error(msg);
       }
-    }
+    };
 
-    R* operator->() {
-      return &*(*this);
-    }
+    /**
+     * Returns the ok value.
+     *
+     * @throws std::logic_error if the result is an error and not ok
+     */
+    const R& ok() const {
+      if (is_ok()) {
+        return this->_ok;
+      } else {
+        std::string msg = "attempt to get ok value from err: ";
+        msg += _err.detail;
+        throw std::logic_error(msg);
+      }
+    };
+
+    /**
+     * Returns the err value.
+     *
+     * @throws std::logic_error if the result is ok and not an error
+     */
+    error& err() {
+      if (is_err()) {
+        return this->_err;
+      } else {
+        throw std::logic_error("tried to get error from ok result");
+      }
+    };
+
+    /**
+     * Returns the err value.
+     *
+     * @throws std::logic_error if the result is ok and not an error
+     */
+    const error& err() const {
+      if (is_err()) {
+        return this->_err;
+      } else {
+        throw std::logic_error("tried to get error from ok result");
+      }
+    };
+
+    /**
+     * Returns true if the result is ok
+     */
+    bool is_ok()  const { return _tag == tag::ok; }
+
+    /**
+     * Returns true if the result is an error
+     */
+    bool is_err() const { return _tag == tag::err; }
+
+    /**
+     * Returns true if the result is an error
+     */
+    bool operator!() const noexcept { return is_err(); }
+
+    /**
+     * Returns the ok value.
+     *
+     * @throws std::logic_error if the result is an error and not ok
+     */
+    R& operator*() { return ok(); }
+
+    /**
+     * Returns a pointer to the ok value.
+     *
+     * @throws std::logic_error if the result is an error and not ok
+     */
+    R* operator->() { return &ok(); }
 
     static std::unique_ptr<result<R>> make_unique() {
       return std::unique_ptr<result<R>>(new result<R>(R()));

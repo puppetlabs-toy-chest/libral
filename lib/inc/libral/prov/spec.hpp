@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/optional.hpp>
 #include <yaml-cpp/yaml.h>
 
 #include <libral/attr/spec.hpp>

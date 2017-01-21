@@ -58,7 +58,7 @@ namespace libral {
 
     auto& self = *this;
     auto res = result<changes>::make_unique();
-    changes& chgs = *res->ok();
+    changes& chgs = res->ok();
 
     auto state = lookup<std::string>("ensure", "absent");
     auto ensure = should.lookup<std::string>("ensure", state);

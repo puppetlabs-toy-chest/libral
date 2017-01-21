@@ -21,7 +21,7 @@ namespace libral {
   simple_provider::simple_resource::update(const attr_map &should) {
     std::vector<std::string> args;
     auto rslt = result<changes>::make_unique();
-    auto& chgs = *rslt->ok();
+    auto& chgs = rslt->ok();
 
     auto cb = [this, &chgs](std::string& key, std::string& value)
       -> result<bool> {
@@ -43,8 +43,8 @@ namespace libral {
       args.push_back(p.first + "='" + p.second.to_string() + "'");
     }
     auto r = _prov->run_action("update", cb, args);
-    if (auto e = r.err()) {
-      return result<changes>::make_unique(*e);
+    if (!r) {
+      return result<changes>::make_unique(r.err());
     } else {
       return rslt;
     }
@@ -94,7 +94,7 @@ namespace libral {
     auto r = run_action("find", cb, { "name='" + name + "'" });
     if (r.is_err()) {
       // FIXME: return error instead of logging it
-      LOG_ERROR(r.err()->detail);
+      LOG_ERROR(r.err().detail);
       return boost::none;
     } else {
       return std::move(rsrc);
@@ -120,7 +120,7 @@ namespace libral {
     auto r = run_action("list", cb);
     if (r.is_err()) {
       // FIXME: this function needs to return a result<..>
-      LOG_ERROR(r.err()->detail);
+      LOG_ERROR(r.err().detail);
     };
     return result;
   }

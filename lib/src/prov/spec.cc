@@ -46,7 +46,7 @@ namespace libral { namespace prov {
 
       auto attr = attr::spec::create(name, desc, type, kind);
       if (!attr) {
-        return *attr.err();
+        return attr.err();
       }
       attr_specs.insert(std::make_pair(name, *attr));
     }
