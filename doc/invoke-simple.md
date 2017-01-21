@@ -80,14 +80,14 @@ could be returned is
 
 ```yaml
 ---
-meta:
+provider:
   type: service
   invoke: simple
   actions: [list,find,update]
   suitable: true
 ```
 
-The entries under `meta` have the following meaning:
+The entries under `provider` have the following meaning:
 
 * `type`: the name of the provider's underlying type
 * `invoke`: the calling convention the provider uses. Must be `simple` for
@@ -104,7 +104,7 @@ and some simple notation for discovering some commands, so that people can
 write
 
 ```yaml
-meta:
+provider:
   suitable:
     - command(which)
     - command(something_else)
@@ -115,7 +115,7 @@ Similarly, we want to make it possible to indicate whether a provider
 should be the default by offering a `default` key that can contain similar
 expressions, so that one could write
 ```yaml
-meta:
+provider:
   default:
     - osfamily = 'archlinux'
     - osfamily = 'redhat' and operatingsystemmajrelease = '7'

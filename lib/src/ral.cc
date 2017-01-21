@@ -73,7 +73,7 @@ namespace libral {
             LOG_ERROR("describing provider {1} did not produce a map", path);
             return true;
           }
-          auto meta = node["meta"];
+          auto meta = node["provider"];
           if (meta) {
             auto invoke = meta["invoke"].as<std::string>("(none)");
             if (invoke == "simple") {

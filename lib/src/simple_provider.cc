@@ -62,7 +62,11 @@ namespace libral {
   }
 
   result<bool> simple_provider::suitable() {
-    auto s = _node["meta"]["suitable"].as<std::string>();
+    auto meta = _node["provider"];
+    if (! meta.IsMap()) {
+      return error(_("expected 'provider' key in metadata to contain a map"));
+    }
+    auto s = meta["suitable"].as<std::string>();
     if (s != "true" && s != "false") {
       return error(_("provider {1} (simple): metadata 'suitable' must be either 'true' or 'false' but was '{2}'", _path, s));
     }
