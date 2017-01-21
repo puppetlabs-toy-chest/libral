@@ -2,6 +2,7 @@
 
 #include <boost/optional.hpp>
 #include <ostream>
+#include <memory>
 
 namespace libral {
   /*
@@ -42,47 +43,22 @@ namespace libral {
     result(error& err) : _tag(tag::err), _err(err) {};
     result(const error& err) : _tag(tag::err), _err(err) {};
     result(error&& err) : _tag(tag::err), _err(std::move(err)) {};
-    result(const result& other) {
-      _tag = other._tag;
-      if (other.is_ok()) {
-        _ok = other._ok;
-      } else {
-        _err = other._err;
-      }
-    }
 
-    result(const result&& other) {
-      _tag = other._tag;
-      if (other.is_ok()) {
-        _ok = std::move(other._ok);
-      } else {
-        _err = std::move(other._err);
-      }
-    }
+    result(const result& other) { assign(other); }
+    result(result&& other) { assign(other); }
 
     result& operator=(const result& other) {
-      _tag = other._tag;
-      if (other.is_ok()) {
-        _ok = other._ok;
-      } else {
-        _err = other._err;
-      }
+      assign(other);
       return *this;
     }
 
     result& operator=(result&& other) {
-      _tag = other._tag;
-      if (other.is_ok()) {
-        _ok = std::move(other._ok);
-      } else {
-        _err = std::move(other._err);
-      }
+      assign(other);
       return *this;
     }
 
     result& operator=(const error& err) {
-      _tag = tag::err;
-      _err = err;
+      assign(err);
       return *this;
     }
 
@@ -145,6 +121,10 @@ namespace libral {
       }
     }
 
+    R* operator->() {
+      return &*(*this);
+    }
+
     static std::unique_ptr<result<R>> make_unique() {
       return std::unique_ptr<result<R>>(new result<R>(R()));
     };
@@ -153,6 +133,65 @@ namespace libral {
       return std::unique_ptr<result<R>>(new result<R>(e));
     };
   private:
+
+    /* Assign by copy */
+    void assign(const error& err) {
+      if (_tag == tag::ok) {
+        _ok.~R();
+        new (&_err) error(err);
+      } else {
+        _err = err;
+      }
+      _tag = tag::err;
+    }
+
+    void assign(const R& ok) {
+      if (_tag == tag::ok) {
+        _ok = ok;
+      } else {
+        _err.~error();
+        new (&_ok) R(ok);
+      }
+      _tag = tag::ok;
+    }
+
+    void assign(const result& other) {
+      if (other._tag == tag::ok) {
+        assign(other._ok);
+      } else {
+        assign(other._err);
+      }
+    }
+
+    /* Assign by move */
+    void assign(error&& err) {
+      if (_tag == tag::ok) {
+        _ok.~R();
+        new (&_err) error(err);
+      } else {
+        _err = std::move(err);
+      }
+      _tag = tag::err;
+    }
+
+    void assign(R&& ok) {
+      if (_tag == tag::ok) {
+        _ok = std::move(ok);
+      } else {
+        _err.~error();
+        new (&_ok) R(ok);
+      }
+      _tag = tag::ok;
+    }
+
+    void assign(result&& other) {
+      if (other._tag == tag::ok) {
+        assign(std::move(other._ok));
+      } else {
+        assign(std::move(other._err));
+      }
+    }
+
     tag _tag;
     union {
       error _err;
