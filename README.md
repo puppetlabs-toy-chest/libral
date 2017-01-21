@@ -59,8 +59,10 @@ following:
 
 - [X] finish mount provider
 - [X] add a shell provider
-- [ ] add a remote provider (using an HTTP API)
-- [ ] adapt providers to multiple OS (maybe using mount)
+- [X] event reporting on update
+- [X] simple type system and checking for provider attributes
+- [ ] produce help/details about providers
+- [ ] add a json calling convention and use it in a provider
 - more core providers
   - [ ] cron
   - [X] file
@@ -79,8 +81,10 @@ following:
   - [ ] ssh-authorized-key
   - [ ] vlan
   - [ ] yumrepo
+- [ ] add a remote provider (using an HTTP API)
+- [ ] adapt providers to multiple OS (maybe using mount)
 - [ ] noop mode
-- [X] event reporting
+- [ ] expand the type system to cover as much of Puppet 4 as is reasonable
 
 ## Some language
 
