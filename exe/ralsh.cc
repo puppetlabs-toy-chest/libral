@@ -83,7 +83,7 @@ static void print_update(lib::type& type, lib::resource& res,
     print_resource(type, res);
     cout << rslt.ok() << endl;
   } else {
-    cout << "Failed: " << rslt.err().detail << endl;
+    cout << color::red << _("failed: {1}", rslt.err().detail) << color::reset << endl;
   }
 }
 
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
       colorize(boost::nowide::cerr, log_level::error);
       boost::nowide::cerr << "error: " << ex.what() << "\n" << endl;
       colorize(boost::nowide::cerr);
-      boost::nowide::cerr << "Try 'ralsh -h' for more information." << endl;
+      boost::nowide::cerr << "try 'ralsh -h' for more information." << endl;
       return EXIT_FAILURE;
     }
 
@@ -191,7 +191,8 @@ int main(int argc, char **argv) {
     // @todo lutter 2016-06-09: find a non crappy way to get this, obviously
     std::string data_dir;
     if (! leatherman::util::environment::get("RALSH_DATA_DIR", data_dir)) {
-      boost::nowide::cerr << "Set the environment variable RALSH_DATA_DIR to the path to the data/ directory in your source checkout" << endl;
+      boost::nowide::cerr << color::red << "Set the environment variable RALSH_DATA_DIR to the\npath of the data/ directory in your source checkout"
+                          << color::reset << endl;
       return EXIT_FAILURE;
     }
 
@@ -204,7 +205,11 @@ int main(int argc, char **argv) {
       auto type_name = vm["type"].as<std::string>();
       auto opt_type = ral.find_type(type_name);
       if (opt_type == boost::none) {
-        boost::nowide::cout << "Unknown type: " << type_name << endl;
+        boost::nowide::cout << color::red
+                            << _("unknown type: '{1}'", type_name)
+                            << color::reset << endl;
+        boost::nowide::cout << _("run 'ralsh' to see a list of all types")
+                            << color::reset << endl;
         return EXIT_FAILURE;
       }
 
@@ -232,7 +237,10 @@ int main(int argc, char **argv) {
               if (value) {
                 attrs[attr] = value.ok();
               } else {
-                boost::nowide::cout << "Failed to read attribute " << attr << ":" << value.err().detail << endl;
+                boost::nowide::cerr << color::red <<
+                  _("failed to read attribute {1}: {2}", attr,
+                    value.err().detail) << color::reset << endl;
+                boost::nowide::cerr << _("run 'ralsh -e {1}' to get a list of attributes and valid values", type->name()) << endl;
                 return EXIT_FAILURE;
               }
             }
@@ -256,7 +264,10 @@ int main(int argc, char **argv) {
       }
     } else {
       if (explain) {
-        boost::nowide::cout << "please provide a type" << endl;
+        boost::nowide::cout << color::red << _("please provide a type")
+                            << color::reset << endl;
+        boost::nowide::cout << _("run 'ralsh' to see a list of all types")
+                            << color::reset << endl;
         return EXIT_FAILURE;
       }
       // No type given, list known types
@@ -267,7 +278,7 @@ int main(int argc, char **argv) {
     }
   } catch (domain_error& ex) {
     colorize(boost::nowide::cerr, log_level::fatal);
-    boost::nowide::cerr << "unhandled exception: " << ex.what() << "\n" << endl;
+    boost::nowide::cerr << _("unhandled exception: {1}\n", ex.what()) << endl;
     colorize(boost::nowide::cerr);
     return EXIT_FAILURE;
   }
