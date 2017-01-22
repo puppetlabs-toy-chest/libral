@@ -28,6 +28,7 @@ namespace libral {
        possible */
     result<value> parse(const std::string &name, const std::string &v);
 
+    const provider& prov() { return *_prov; };
   private:
     std::string _name;
     std::shared_ptr<provider> _prov;

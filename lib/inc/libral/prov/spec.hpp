@@ -14,7 +14,7 @@ namespace libral { namespace prov {
      * Returns the attribute spec for attribute name or none if there is no
      * attribute of that name.
      */
-    boost::optional<const attr::spec &> attr(const std::string& name);
+    boost::optional<const attr::spec &> attr(const std::string& name) const;
 
     /**
      * Reads a provider specification from a parsed YAML representation
@@ -31,6 +31,12 @@ namespace libral { namespace prov {
      * @param yaml the YAML text
      */
     static result<spec> read(const std::string& name, const std::string &yaml);
+
+    attr_spec_map::const_iterator attr_begin() const
+      { return _attr_specs.cbegin(); }
+    attr_spec_map::const_iterator attr_end() const
+      { return _attr_specs.cend(); }
+
   private:
     spec(attr_spec_map&& attr_specs) : _attr_specs(std::move(attr_specs)) { };
     attr_spec_map _attr_specs;

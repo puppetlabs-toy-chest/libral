@@ -163,6 +163,16 @@ namespace libral {
      */
     result<value> parse(const std::string& name, const std::string& v);
 
+    /**
+     * Return the provider specification
+     */
+    const boost::optional<prov::spec>& spec() const { return _spec; };
+
+    /**
+     * Return a human-readable string that indicates where this
+     * provider came from.
+     */
+    virtual const std::string& source() const;
   protected:
     friend class ral;
     /**

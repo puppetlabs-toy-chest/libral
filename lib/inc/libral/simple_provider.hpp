@@ -30,6 +30,8 @@ namespace libral {
     std::unique_ptr<resource> create(const std::string& name);
     boost::optional<std::unique_ptr<resource>> find(const std::string &name);
     std::vector<std::unique_ptr<resource>> instances();
+
+    const std::string& source() const { return _path; }
   protected:
     result<prov::spec> describe() override;
   private:

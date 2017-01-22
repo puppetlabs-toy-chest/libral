@@ -7,7 +7,7 @@ using namespace leatherman::locale;
 namespace libral { namespace prov {
 
   boost::optional<const attr::spec&>
-  spec::attr(const std::string& name) {
+  spec::attr(const std::string& name) const {
     auto it = _attr_specs.find(name);
     if (it == _attr_specs.end()) {
       return boost::none;

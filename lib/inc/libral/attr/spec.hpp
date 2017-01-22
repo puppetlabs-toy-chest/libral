@@ -3,6 +3,7 @@
 #include <libral/result.hpp>
 #include <libral/value.hpp>
 #include <vector>
+#include <ostream>
 
 namespace libral { namespace attr {
 
@@ -15,11 +16,13 @@ namespace libral { namespace attr {
 
     kind(tag t) : _tag(t) { };
     tag get_tag() const { return _tag; }
-
+    bool is(tag t) const { return _tag == t; }
     static result<kind> create(const std::string& tag_str);
   private:
     tag _tag;
   };
+
+  std::ostream& operator<<(std::ostream& os, kind const& k);
 
   /**
    * The types we currently support for attributes. Their main point is to
@@ -29,13 +32,19 @@ namespace libral { namespace attr {
     result<value> read_string(const std::string& s) const;
   };
 
+  std::ostream& operator<<(std::ostream& os, string_type const& st);
+
   struct boolean_type {
     result<value> read_string(const std::string& s) const;
   };
 
+  std::ostream& operator<<(std::ostream& os, boolean_type const& bt);
+
   struct array_type {
     result<value> read_string(const std::string& s) const;
   };
+
+  std::ostream& operator<<(std::ostream& os, array_type const& at);
 
   class enum_type {
   public:
@@ -46,6 +55,8 @@ namespace libral { namespace attr {
   private:
     std::vector<std::string> _options;
   };
+
+  std::ostream& operator<<(std::ostream& os, enum_type const& et);
 
   /**
    * A generic data type, encompassing all data types we support

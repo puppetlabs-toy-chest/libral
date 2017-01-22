@@ -23,16 +23,44 @@ namespace libral { namespace attr {
     }
   }
 
+  std::ostream& operator<<(std::ostream& os, kind const& k) {
+    if (k.is(kind::tag::r)) {
+      os << "r";
+    } else if (k.is(kind::tag::w)) {
+      os << "w";
+    } else if (k.is(kind::tag::rw)) {
+      os << "rw";
+    } else {
+      throw std::logic_error("internal error: unknown kind");
+    }
+    return os;
+  }
+
   result<value> string_type::read_string(const std::string& s) const {
     return value(s);
+  }
+
+  std::ostream& operator<<(std::ostream& os, string_type const& st) {
+    os << "string";
+    return os;
   }
 
   result<value> boolean_type::read_string(const std::string& s) const {
     return value(boost::iequals(s, "true"));
   }
 
+  std::ostream& operator<<(std::ostream& os, boolean_type const& bt) {
+    os << "boolean";
+    return os;
+  }
+
   result<value> array_type::read_string(const std::string& s) const {
     return not_implemented_error();
+  }
+
+  std::ostream& operator<<(std::ostream& os, array_type const& at) {
+    os << "array[string]";
+    return os;
   }
 
   result<value> enum_type::read_string(const std::string& s) const {
@@ -41,6 +69,20 @@ namespace libral { namespace attr {
     } else {
       return error(_("value '{1}' is not a legal value for this enum", s));
     }
+  }
+
+  std::ostream& operator<<(std::ostream& os, enum_type const& et) {
+    os << "enum[";
+    auto first = true;
+    for (auto o : et.options()) {
+      if (!first) {
+        os << ", ";
+      }
+      first = false;
+      os << o;
+    }
+    os << "]";
+    return os;
   }
 
   /*

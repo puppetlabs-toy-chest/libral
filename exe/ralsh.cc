@@ -17,6 +17,7 @@ using namespace std;
 using namespace leatherman::logging;
 namespace lib = libral;
 namespace po = boost::program_options;
+using namespace leatherman::locale;
 
 void help(po::options_description& desc)
 {
@@ -68,6 +69,46 @@ static void print_update(lib::type& type, lib::resource& res,
   }
 }
 
+static void print_attr_explanation(const std::string& name,
+                                   const lib::attr::spec& attr,
+                                   uint maxlen) {
+  cout << "  " << left << setw(maxlen) << name
+         << " : " << attr.desc() << endl;
+    cout << "  " << left << setw(maxlen) << " "
+         << " . kind = " << attr.get_kind() << endl;
+    cout << "  " << left << setw(maxlen) << " "
+         << " . type = " << attr.get_data_type() << endl;
+}
+
+static void print_explanation(lib::type& type) {
+  auto& prov = type.prov();
+  auto& spec = prov.spec();
+  if (!spec) {
+    cerr << _("internal error: failed to get metadata for {1}", type.name())
+         << endl;
+    return;
+  }
+
+  uint maxlen = 0;
+  for (auto a = spec->attr_begin(); a != spec->attr_end(); ++a) {
+    if (a->first.length() > maxlen) maxlen = a->first.length();
+  }
+
+  cout << _("Type {1} (from {2})", type.name(), prov.source()) << endl;
+  if (auto attr = spec->attr("name")) {
+    print_attr_explanation("name", *attr, maxlen);
+  }
+  if (auto attr = spec->attr("ensure")) {
+    print_attr_explanation("ensure", *attr, maxlen);
+  }
+  for (auto attr = spec->attr_begin(); attr != spec->attr_end(); attr++) {
+    if (attr->first == "name" || attr->first == "ensure") {
+      continue;
+    }
+    print_attr_explanation(attr->first, attr->second, maxlen);
+  }
+}
+
 int main(int argc, char **argv) {
   try {
     // Fix args on Windows to be UTF-8
@@ -78,6 +119,7 @@ int main(int argc, char **argv) {
 
     po::options_description command_line_options("");
     command_line_options.add_options()
+      ("explain,e", "print an explanation of TYPE, which must be provided")
       ("help,h", "produce help message")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
       ("version", "print the version and exit");
@@ -133,6 +175,7 @@ int main(int argc, char **argv) {
     }
 
     // Do the actual work
+    bool explain = vm.count("explain");
     auto ral = lib::open(data_dir);
 
     if (vm.count("type")) {
@@ -145,6 +188,11 @@ int main(int argc, char **argv) {
       }
 
       auto& type = *opt_type;
+
+      if (explain) {
+        print_explanation(*type);
+        return EXIT_SUCCESS;
+      }
 
       if (vm.count("name")) {
         // We have a resource name
@@ -186,6 +234,10 @@ int main(int argc, char **argv) {
         }
       }
     } else {
+      if (explain) {
+        boost::nowide::cout << "please provide a type" << endl;
+        return EXIT_FAILURE;
+      }
       // No type given, list known types
       auto types = ral.types();
       for (auto t = types.begin(); t != types.end(); ++t) {

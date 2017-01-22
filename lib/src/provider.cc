@@ -146,6 +146,11 @@ namespace libral {
     return spec->read_string(v);
   }
 
+  const std::string& provider::source() const {
+    static const std::string s_builtin = "builtin";
+    return s_builtin;
+  }
+
   result<bool> provider::prepare() {
     auto res = describe();
     if (!res) {
