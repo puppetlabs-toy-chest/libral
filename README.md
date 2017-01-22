@@ -61,7 +61,7 @@ following:
 - [X] add a shell provider
 - [X] event reporting on update
 - [X] simple type system and checking for provider attributes
-- [ ] produce help/details about providers
+- [X] produce help/details about providers
 - [ ] add a json calling convention and use it in a provider
 - more core providers
   - [ ] cron
