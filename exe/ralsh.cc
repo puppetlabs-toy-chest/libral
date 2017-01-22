@@ -19,6 +19,18 @@ namespace lib = libral;
 namespace po = boost::program_options;
 using namespace leatherman::locale;
 
+namespace color {
+  // Very porr man's output coloring
+  const std::string cyan = "\33[0;36m";
+  const std::string green = "\33[0;32m";
+  const std::string yellow = "\33[0;33m";
+  const std::string red = "\33[0;31m";
+  const std::string magenta = "\33[0;35m";
+  const std::string blue = "\33[0;34m";
+
+  const std::string reset = "\33[0m";
+}
+
 void help(po::options_description& desc)
 {
   const static std::string help1 =
@@ -39,22 +51,28 @@ Options:
   boost::nowide::cout << help1 << desc << endl;
 }
 
+static void print_resource_attr(const std::string& name,
+                                const lib::value& v,
+                                uint maxlen) {
+  cout << "  " << color::green << left << setw(maxlen) << name << color::reset
+       << " => '" << v << "'," << endl;
+}
+
 static void print_resource(lib::type& type, lib::resource& res) {
-  cout << type.name() << " { '" << res.name() << "':" << endl;
+  cout << color::blue << type.name() << color::reset << " { '"
+       << color::blue << res.name() << color::reset << "':" << endl;
   uint maxlen = 0;
   for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
     if (a->first.length() > maxlen) maxlen = a->first.length();
   }
   auto ens = res.lookup<std::string>("ensure");
   if (ens) {
-    cout << "  " << left << setw(maxlen) << "ensure"
-         << " => '" << (*ens) << "'," << endl;
+    print_resource_attr("ensure", *ens, maxlen);
   }
   for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
     if (a->first == "ensure")
       continue;
-    cout << "  " << left << setw(maxlen) << a->first
-         << " => '" << a->second << "'," << endl;
+    print_resource_attr(a->first, a->second, maxlen);
   }
   cout << "}" << endl;
 }
@@ -72,12 +90,15 @@ static void print_update(lib::type& type, lib::resource& res,
 static void print_attr_explanation(const std::string& name,
                                    const lib::attr::spec& attr,
                                    uint maxlen) {
-  cout << "  " << left << setw(maxlen) << name
-         << " : " << attr.desc() << endl;
-    cout << "  " << left << setw(maxlen) << " "
-         << " . kind = " << attr.get_kind() << endl;
-    cout << "  " << left << setw(maxlen) << " "
-         << " . type = " << attr.get_data_type() << endl;
+  cout << "  " << color::green << left << setw(maxlen)
+       << name << color::reset
+       << " : " << attr.desc() << endl;
+  cout << "  " << left << setw(maxlen) << " "
+       << " . kind = " << color::blue << attr.get_kind()
+                       << color::reset << endl;
+  cout << "  " << left << setw(maxlen) << " "
+       << " . type = " << color::blue << attr.get_data_type()
+                       << color::reset << endl;
 }
 
 static void print_explanation(lib::type& type) {
