@@ -20,28 +20,22 @@ namespace po = boost::program_options;
 
 void help(po::options_description& desc)
 {
-  boost::nowide::cout <<
-    "Synopsis\n"
-    "========\n"
-    "\n"
-    "Uses the Puppet RAL to directly interact with the system.\n"
-    "\n"
-    "Usage\n"
-    "=====\n"
-    "\n"
-    /* Not implemented:
-       [-d|--debug] [-v|--verbose] [-e|--edit] [-p|--param parameter] [-t|--types] [-y|--to_yaml]
-    */
-    "  ralsh [-h|--help] type [name] [attribute=value ...]\n"
-    "\n"
-    "Options\n"
-    "=======\n\n" << desc <<
-    "\nDescription\n"
-    "===========\n"
-    "This command provides simple facilities for converting current system state\n"
-    "into Puppet code, along with some ability to modify the current state using\n"
-    "Puppet's RAL."
-    "\n" << endl;
+  const static std::string help1 =
+R"txt(Usage: ralsh [OPTION]... [TYPE [NAME [ATTRIBUTE=VALUE] ... ] ]
+Print resources managed by libral and modify them.
+
+The positional arguments make ralsh behave in the following way:
+  ralsh           : list all the types that libral knows about.
+  ralsh TYPE      : list all instances of TYPE
+  ralsh TYPE NAME : list just TYPE[NAME]
+  ralsh TYPE NAME ATTRIBUTE=VALUE ... :
+                    modify TYPE[NAME] by setting the provided attributes
+                    to the corresponding values. Print the resulting resource
+                    and a list of the changes that were made.
+
+Options:
+)txt";
+  boost::nowide::cout << help1 << desc << endl;
 }
 
 static void print_resource(lib::type& type, lib::resource& res) {
