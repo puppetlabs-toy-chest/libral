@@ -1,0 +1,27 @@
+---
+# An example of valid metadata for a provider.
+# See ../../doc/metadata.md for details
+provider:
+  # the type for which this provider manages resources
+  type: some_type
+  # the invocation method/calling convention for this provider
+  invoke: simple
+  # the actions this provider supports. Each of the actions listed in this
+  # array can be omitted
+  actions: [list,find,update]
+  # whether the provider can be used on this system; must be true or false
+  suitable: true
+  # specification of the provider's attributes
+  # See ../../doc/attributes.md for details
+  attributes:
+    name:
+      desc: what the name of a resource means
+      type: string
+    ensure:
+      desc: ensure a certain state for this resource
+      type: enum[present, absent, limbo]
+      kind: rw
+    some_attr:
+      desc: something specific to these resources
+      type: string
+      kind: rw

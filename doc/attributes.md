@@ -1,8 +1,9 @@
 # Resource attributes
 
-Every provider defines, as part of its metadata, what attributes it has
-and, for each of them, their data type and whether that attribute can be
-read or written.
+Every provider defines, as part of its [metadata](metadata.md), what
+attributes it has and, for each of them, their data type and whether that
+attribute can be read or written. A complete example can be found
+[here](../examples/providers/metadata.yaml)
 
 There is one attribute that every resource needs to have: `name`, which
 must be of type `string`. This attribute can not be changed through
@@ -11,15 +12,13 @@ resources managed by a specific provider.
 
 ## Specifying provider attributes
 
-Provider attributes are specified in YAML (TODO: clarify where that YAML
-comes from) in the following way:
+Provider attributes are specified in the YAML metadata that the `describe`
+action for each provider returns.
 
 ```yaml
 ---
 provider:
-  name: <provider_name>
-  type: <type_name>
-  desc: <description of what the provider does>
+  ... general provider metadata ...
   attributes:
     name:
       desc: <description of name in the context of this provider>

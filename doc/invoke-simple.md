@@ -4,10 +4,6 @@ A script that follows the `simple` calling convention must, at a minimum,
 be able to describe itself and list all resources of a certain kind. In
 addition, it may be able to find a resoure by name, or update a resource.
 
-**FIXME**: to make discovery simpler/unambiguous, we want scripts to be
-called `script.prov`, i.e. have a `.prov` extension. They also must be
-executable.
-
 When a `simple` script is invoked, it receives a number of key/value pairs
 as command line arguments, i.e. if the script is called `script.prov`,
 `libral` will invoke it as

@@ -93,12 +93,13 @@ started with `libral`, you should write your first providers using the
 `data/providers/` and be executable files whose name ends in `.prov`.
 
 * [simple](doc/invoke-simple.md)
-* `json` (planned): input/output via JSON
+* [json](doc/invoke-json.md): input/output via JSON
 * `json_batch` (planned,maybe): input/output via JSON, can operate on multiple resources at once
 * [native](doc/invoke-native.md)
 
-For all of these, you will also want to read up on
-[how to specify resource attributes](doc/attributes.md)
+For all of these, you will also want to read up on the
+[metadata](doc/metadata.md) that each provider needs to produce to describe
+itself.
 
 ## Todo list
 
