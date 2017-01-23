@@ -1,13 +1,24 @@
 # Libral
 
-Libral is a sketch of an attempt to try and build a native provider
-platform/framework. The goals of this are
+Libral is a systems management library that makes it possible to query and
+modify system resources (files, packages, services, etc.) through a
+desired-state API. It's goals are:
 
-* Roughly match the functionality of the `puppet resource` command
-* Serve as the basis for Puppet's provider system
-* Avoid being Puppet specific as much as possible to make it useful for
-  other uses
-* Make writing providers very easy
+* Provide a management API for UNIX-like systems to query and modify
+  system resources
+* Make managing new kinds of resources very simple; in particular, there is
+  no need to write native code to add new providers and they can be
+  arbitrary scripts that adhere to one of a number of simple calling
+  conventions
+* Express both current state and desired state in a simple, unified form
+* Guarantee that all changes are done idempotently, by enforcing desired
+  state only when changes are needed
+* Have a very small default footprint enabling use of `libral` in
+  resource-constrained environments such as devices or containers
+* Be versatile enough to serve as the basis of more extensive configuration
+  management systems, such as
+  [Puppet](https://github.com/puppetlabs/puppet/) without being directly
+  tied to any one of them.
 
 ## Getting in touch
 
@@ -28,32 +39,65 @@ let [us](mailto:libral@googlegroups.com) know.
 
 ## Usage
 
-After you built `libral` you can try things out by running `ralsh`:
+After you built `libral` or after you downloaded and unpacked the
+[precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
+you can try things out by running `ralsh`:
 
 ```bash
+    # If you downloaded the precompiled tarball
+    alias ralsh=$TARBALL_LOCATION/ral/bin/ralsh
+
+    # Only if you built libral from source
     export RALSH_DATA_DIR=$LIBRAL_CHECKOUT/data
+    alias ralsh=$LIBRAL_CHECKOUT/bin/ralsh
+
     # list available types
-    ./bin/ralsh
+    ralsh
     # list all instances of a type
-    ./bin/ralsh mount
+    ralsh mount
     # list a specific instance
-    ./bin/ralsh service crond
+    ralsh service crond
     # make a change for the better
-    ./bin/ralsh service crond ensure=stopped
+    ralsh service crond ensure=stopped
 ```
 
 ### Running inside a container
 
-The script `examples/dpack` produces a directory `build/dpack` that has a
-statically linked `ralsh` plus all supporting files in it. You can copy
-`build/dpack` into a container and then run it with commands like the
-following:
+The
+[precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
+contains a statically linked `ralsh` and all supporting files in it. After
+unpacking the tarball, you can copy it into a container and run it like
+this:
 
 ```bash
-   CONTAINER=<some_container>
-   docker cp build/dpack $CONTAINER:/tmp
-   docker exec $CONTAINER /bin/sh -c "RALSH_DATA_DIR=/tmp/dpack/data /tmp/dpack/bin/ralsh"
+    CONTAINER=<some_container>
+    docker cp $TARBALL_LOCATION/ral $CONTAINER:/tmp
+    docker exec $CONTAINER /bin/sh -c /tmp/ral/bin/ralsh
+    docker exec $CONTAINER /bin/sh -c '/tmp/ral/bin/ralsh user root'
 ```
+
+## Writing providers
+
+What resources `libral` can manage is determined by what providers are
+available. Some providers are built in and implemented in C++, but doing
+that is of course labor-intensive and should only be done for good
+reason. It is much simpler, and recommended, that new providers first be
+implemented as external providers. External providers are nothing more than
+scripts or other executables that follow one of `libral`'s calling
+conventions. The different calling conventions trade off implementation
+complexity for expressive power.
+
+The following calling conventions are available. If you are just getting
+started with `libral`, you should write your first providers using hte
+`simple` calling convention.
+
+* [simple](doc/invoke-simple.md)
+* `json` (planned): input/output via JSON
+* `json_batch` (planned,maybe): input/output via JSON, can operate on multiple resources at once
+* [native](doc/invoke-native.md)
+
+For all of these, you will also want to read up on
+[how to specify resource attributes](doc/attributes.md)
 
 ## Todo list
 
@@ -118,71 +162,3 @@ meaning (or should it?)
   rather than making it part of the framework ?
 - Would it be better to make providers responsible for event generation
   rather than doing that in the framework ?
-
-## External providers
-
-What resources `libral` can manage is determined by what providers are
-available. Some providers are built in and implemented in C++, but doing
-that is of course labor-intensive and should only be done for good
-reason. It is much simpler, and recommended, that new providers first be
-implemented as external providers. External providers are nothing more than
-scripts or other executables that follow one of `libral`'s calling
-conventions. The different calling conventions trade off implementation
-complexity for expressive power.
-
-The following calling conventions are available. If you are just getting
-started with `libral`, you should write your first providers using hte
-`simple` calling convention.
-
-* [simple](doc/invoke-simple.md)
-* `augeas` (planned,maybe): when you mostly need to twiddle entries in a file,
-and maybe run a command
-* `json` (planned): input/output via JSON
-* `json_batch` (planned,maybe): input/output via JSON, can operate on multiple resources at once
-
-## Provider lifecycle
-
-The lifecycle for providers written in C++ follows the outline below. This
-applies only to C++ providers - external providers follow a much simpler
-lifecycle which is described in the section above for each calling
-convention.
-
-```cpp
-    some_provider prov();
-
-    // A call to suitable() must also initialize any provider internals.
-    // Once suitable() returns true, the provider must be ready to use.
-    if (prov.suitable()) {
-      // Called by libral once when it sets up a provider
-      auto metadata = prov.describe();
-
-      // Loop over all resources
-      for (auto rsrc : prov.instances()) {
-        auto should = get_new_attrs_from_somewhere(rsrc.name());
-        rsrc.update(should);
-      }
-
-      // or do something to a specific resource
-      auto rsrc = prov.find(some_name);
-      attr_map should = { { "ensure", "absent" } };
-      rsrc.update(should);
-
-      // or create a new one
-      auto rsrc = prov.create("new_one");
-      auto should = get_new_attrs_from_somewhere_else();
-      rsrc.update(should);
-
-      // make sure all changes have been written to disk
-      prov.flush();
-
-      // not sure yet if we need an explicit 'close' call
-      prov.close()
-    }
-```
-
-* Rather than returning just a `bool`, at some point `suitable()` will need
-  to return more details about what the provider does and whether it can be
-  used
-* At some point, we'll need a notion of a context that tells providers
-  about system details (like facts) and some settings; would be cool to use
-  that to change the idea of where the root of the FS is, for example.
