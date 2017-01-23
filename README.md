@@ -88,8 +88,9 @@ conventions. The different calling conventions trade off implementation
 complexity for expressive power.
 
 The following calling conventions are available. If you are just getting
-started with `libral`, you should write your first providers using hte
-`simple` calling convention.
+started with `libral`, you should write your first providers using the
+`simple` calling convention. For now, all providers need to be placed into
+`data/providers/` and be executable files whose name ends in `.prov`.
 
 * [simple](doc/invoke-simple.md)
 * `json` (planned): input/output via JSON
