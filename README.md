@@ -142,8 +142,10 @@ and maybe run a command
 
 ## Provider lifecycle
 
-The intent is that the lifecycle for providers will be roughly something
-like this:
+The lifecycle for providers written in C++ follows the outline below. This
+applies only to C++ providers - external providers follow a much simpler
+lifecycle which is described in the section above for each calling
+convention.
 
 ```cpp
     some_provider prov();
@@ -151,22 +153,24 @@ like this:
     // A call to suitable() must also initialize any provider internals.
     // Once suitable() returns true, the provider must be ready to use.
     if (prov.suitable()) {
+      // Called by libral once when it sets up a provider
+      auto metadata = prov.describe();
 
       // Loop over all resources
       for (auto rsrc : prov.instances()) {
-        auto should = get_new_attrs_from_somewhere();
+        auto should = get_new_attrs_from_somewhere(rsrc.name());
         rsrc.update(should);
       }
 
       // or do something to a specific resource
       auto rsrc = prov.find(some_name);
-      rsrc.destroy();
+      attr_map should = { { "ensure", "absent" } };
+      rsrc.update(should);
 
       // or create a new one
       auto rsrc = prov.create("new_one");
       auto should = get_new_attrs_from_somewhere_else();
       rsrc.update(should);
-      rsrc.flush()
 
       // make sure all changes have been written to disk
       prov.flush();

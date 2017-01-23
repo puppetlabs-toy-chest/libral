@@ -4,7 +4,8 @@
 #include <memory>
 #include <boost/optional.hpp>
 
-#include "type.hpp"
+#include <libral/result.hpp>
+#include <libral/type.hpp>
 
 namespace libral {
   class ral {
@@ -17,6 +18,9 @@ namespace libral {
   private:
     bool add_type(std::vector<std::unique_ptr<type>>& types,
                   const std::string& name, std::shared_ptr<provider> prov);
+    result<YAML::Node> parse_metadata(const std::string& path,
+                                      const std::string& yaml) const;
+    result<std::string> run_describe(const std::string& path) const;
     std::string _data_dir;
   };
 }
