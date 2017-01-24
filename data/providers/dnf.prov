@@ -1,0 +1,232 @@
+#! /usr/bin/python
+
+import json
+import sys
+
+try:
+    import dnf
+    from dnf import cli, const, exceptions, subject, util
+    HAS_DNF = True
+except ImportError:
+    HAS_DNF = False
+
+METADATA="""
+---
+provider:
+  type: package
+  invoke: json
+  actions: [list,find,update]
+  suitable: {suitable}
+  attributes:
+    name:
+      desc: the name of the package
+    ensure:
+      desc: what state the package should be in
+      # Our type system is not strong enough to be more precise. ensure is
+      # either one of enum[present,installed,absent,purged,held,latest] or
+      # a version number (so string might be as tightly as this can be
+      # typed anyway
+      type: string
+    allow_virtual:
+      desc: |
+        specifies if virtual package names are allowed for install and uninstall
+      type: boolean
+      kind: w
+    category:
+      desc: a read-only parameter set by the package
+      kind: r
+    description:
+      desc: a read-only parameter set by the package
+      kind: r
+    install_options:
+      desc: an array of additional options to pass when installing a package
+      kind: w
+    instance:
+      desc: a read-only parameter set by the package
+      kind: r
+    platform:
+      desc: a read-only parameter set by the package
+      kind: r
+    root:
+      desc: a read-only parameter set by the package
+      kind: r
+    status:
+      desc: a read-only parameter set by the package
+      kind: r
+    vendor:
+      desc: a read-only parameter set by the package
+      kind: r
+"""
+
+DNF="/usr/bin/dnf"
+
+#
+# Utility methods
+#
+
+def dnf_base():
+    """Return a fully configured dnf Base object."""
+    base = dnf.Base()
+    # Configure base
+    conf = base.conf
+    conf.debuglevel = 0
+    conf.assumeyes = True
+    conf.read()
+
+    base.read_all_repos()
+    base.fill_sack(load_system_repo='auto')
+    return base
+
+
+def pkg_as_json(pkg):
+    """Return a dictionary of information for the package."""
+    result = {
+        'name': pkg.name,
+        'ensure': pkg.version,
+        'platform': pkg.arch}
+    return result
+
+def find_installed(base, name):
+    q=base.sack.query()
+    pkgs=q.installed().filter(name=name)
+    if len(pkgs) == 0:
+        return None
+    else:
+        return pkgs[0]
+
+#
+# Provider actions
+#
+def do_describe():
+    suitable=HAS_DNF
+    print(METADATA.format(suitable=str(suitable).lower()))
+
+def do_list(inp):
+    base=dnf_base()
+    q=base.sack.query()
+    return {
+        "resources": [pkg_as_json(pkg) for pkg in q.installed()]
+    }
+
+def do_find(inp):
+    name = inp["resource"]["name"]
+    base=dnf_base()
+    pkg=find_installed(base, name)
+    if pkg:
+        return { "resource": pkg_as_json(pkg) }
+    else:
+        return {
+            "error": {
+                "message": ("no package %s found" % name),
+                "kind": "unknown" } }
+
+def dnf_run(base, name, noop):
+    base.resolve()
+    if not noop:
+        base.download_packages(base.transaction.install_set)
+        base.do_transaction()
+    pkgs=[p for p in base.transaction.install_set if p.name == name]
+    if len(pkgs) == 1:
+        return pkgs[0]
+    else:
+        return find_installed(base, name)
+
+def do_update(inp):
+    if not util.am_i_root():
+        return {
+            "error": {
+                "message": "only the root user can make package changes",
+                "kind": "failed"
+            } }
+    should=inp["resource"]
+    ensure=should["ensure"]
+    name=should["name"]
+    noop=inp["ral"]["noop"]
+    base=dnf_base()
+    result = { "changes": { } }
+    is_pkg=find_installed(base, name)
+    try:
+        if ensure == "present" or ensure == "installed":
+            if not is_pkg:
+                base.install(name)
+                pkg=dnf_run(base, name, noop)
+                result["changes"]["ensure"] = { "is": pkg.version,
+                                                "was": "absent" }
+            return result
+        elif ensure == "absent" or ensure == "purged":
+            if is_pkg:
+                base.remove(name)
+                pkg=dnf_run(base, name, noop)
+                result["changes"]["ensure"] = { "is": ensure,
+                                                "was": is_pkg.version }
+            return result
+        elif ensure == "held":
+            # No idea what this is supposed to do
+            return { "error": { "message": "not implemented", "kind": "failed" }}
+        elif ensure == "latest":
+            if is_pkg:
+                base.upgrade(name)
+                pkg=dnf_run(base, name, noop)
+                if pkg.version != new_pkg.version:
+                    result["changes"]["ensure"] = { "is": pkg.version,
+                                                    "was": is_pkg.version }
+            else:
+                base.install(name)
+                pkg=dnf_run(base, name, noop)
+                result["changes"]["ensure"] = { "is": pkg.version,
+                                                "was": "absent" }
+            return result
+        else:
+            target=("%s-%s" % (name, ensure))
+            if is_pkg:
+                if is_pkg.version != ensure:
+                    base.upgrade(target)
+                    pkg=dnf_run(base, name, noop)
+                    result["changes"]["ensure"] = { "is": pkg.version,
+                                                    "was": is_pkg.version }
+            else:
+                base.install(target)
+                pkg=dnf_run(base, name, noop)
+                result["changes"]["ensure"] = { "is": pkg.version,
+                                                "was": "absent" }
+            return result
+    except exceptions.Error as e:
+        return { "error": { "message": str(e), "kind": "failed" } }
+    finally:
+        base.close()
+
+def die(msg):
+    print msg
+    sys.exit(1)
+
+def parse_stdin():
+    inp=json.load(sys.stdin)
+    # Checking isn't strictly necessary as libral will make sure that all
+    # these things are set up right, but it helps when monkeying around
+    # from the command line
+    if not isinstance(inp, dict):
+        die("input must be a dict")
+    return inp
+
+def dump(obj):
+    print(json.dumps(obj))
+
+def main():
+    if len(sys.argv) < 2:
+        print "usage: dnf.prov ral_action=<action>"
+        sys.exit(1)
+    action=sys.argv[1].split("=")[-1]
+    if action == "describe":
+        do_describe()
+    elif action == "list":
+        dump(do_list(parse_stdin()))
+    elif action == "find":
+        dump(do_find(parse_stdin()))
+    elif action == "update":
+        dump(do_update(parse_stdin()))
+    else:
+        print("unsupported action: '%s'" % action)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
