@@ -2,7 +2,7 @@
 
 Libral is a systems management library that makes it possible to query and
 modify system resources (files, packages, services, etc.) through a
-desired-state API. It's goals are:
+desired-state API. Its goals are to:
 
 * Provide a management API for UNIX-like systems to query and modify
   system resources
@@ -11,14 +11,14 @@ desired-state API. It's goals are:
   arbitrary scripts that adhere to one of a number of simple calling
   conventions
 * Express both current state and desired state in a simple, unified form
-* Guarantee that all changes are done idempotently, by enforcing desired
+* Guarantee that all changes are done idempotently by enforcing desired
   state only when changes are needed
-* Have a very small default footprint enabling use of `libral` in
+* Have a very small default footprint that enables use of `libral` in
   resource-constrained environments such as devices or containers
 * Be versatile enough to serve as the basis of more extensive configuration
   management systems, such as
-  [Puppet](https://github.com/puppetlabs/puppet/) without being directly
-  tied to any one of them.
+  [Puppet](https://github.com/puppetlabs/puppet/), without being directly
+  dependent on any one of them.
 
 ## Getting in touch
 
@@ -34,13 +34,13 @@ If you just want to quickly try out `libral`, you can download a
 [precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
 ([GPG signature](http://download.augeas.net/libral/ralsh-latest.tgz.sig))
 that should work on any Linux machine that has glibc 2.12 or later. (It
-might actually work with glibc 2.8 or later) If you succeed in that, please
+might actually work with glibc 2.8 or later.) If you succeed in that, please
 let [us](mailto:libral@googlegroups.com) know.
 
 ## Usage
 
-After you built `libral` or after you downloaded and unpacked the
-[precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
+After you build `libral`, or after you download and unpack the
+[precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz),
 you can try things out by running `ralsh`:
 
 ```bash
@@ -65,7 +65,7 @@ you can try things out by running `ralsh`:
 
 The
 [precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
-contains a statically linked `ralsh` and all supporting files in it. After
+contains a statically linked `ralsh` and all supporting files. After
 unpacking the tarball, you can copy it into a container and run it like
 this:
 
@@ -80,7 +80,7 @@ this:
 
 What resources `libral` can manage is determined by what providers are
 available. Some providers are built in and implemented in C++, but doing
-that is of course labor-intensive and should only be done for good
+that is of course labor intensive and should only be done for good
 reason. It is much simpler, and recommended, that new providers first be
 implemented as external providers. External providers are nothing more than
 scripts or other executables that follow one of `libral`'s calling
