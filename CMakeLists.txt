@@ -28,7 +28,7 @@ option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${RAL_STATIC})
 find_package(YAMLCPP REQUIRED)
 
 # Leatherman setup
-SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution)
+SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution json_container)
 SET(BOOST_STATIC ${RAL_STATIC})
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 

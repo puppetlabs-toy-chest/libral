@@ -5,6 +5,7 @@
 #include <libral/file.hpp>
 
 #include <libral/simple_provider.hpp>
+#include <libral/json_provider.hpp>
 #include <leatherman/file_util/directory.hpp>
 #include <leatherman/execution/execution.hpp>
 #include <leatherman/logging/logging.hpp>
@@ -79,12 +80,17 @@ namespace libral {
       }
 
       auto invoke = meta["invoke"].as<std::string>("(none)");
-      if (invoke == "simple") {
-        auto sprov = new simple_provider(path, node);
-        auto prov = std::shared_ptr<provider>(sprov);
+      if (invoke == "simple" || invoke == "json") {
+        provider *raw_prov;
+        if (invoke == "simple") {
+          raw_prov = new simple_provider(path, node);
+        } else {
+          raw_prov = new json_provider(path, node);
+        }
+        auto prov = std::shared_ptr<provider>(raw_prov);
         if (add_type(result, type_name, prov)) {
-          LOG_INFO(_("provider[{1}] (simple) for {2} loaded",
-                     path, type_name));
+          LOG_INFO(_("provider[{1}] ({2}) for {3} loaded",
+                     path, invoke, type_name));
         }
       } else if (invoke == "(none)") {
         LOG_ERROR("provider[{1}]: no calling convention given under 'provider.invoke'",
