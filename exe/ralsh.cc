@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
           }
           auto res = type->update(name, attrs);
           type->flush();
-          print_update(*type, *(res.first), *(res.second));
+          print_update(*type, *(res.first), res.second);
         } else {
           // No attributes, dump the resource
           auto inst = type->find(name);
