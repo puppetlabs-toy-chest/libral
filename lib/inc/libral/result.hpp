@@ -43,8 +43,8 @@ namespace libral {
     result(const error& err) : _tag(tag::err), _err(err) {};
     result(error&& err) : _tag(tag::err), _err(std::move(err)) {};
 
-    result(const result& other) { assign(other); }
-    result(result&& other) { assign(std::move(other)); }
+    result(const result& other) { init(other); }
+    result(result&& other) { init(std::move(other)); }
 
     result& operator=(const result& other) {
       assign(other);
@@ -199,6 +199,15 @@ namespace libral {
       }
     }
 
+    void init(const result& other) {
+      _tag = other._tag;
+      if (_tag == tag::ok) {
+        new (&_ok) R(other._ok);
+      } else {
+        new (&_err) error(other._err);
+      }
+    }
+
     /* Assign by move */
     void assign(error&& err) {
       if (_tag == tag::ok) {
@@ -225,6 +234,15 @@ namespace libral {
         assign(std::move(other._ok));
       } else {
         assign(std::move(other._err));
+      }
+    }
+
+    void init(result&& other) {
+      _tag = other._tag;
+      if (_tag == tag::ok) {
+        new (&_ok) R(std::move(other._ok));
+      } else {
+        new (&_err) error(std::move(other._err));
       }
     }
 
