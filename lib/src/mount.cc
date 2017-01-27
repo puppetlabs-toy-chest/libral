@@ -1,6 +1,6 @@
 #include <libral/mount.hpp>
 
-#include <iostream>
+#include <sstream>
 
 #include <leatherman/execution/execution.hpp>
 
@@ -16,8 +16,15 @@ namespace libral {
 
   result<bool> mount_provider::suitable() {
     if (this->aug == nullptr) {
-      this->aug = aug::handle::make(_ral->data_dir() + "/lenses",
-                                    AUG_NO_MODL_AUTOLOAD);
+      std::stringstream buf;
+      bool first=true;
+      for (auto dir : _ral->data_dirs()) {
+        if (!first)
+          buf << ":";
+        first=false;
+        buf << dir << "/lenses";
+      }
+      this->aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
 
       aug->include("Mount_Fstab.lns", "/etc/fstab");
       aug->include("Mount_Fstab.lns", "/etc/mtab");

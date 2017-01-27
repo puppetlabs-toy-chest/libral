@@ -24,7 +24,7 @@ namespace libral {
     return std::shared_ptr<ral>(handle);
   }
 
-  ral::ral(const std::string& data_dir) : _data_dir({ data_dir }) { }
+  ral::ral(const std::string& data_dir) : _data_dirs({ data_dir }) { }
 
   bool ral::add_type(std::vector<std::unique_ptr<type>>& types,
                      const std::string& name, std::shared_ptr<provider> prov) {
@@ -108,7 +108,9 @@ namespace libral {
       return true;
     };
 
-    leatherman::file_util::each_file(_data_dir + "/providers", cb , "\\.prov$");
+    for (auto dir : _data_dirs) {
+      leatherman::file_util::each_file(dir + "/providers", cb , "\\.prov$");
+    }
     return result;
   }
 

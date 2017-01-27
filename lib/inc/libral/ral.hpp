@@ -16,7 +16,7 @@ namespace libral {
     /* Create an instance of the RAL */
     static std::shared_ptr<ral> create(const std::string& data_dir);
 
-    const std::string& data_dir() const { return _data_dir; }
+    const std::vector<std::string>& data_dirs() const { return _data_dirs; }
   protected:
     ral(const std::string& data_dir);
   private:
@@ -25,6 +25,6 @@ namespace libral {
     result<YAML::Node> parse_metadata(const std::string& path,
                                       const std::string& yaml) const;
     result<std::string> run_describe(const std::string& path) const;
-    std::string _data_dir;
+    std::vector<std::string> _data_dirs;
   };
 }
