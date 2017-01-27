@@ -52,13 +52,13 @@ namespace libral {
     return result;
   }
 
-  std::unique_ptr<result<changes>>
+  result<changes>
   user_provider::user_resource::update(const attr_map& should) {
     auto props = { "comment", "gid", "home", "shell", "uid" };
 
     auto& self = *this;
-    auto res = result<changes>::make_unique();
-    changes& chgs = res->ok();
+    auto res = result<changes>(changes());
+    changes& chgs = res.ok();
 
     auto state = lookup<std::string>("ensure", "absent");
     auto ensure = should.lookup<std::string>("ensure", state);
@@ -111,7 +111,7 @@ namespace libral {
     } else if (ensure == "absent") {
       leatherman::execution::execute(_prov->_cmd_userdel, { "-r", name() });
     } else if (ensure == "role") {
-      return result<changes>::make_unique(error("can not ensure=role with this provider"));
+      return error("can not ensure=role with this provider");
     }
     return res;
   }

@@ -212,10 +212,10 @@ namespace libral {
    *   same row
    * - 'metadata', 'content', 'target' are short for 'update_metadata' etc.
    */
-  fprov::change_result_uptr
+  result<changes>
   fprov::file_resource::update(const attr_map& should) {
     auto& is = *this;
-    auto res = result<changes>::make_unique();
+    result<changes> res;
 
     auto state = lookup<std::string>("ensure", s_absent);
     if (state == s_present) {
@@ -238,8 +238,8 @@ namespace libral {
     // See if we would have to mutate a directory to something else without
     // the force flag
     if (state == s_directory && state != ensure && !force) {
-      *res = error(_("Cannot change file '{1}' from directory to {2}",
-                     name(), ensure));
+      res = error(_("Cannot change file '{1}' from directory to {2}",
+                    name(), ensure));
       return res;
     }
 
@@ -247,44 +247,44 @@ namespace libral {
     // by doing the same as if the file was absent
     if (ensure != state) {
       if (state != s_absent) {
-        remove(*res, state, force);
-        if (!(*res)) {
+        remove(res, state, force);
+        if (!res) {
           return res;
         }
       }
 
-      changes& chgs = res->ok();
+      changes& chgs = res.ok();
       is["ensure"] = ensure;
       chgs.add("ensure", ensure, state);
     }
 
     if (ensure == s_file) {
       if (state == s_absent) {
-        create_file(*res);
+        create_file(res);
       }
-      update_metadata(*res, should);
-      update_content(*res, should);
+      update_metadata(res, should);
+      update_content(res, should);
     } else if (ensure == s_directory) {
       if (state == s_absent) {
-        create_directory(*res);
+        create_directory(res);
       }
-      update_metadata(*res, should);
+      update_metadata(res, should);
     } else if (ensure == s_link) {
       auto target = should.lookup<std::string>("target");
       if (!target) {
-        *res = error(_("ensure for '{1}' is 'link', but target is not set",
+        res = error(_("ensure for '{1}' is 'link', but target is not set",
                        name()));
         return res;
       }
-      update_target(*res, state, *target);
-      update_metadata(*res, should);
+      update_target(res, state, *target);
+      update_metadata(res, should);
     } else if (ensure == s_absent) {
-      remove(*res, state, force);
+      remove(res, state, force);
     } else {
-      *res = error(_("Illegal ensure value '{1}'", ensure));
+      res = error(_("Illegal ensure value '{1}'", ensure));
     }
 
-    if (*res && res->ok().size() > 0) {
+    if (res && res.ok().size() > 0) {
       // If we made any changes, just restat all metadata
       _prov->load(is);
     }

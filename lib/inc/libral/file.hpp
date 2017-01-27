@@ -60,14 +60,13 @@ namespace libral {
   public:
 
     using shared_provider_ptr = std::shared_ptr<file_provider>;
-    using change_result_uptr = std::unique_ptr<result<changes>>;
 
     class file_resource : public resource {
     public:
       file_resource(shared_provider_ptr& prov, const std::string& name)
         : resource(name), _prov(prov) { }
 
-      change_result_uptr update(const attr_map& should);
+      result<changes> update(const attr_map& should) override;
     private:
       void update_metadata(result<changes>& res, const attr_map& should);
       void update_content(result<changes>& res, const attr_map& should);

@@ -62,7 +62,7 @@ namespace libral {
         attrs["content"] = "stuff";
         auto upd = rsc.update(attrs);
         REQUIRE(upd);
-        auto& chgs = upd->ok();
+        auto& chgs = upd.ok();
         REQUIRE(chgs.exists("ensure"));
         REQUIRE(chgs.exists("mode"));
         REQUIRE(rsc["ensure"] == value("file"));
@@ -93,7 +93,7 @@ namespace libral {
         attrs["target"] = "/tmp";
         auto upd = rsc.update(attrs);
         REQUIRE(upd);
-        auto& chgs = upd->ok();
+        auto& chgs = upd.ok();
         REQUIRE(chgs.size() == 2);
         REQUIRE(chgs.exists("ensure"));
         REQUIRE(chgs.exists("target"));
@@ -108,7 +108,7 @@ namespace libral {
         attrs["target"] = "/var/tmp";
         auto upd = rsc.update(attrs);
         REQUIRE(upd);
-        auto& chgs = upd->ok();
+        auto& chgs = upd.ok();
         REQUIRE(chgs.size() == 1);
         REQUIRE(chgs.exists("target"));
         REQUIRE(rsc["ensure"] == value("link"));
@@ -121,7 +121,7 @@ namespace libral {
         attrs["ensure"] = "directory";
         auto upd = rsc.update(attrs);
         REQUIRE(upd);
-        auto& chgs = upd->ok();
+        auto& chgs = upd.ok();
         REQUIRE(chgs.size() == 1);
         REQUIRE(chgs.exists("ensure"));
         REQUIRE(rsc["ensure"] == value("directory"));

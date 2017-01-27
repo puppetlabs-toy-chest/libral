@@ -20,7 +20,7 @@ namespace libral {
     return result;
   }
 
-  std::pair<std::unique_ptr<resource>,std::unique_ptr<result<changes>>>
+  std::pair<std::unique_ptr<resource>, result<changes>>
   type::update(const std::string& name,
                const attr_map& attrs) {
     auto opt_rsrc = _prov->find(name);
@@ -34,8 +34,8 @@ namespace libral {
     auto ch = res->update(attrs);
     return
       std::pair<std::unique_ptr<resource>,
-                std::unique_ptr<result<changes>>>(std::move(res),
-                                                  std::move(ch));
+                result<changes>>(std::move(res),
+                                 std::move(ch));
   }
 
   result<value> type::parse(const std::string &name, const std::string &v) {

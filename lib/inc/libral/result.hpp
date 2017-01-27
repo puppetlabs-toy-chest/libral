@@ -35,6 +35,7 @@ namespace libral {
   private:
     enum class tag { err, ok };
   public:
+    result() : result(R()) {};
     result(R& ok) : _tag(tag::ok), _ok(ok) {};
     result(const R& ok) : _tag(tag::ok), _ok(ok) {};
     result(R&& ok) : _tag(tag::ok), _ok(std::move(ok)) {};

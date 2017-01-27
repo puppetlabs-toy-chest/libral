@@ -121,10 +121,10 @@ namespace libral {
     _base.set("passno", self["pass"].to_string(), "0");
   }
 
-  std::unique_ptr<result<changes>>
+  result<changes>
   mount_provider::mount_resource::update(const attr_map& should) {
-    auto res = std::unique_ptr<result<changes>>(new result<changes>(changes()));
-    changes& changes = res->ok();
+    result<changes> res;
+    changes& changes = res.ok();
 
     /* Possible values for ensure:
 

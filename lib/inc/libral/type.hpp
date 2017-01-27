@@ -20,7 +20,7 @@ namespace libral {
     boost::optional<std::unique_ptr<resource>> find(const std::string &name);
     std::vector<std::unique_ptr<resource>> instances(void);
     // @todo lutter 2016-06-08: some error indication might be nice
-    std::pair<std::unique_ptr<resource>, std::unique_ptr<result<changes>>>
+    std::pair<std::unique_ptr<resource>, result<changes>>
     update(const std::string& name, const attr_map& attrs);
     void flush() { _prov->flush(); }
 

@@ -51,7 +51,7 @@ namespace libral {
       user_resource(provider_ptr& prov, const std::string& name, bool exists)
         : resource(name), _prov(prov), _exists(exists) { }
 
-      std::unique_ptr<result<changes>> update(const attr_map& should);
+      result<changes> update(const attr_map& should) override;
     private:
       provider_ptr   _prov;
       /* Indicate whether this resource already exists on the system or is

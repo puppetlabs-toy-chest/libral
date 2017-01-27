@@ -39,7 +39,7 @@ namespace libral {
       mount_resource(std::shared_ptr<mount_provider>& prov, const std::string& name, const aug::node& base)
         : resource(name), _prov(prov), _base(base) { extract_base(); }
 
-      std::unique_ptr<result<changes>> update(const attr_map& should);
+      result<changes> update(const attr_map& should) override;
     private:
       // Copy properties from _base into _values
       void extract_base();

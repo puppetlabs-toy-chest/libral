@@ -106,7 +106,7 @@ namespace libral {
      * to be left alone. It is safe to assume that the current attributes
      * of the resource represent the 'is' state.
      */
-    virtual std::unique_ptr<result<changes>> update(const attr_map& should) = 0;
+    virtual result<changes> update(const attr_map& should) = 0;
   protected:
     /* Check if any of the attributes named in props differ between what we
        have and what is in should. If they differ, add a change entry to

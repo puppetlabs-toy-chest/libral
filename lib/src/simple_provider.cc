@@ -17,11 +17,11 @@ using namespace leatherman::locale;
 
 namespace libral {
 
-  std::unique_ptr<result<changes>>
+  result<changes>
   simple_provider::simple_resource::update(const attr_map &should) {
     std::vector<std::string> args;
-    auto rslt = result<changes>::make_unique();
-    auto& chgs = rslt->ok();
+    result<changes> rslt;
+    auto& chgs = rslt.ok();
 
     auto cb = [this, &chgs](std::string& key, std::string& value)
       -> result<bool> {
@@ -44,7 +44,7 @@ namespace libral {
     }
     auto r = _prov->run_action("update", cb, args);
     if (!r) {
-      return result<changes>::make_unique(r.err());
+      return r.err();
     } else {
       return rslt;
     }
