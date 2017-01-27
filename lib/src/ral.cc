@@ -18,7 +18,13 @@ namespace exe = leatherman::execution;
 using namespace leatherman::locale;
 
 namespace libral {
-  ral::ral(const std::string& data_dir) : _data_dir(data_dir) { }
+  std::shared_ptr<ral> ral::create(const std::string& data_dir) {
+    auto handle = new ral(data_dir);
+
+    return std::shared_ptr<ral>(handle);
+  }
+
+  ral::ral(const std::string& data_dir) : _data_dir({ data_dir }) { }
 
   bool ral::add_type(std::vector<std::unique_ptr<type>>& types,
                      const std::string& name, std::shared_ptr<provider> prov) {

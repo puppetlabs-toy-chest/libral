@@ -18,5 +18,4 @@ namespace libral {
    */
   std::string LIBRAL_EXPORT version();
 
-  ral open(const std::string& data_dir);
 }  // namespace libral

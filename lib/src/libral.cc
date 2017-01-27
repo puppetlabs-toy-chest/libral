@@ -12,8 +12,4 @@ namespace libral {
     //LOG_DEBUG("libral version is %1%", LIBRAL_VERSION_WITH_COMMIT);
     return LIBRAL_VERSION_WITH_COMMIT;
   }
-
-  ral open(const std::string& data_dir) {
-    return ral(data_dir);
-  }
 }  // libral

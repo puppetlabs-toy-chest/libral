@@ -198,12 +198,12 @@ int main(int argc, char **argv) {
 
     // Do the actual work
     bool explain = vm.count("explain");
-    auto ral = lib::open(data_dir);
+    auto ral = lib::ral::create(data_dir);
 
     if (vm.count("type")) {
       // We have a type name
       auto type_name = vm["type"].as<std::string>();
-      auto opt_type = ral.find_type(type_name);
+      auto opt_type = ral->find_type(type_name);
       if (opt_type == boost::none) {
         boost::nowide::cout << color::red
                             << _("unknown type: '{1}'", type_name)
@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
       }
       // No type given, list known types
-      auto types = ral.types();
+      auto types = ral->types();
       for (auto t = types.begin(); t != types.end(); ++t) {
         boost::nowide::cout << (*t)->name() << endl;
       }
