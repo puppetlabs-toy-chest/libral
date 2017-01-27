@@ -17,6 +17,7 @@ leatherman_logging_namespace("ral")
 # Setup compiling the library.
 include_directories(
   inc
+  ${PROJECT_BINARY_DIR}/inc
   ${AUGEAS_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}

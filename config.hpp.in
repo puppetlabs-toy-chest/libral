@@ -1,0 +1,3 @@
+#pragma once
+
+#define RALSH_DATA_DIR "@RALSH_DATA_DIR@"

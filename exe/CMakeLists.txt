@@ -7,6 +7,7 @@ leatherman_logging_namespace("puppetlabs.ralsh.command")
 # Setup compiling the executable.
 include_directories(
     ../lib/inc
+    ${PROJECT_BINARY_DIR}/inc
     ${Boost_INCLUDE_DIRS}
     ${LEATHERMAN_INCLUDE_DIRS}
 )

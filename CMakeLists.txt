@@ -10,6 +10,10 @@ project(libral VERSION 0.0.1)
 # now since Fedora is missing augeas-static, icu-static, and yaml-cpp-static
 option(RAL_STATIC "Build a static executable")
 
+# The default data dir. Providers should be placed into
+# RALSH_DATA_DIR/providers.
+set(RALSH_DATA_DIR "/usr/share/libral/data" CACHE STRING "where to look for providers etc. by default")
+
 string(MAKE_C_IDENTIFIER ${PROJECT_NAME} PROJECT_C_NAME)
 string(TOUPPER ${PROJECT_C_NAME} PROJECT_NAME_UPPER)
 string(TOLOWER ${PROJECT_C_NAME} PROJECT_NAME_LOWER)
@@ -56,6 +60,10 @@ feature_summary(WHAT ALL)
 
 add_subdirectory(lib)
 add_subdirectory(exe)
+
+configure_file("${PROJECT_SOURCE_DIR}/config.hpp.in"
+               "${PROJECT_BINARY_DIR}/inc/config.hpp")
+include_directories(${PROJECT_BINARY_DIR}/inc)
 
 # Add cpplint and cppcheck targets
 file(GLOB_RECURSE ALL_SOURCES lib/src/**/*.cc lib/inc/*.hpp exe/*.cc)
