@@ -233,6 +233,6 @@ namespace libral {
       }
       (*rsrc)[k] = value(json.get<std::string>(k));
     }
-    return rsrc;
+    return std::move(rsrc);
   }
 }
