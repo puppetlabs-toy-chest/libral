@@ -13,7 +13,7 @@ namespace fs = boost::filesystem;
 namespace libral {
   // We need to create a shared_ptr here because provider uses
   // shared_from_this and that only works if a shared_ptr already exists
-  auto ptr = std::make_shared<file_provider>("");
+  auto ptr = std::make_shared<file_provider>();
   auto& prv = *ptr;
 
   SCENARIO("instances() returns an empty vector") {

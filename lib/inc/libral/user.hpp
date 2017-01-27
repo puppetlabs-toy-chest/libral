@@ -60,8 +60,6 @@ namespace libral {
       bool           _exists;
     };
 
-    user_provider(const std::string& data_dir) : _data_dir(data_dir) { };
-
     const std::string& description();
     result<bool> suitable();
     void flush();

@@ -79,8 +79,6 @@ namespace libral {
       shared_provider_ptr _prov;
     };
 
-    file_provider(const std::string& data_dir) { };
-
     result<bool> suitable() { return true; };
 
     /* Always returns an empty vector for now, can't list all files this

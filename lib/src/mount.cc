@@ -16,7 +16,8 @@ namespace libral {
 
   result<bool> mount_provider::suitable() {
     if (this->aug == nullptr) {
-      this->aug = aug::handle::make(_data_dir + "/lenses", AUG_NO_MODL_AUTOLOAD);
+      this->aug = aug::handle::make(_ral->data_dir() + "/lenses",
+                                    AUG_NO_MODL_AUTOLOAD);
 
       aug->include("Mount_Fstab.lns", "/etc/fstab");
       aug->include("Mount_Fstab.lns", "/etc/mtab");

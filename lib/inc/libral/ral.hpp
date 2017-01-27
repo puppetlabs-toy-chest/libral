@@ -15,6 +15,8 @@ namespace libral {
 
     /* Create an instance of the RAL */
     static std::shared_ptr<ral> create(const std::string& data_dir);
+
+    const std::string& data_dir() const { return _data_dir; }
   protected:
     ral(const std::string& data_dir);
   private:

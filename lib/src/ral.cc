@@ -53,13 +53,13 @@ namespace libral {
     // @todo lutter 2016-05-10:
     //   Need more magic here: need to find and register all types
     std::vector<std::unique_ptr<type>> result;
-    auto mount_prov = std::shared_ptr<provider>(new mount_provider(_data_dir));
+    auto mount_prov = std::shared_ptr<provider>(new mount_provider(shared_from_this()));
     add_type(result, "mount", mount_prov);
 
-    auto user_prov = std::shared_ptr<provider>(new user_provider(_data_dir));
+    auto user_prov = std::shared_ptr<provider>(new user_provider());
     add_type(result, "user", user_prov);
 
-    auto file_prov = std::shared_ptr<provider>(new file_provider(_data_dir));
+    auto file_prov = std::shared_ptr<provider>(new file_provider());
     add_type(result, "file", file_prov);
 
     // Find external providers

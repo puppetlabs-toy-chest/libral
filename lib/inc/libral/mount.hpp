@@ -1,7 +1,7 @@
 #pragma once
 
+#include <libral/ral.hpp>
 #include <libral/provider.hpp>
-
 #include <libral/augeas.hpp>
 
 namespace libral {
@@ -60,8 +60,8 @@ namespace libral {
       aug::node                       _base;
     };
 
-    mount_provider(const std::string& data_dir)
-      : aug(nullptr), _data_dir(data_dir), _seq(1) { };
+    mount_provider(std::shared_ptr<ral> ral)
+      : aug(nullptr), _ral(ral), _seq(1) { };
 
     result<bool> suitable();
     void flush();
@@ -73,7 +73,7 @@ namespace libral {
     std::shared_ptr<aug::handle>  aug;
     std::string                  _cmd_mount;
     std::string                  _cmd_umount;
-    std::string                  _data_dir;
+    std::shared_ptr<ral>         _ral;
     // We use this to create new paths in the augeas tree when creating entries
     int                          _seq;
   };
