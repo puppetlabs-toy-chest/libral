@@ -6,6 +6,8 @@
 
 #include <iomanip>
 
+#include <config.hpp>
+
 // boost includes are not always warning-clean. Disable warnings that
 // cause problems before including the headers, then re-enable the warnings.
 #pragma GCC diagnostic push
@@ -142,6 +144,7 @@ int main(int argc, char **argv) {
     command_line_options.add_options()
       ("explain,e", "print an explanation of TYPE, which must be provided")
       ("help,h", "produce help message")
+      ("include,I", po::value<std::vector<std::string>>(), "search directory '$arg/providers' for providers.")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
       ("version", "print the version and exit");
 
@@ -188,17 +191,22 @@ int main(int argc, char **argv) {
       return EXIT_SUCCESS;
     }
 
-    // @todo lutter 2016-06-09: find a non crappy way to get this, obviously
-    std::string data_dir;
-    if (! leatherman::util::environment::get("RALSH_DATA_DIR", data_dir)) {
-      boost::nowide::cerr << color::red << "Set the environment variable RALSH_DATA_DIR to the\npath of the data/ directory in your source checkout"
-                          << color::reset << endl;
-      return EXIT_FAILURE;
+    bool explain = vm.count("explain");
+
+    // Figure out our include path
+    std::vector<std::string> data_dirs;
+    std::string env_data_dir;
+    if (leatherman::util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
+      data_dirs.push_back(env_data_dir);
     }
+    if (vm.count("include")) {
+      auto inc = vm["include"].as<std::vector<std::string>>();
+      data_dirs.insert(data_dirs.end(), inc.begin(), inc.end());
+    }
+    data_dirs.push_back(RALSH_DATA_DIR);
 
     // Do the actual work
-    bool explain = vm.count("explain");
-    auto ral = lib::ral::create(data_dir);
+    auto ral = lib::ral::create(data_dirs);
 
     if (vm.count("type")) {
       // We have a type name

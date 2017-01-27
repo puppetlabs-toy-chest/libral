@@ -1,5 +1,7 @@
 #include <libral/ral.hpp>
 
+#include <config.hpp>
+
 #include <libral/mount.hpp>
 #include <libral/user.hpp>
 #include <libral/file.hpp>
@@ -18,13 +20,13 @@ namespace exe = leatherman::execution;
 using namespace leatherman::locale;
 
 namespace libral {
-  std::shared_ptr<ral> ral::create(const std::string& data_dir) {
-    auto handle = new ral(data_dir);
+  std::shared_ptr<ral> ral::create(const std::vector<std::string>& data_dirs) {
+    auto handle = new ral(data_dirs);
 
     return std::shared_ptr<ral>(handle);
   }
 
-  ral::ral(const std::string& data_dir) : _data_dirs({ data_dir }) { }
+  ral::ral(const std::vector<std::string>& data_dirs) : _data_dirs(data_dirs) { }
 
   bool ral::add_type(std::vector<std::unique_ptr<type>>& types,
                      const std::string& name, std::shared_ptr<provider> prov) {
