@@ -27,34 +27,8 @@ provider:
       # a version number (so string might be as tightly as this can be
       # typed anyway
       type: string
-    allow_virtual:
-      desc: |
-        specifies if virtual package names are allowed for install and uninstall
-      type: boolean
-      kind: w
-    category:
-      desc: a read-only parameter set by the package
-      kind: r
-    description:
-      desc: a read-only parameter set by the package
-      kind: r
-    install_options:
-      desc: an array of additional options to pass when installing a package
-      kind: w
-    instance:
-      desc: a read-only parameter set by the package
-      kind: r
     platform:
-      desc: a read-only parameter set by the package
-      kind: r
-    root:
-      desc: a read-only parameter set by the package
-      kind: r
-    status:
-      desc: a read-only parameter set by the package
-      kind: r
-    vendor:
-      desc: a read-only parameter set by the package
+      desc: the platform (architecture) for which the package was built
       kind: r
 """
 
