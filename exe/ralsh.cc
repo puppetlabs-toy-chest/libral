@@ -1,6 +1,7 @@
 #include <libral/libral.hpp>
 #include <boost/nowide/iostream.hpp>
 #include <boost/nowide/args.hpp>
+#include <boost/filesystem.hpp>
 #include <leatherman/logging/logging.hpp>
 #include <leatherman/util/environment.hpp>
 
@@ -20,6 +21,7 @@ using namespace leatherman::logging;
 namespace lib = libral;
 namespace po = boost::program_options;
 using namespace leatherman::locale;
+namespace fs = boost::filesystem;
 
 namespace color {
   // Very porr man's output coloring
@@ -132,6 +134,10 @@ static void print_explanation(lib::type& type) {
   }
 }
 
+static std::string absolute_path(const std::string& path) {
+  return fs::absolute(fs::path(path)).native();
+}
+
 int main(int argc, char **argv) {
   try {
     // Fix args on Windows to be UTF-8
@@ -197,13 +203,14 @@ int main(int argc, char **argv) {
     std::vector<std::string> data_dirs;
     std::string env_data_dir;
     if (leatherman::util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
-      data_dirs.push_back(env_data_dir);
+      data_dirs.push_back(absolute_path(env_data_dir));
     }
     if (vm.count("include")) {
-      auto inc = vm["include"].as<std::vector<std::string>>();
-      data_dirs.insert(data_dirs.end(), inc.begin(), inc.end());
+      for (auto dir : vm["include"].as<std::vector<std::string>>()) {
+        data_dirs.push_back(absolute_path(dir));
+      }
     }
-    data_dirs.push_back(RALSH_DATA_DIR);
+    data_dirs.push_back(absolute_path(RALSH_DATA_DIR));
 
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);
