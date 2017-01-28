@@ -58,8 +58,6 @@ provider:
       kind: r
 """
 
-DNF="/usr/bin/dnf"
-
 #
 # Utility methods
 #
@@ -82,13 +80,13 @@ def pkg_as_json(pkg):
     """Return a dictionary of information for the package."""
     result = {
         'name': pkg.name,
-        'ensure': pkg.version,
+        'ensure': pkg.evr,
         'platform': pkg.arch}
     return result
 
 def find_installed(base, name):
     q=base.sack.query()
-    pkgs=q.installed().filter(name=name)
+    pkgs=q.installed().filter(name=name).latest()
     if len(pkgs) == 0:
         return None
     else:
@@ -115,21 +113,34 @@ def do_find(inp):
     if pkg:
         return { "resource": pkg_as_json(pkg) }
     else:
-        return {
-            "error": {
-                "message": ("no package %s found" % name),
-                "kind": "unknown" } }
+        return { "resource":
+                 { "name": name,
+                   "ensure": "absent" } }
 
-def dnf_run(base, name, noop):
+# Run the DNF operation that has already been set up in BASE, by resolving,
+# downloading and running the transaction
+#
+# NAME   - the name of tha package we are working on
+# NOOP   - whether to do this in noop mode
+# WAS    - the ensure value that we currently have (before the operation)
+#
+# Return a dict of the form { "ensure": { "is": ENSURE, "was": WAS } }
+def dnf_run(base, name, noop, was, ensure=None):
     base.resolve()
     if not noop:
         base.download_packages(base.transaction.install_set)
         base.do_transaction()
+
     pkgs=[p for p in base.transaction.install_set if p.name == name]
     if len(pkgs) == 1:
-        return pkgs[0]
-    else:
-        return find_installed(base, name)
+        # We installed/updated something
+        return { "ensure": {  "is": pkgs[0].evr, "was": was } }
+
+    pkgs=[p for p in base.transaction.remove_set if p.name == name]
+    if len(pkgs) == 1:
+        # We removed the package
+        return { "ensure": { "is": "absent", "was": was } }
+    return { }
 
 def do_update(inp):
     if not util.am_i_root():
@@ -143,60 +154,47 @@ def do_update(inp):
     name=should["name"]
     noop=inp["ral"]["noop"]
     base=dnf_base()
-    result = { "changes": { } }
+    result = { }
     is_pkg=find_installed(base, name)
+    if is_pkg:
+        was=is_pkg.evr
+    else:
+        was="absent"
     try:
         if ensure == "present" or ensure == "installed":
             if not is_pkg:
                 base.install(name)
-                pkg=dnf_run(base, name, noop)
-                result["changes"]["ensure"] = { "is": pkg.version,
-                                                "was": "absent" }
-            return result
+                result["changes"] = dnf_run(base, name, noop, was)
         elif ensure == "absent" or ensure == "purged":
             if is_pkg:
                 base.remove(name)
-                pkg=dnf_run(base, name, noop)
-                result["changes"]["ensure"] = { "is": ensure,
-                                                "was": is_pkg.version }
-            return result
+                result["changes"]=dnf_run(base, name, noop, was)
         elif ensure == "held":
             # No idea what this is supposed to do
             return { "error": { "message": "not implemented", "kind": "failed" }}
         elif ensure == "latest":
             if is_pkg:
                 base.upgrade(name)
-                pkg=dnf_run(base, name, noop)
-                if pkg.version != new_pkg.version:
-                    result["changes"]["ensure"] = { "is": pkg.version,
-                                                    "was": is_pkg.version }
+                result["changes"]=dnf_run(base, name, noop, was)
             else:
                 base.install(name)
-                pkg=dnf_run(base, name, noop)
-                result["changes"]["ensure"] = { "is": pkg.version,
-                                                "was": "absent" }
-            return result
+                result["changes"]=dnf_run(base, name, noop, was)
         else:
             target=("%s-%s" % (name, ensure))
             if is_pkg:
-                if is_pkg.version != ensure:
-                    base.upgrade(target)
-                    pkg=dnf_run(base, name, noop)
-                    result["changes"]["ensure"] = { "is": pkg.version,
-                                                    "was": is_pkg.version }
+                base.upgrade(target)
+                result["changes"]=dnf_run(base, name, noop, was)
             else:
                 base.install(target)
-                pkg=dnf_run(base, name, noop)
-                result["changes"]["ensure"] = { "is": pkg.version,
-                                                "was": "absent" }
-            return result
+                result["changes"]=dnf_run(base, name, noop, was)
+        return result
     except exceptions.Error as e:
         return { "error": { "message": str(e), "kind": "failed" } }
     finally:
         base.close()
 
 def die(msg):
-    print msg
+    print(msg)
     sys.exit(1)
 
 def parse_stdin():
@@ -213,7 +211,7 @@ def dump(obj):
 
 def main():
     if len(sys.argv) < 2:
-        print "usage: dnf.prov ral_action=<action>"
+        print("usage: dnf.prov ral_action=<action>")
         sys.exit(1)
     action=sys.argv[1].split("=")[-1]
     if action == "describe":
