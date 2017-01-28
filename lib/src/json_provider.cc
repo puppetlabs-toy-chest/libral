@@ -31,7 +31,6 @@ namespace libral {
     }
     auto out=_prov->run_action("update", inp);
     if (!out) {
-      LOG_ERROR("provider[{1}]: {2}", _prov->_path, out.err().detail);
       return out.err();
     }
 
@@ -64,9 +63,10 @@ namespace libral {
       auto was = value(json_chgs.get<std::string>({ k, "was"}));
       chgs.add(k, is, was);
     }
-    for (auto s : should) {
-      if (s.first != "name")
-        operator[](s.first) = s.second;
+    for (auto ch : chgs) {
+      if (ch.attr != "name") {
+        operator[](ch.attr) = ch.is;
+      }
     }
     return res;
   }
@@ -201,9 +201,12 @@ namespace libral {
       return error(_("action '{1}' produced stderr '{2}'", action, res.error));
     }
 
-    // FIXME: this will probably throw like crazy
-    auto reslt = json::JsonContainer(res.output);
-    return reslt;
+    try {
+      return json::JsonContainer(res.output);
+    } catch (json::data_parse_error& e) {
+      return error(_("action '{1}' returned invalid JSON '{2}'",
+                     action, res.output));
+    }
   }
 
   bool json_provider::contains_error(const json::JsonContainer& json,
