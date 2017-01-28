@@ -61,6 +61,18 @@ you can try things out by running `ralsh`:
     ralsh service crond ensure=stopped
 ```
 
+Many of the providers that `libral` knows about are separate
+scripts. `ralsh` searches them in the following order. In each case, the
+providers must be executable scripts in a subdirectory `providers` in the
+mentioned directory ending in `.prov`:
+
+* if the environment variable `RALSH_DATA_DIR` is set, look in the
+  directory this variable is set to
+* if the `--include` option to `ralsh` is given, look in that directory
+  (the option can be given multiple times)
+* default to a directory determined at build time, by default
+  `/usr/share/libral/data`
+
 ### Running inside a container
 
 The
@@ -89,8 +101,7 @@ complexity for expressive power.
 
 The following calling conventions are available. If you are just getting
 started with `libral`, you should write your first providers using the
-`simple` calling convention. For now, all providers need to be placed into
-`data/providers/` and be executable files whose name ends in `.prov`.
+`simple` or `json` calling convention:
 
 * [simple](doc/invoke-simple.md)
 * [json](doc/invoke-json.md): input/output via JSON
@@ -100,6 +111,22 @@ started with `libral`, you should write your first providers using the
 For all of these, you will also want to read up on the
 [metadata](doc/metadata.md) that each provider needs to produce to describe
 itself.
+
+To start a new provider, follow these steps:
+
+1. Decide on some working directory `DIR`, run `mkdir $DIR/providers`, and
+2. Create a file `$DIR/providers/myprovider.prov` and make it executable
+3. Make sure that running `myprovider.prov ral_action=describe` returns
+   valid [provider metadata](doc/metadata.md), especially a valid type. For
+   now it doesn't matter what the type is, let's call it `MYTYPE`
+4. Run `ralsh -I $DIR $MYTYPE`. This will ask the provider to list all
+   instances of the type using the `list` action. Get that working
+5. Run `ralsh -I $DIR $MYTYPE NAME`. This will ask the provider to find a
+   resource with name `NAME` using the `find` action. Get that working,
+   too.
+6. Run `ralsh -I $DIR $MYTYPE NAME ATTR=VALUE...`. This will ask the
+   provider to update the resource `NAME` using the `update` action.
+7. You're done; your provider is ready for a pull request here ;)
 
 ## Todo list
 
