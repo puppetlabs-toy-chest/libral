@@ -20,7 +20,7 @@ describe() {
 
     cat <<EOF
 ---
-meta:
+provider:
   type: SOME_TYPE
   invoke: simple
   actions: [list,find,update]
