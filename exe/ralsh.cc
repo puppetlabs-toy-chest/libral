@@ -24,15 +24,22 @@ using namespace leatherman::locale;
 namespace fs = boost::filesystem;
 
 namespace color {
-  // Very porr man's output coloring
-  const std::string cyan = "\33[0;36m";
-  const std::string green = "\33[0;32m";
-  const std::string yellow = "\33[0;33m";
-  const std::string red = "\33[0;31m";
-  const std::string magenta = "\33[0;35m";
-  const std::string blue = "\33[0;34m";
+  // Very poor man's output coloring. Call init() to fill these
+  // with color escape sequences
+  std::string cyan, green, yellow, red, magenta, blue, reset;
 
-  const std::string reset = "\33[0m";
+  void init() {
+    if (isatty(1)) {
+      cyan = "\33[0;36m";
+      green = "\33[0;32m";
+      yellow = "\33[0;33m";
+      red = "\33[0;31m";
+      magenta = "\33[0;35m";
+      blue = "\33[0;34m";
+
+      reset = "\33[0m";
+    }
+  }
 }
 
 void help(po::options_description& desc)
@@ -145,6 +152,8 @@ int main(int argc, char **argv) {
 
     // Setup logging
     setup_logging(boost::nowide::cerr);
+
+    color::init();
 
     po::options_description command_line_options("");
     command_line_options.add_options()
