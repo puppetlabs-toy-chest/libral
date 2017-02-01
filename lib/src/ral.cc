@@ -39,14 +39,14 @@ namespace libral {
           types.push_back(std::move(std::unique_ptr<type>(t)));
           return true;
         } else {
-          LOG_ERROR("preparing provider for {1} failed: {2}",
+          LOG_ERROR("provider[{1}]: preparing failed: {2}",
                     name, res.err().detail);
         }
       } else {
-        LOG_INFO("provider for {1} is not suitable", name);
+        LOG_INFO("provider[{1}] for {2} is not suitable", prov->source(), name);
       }
     } else {
-      LOG_WARNING("provider for {1} failed to report its suitability: {2}", name, res.err().detail);
+      LOG_WARNING("provider[{1}] failed to report its suitability: {2}", name, res.err().detail);
     }
     return false;
   }
