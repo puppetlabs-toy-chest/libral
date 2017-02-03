@@ -58,7 +58,7 @@ list() {
                | sort) \
   | while read svc enable ensure
     do
-        echo "name: $svc"
+        echo "name: ${svc%.service}"
         echo "ensure: $ensure"
         echo "enable: $enable"
     done
@@ -71,8 +71,7 @@ find_state() {
     [ -z "$name" ] && die "find: missing a name"
 
     # See if we even have a unit file
-    [[ "$name" == *.service ]] && svc="$name" || svc="${name}.service"
-    out=$(systemctl list-unit-files -t service --no-pager --no-legend "$svc")
+    out=$(systemctl list-unit-files -t service --no-pager --no-legend "${name}.service")
 
     if [ -n "$out" ]
     then
@@ -166,6 +165,7 @@ update() {
 
 eval "$@"
 resource="service/systemd[$name]"
+[ -n "$name" ] && name=${name%.service}
 
 case "$ral_action"
 in
