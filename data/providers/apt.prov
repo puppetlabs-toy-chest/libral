@@ -1,0 +1,97 @@
+#! /bin/bash
+
+# die MESSAGE
+# Print an error message and exit
+die() {
+    echo "ral_error: $1"
+    echo "ral_eom"
+    exit 0
+}
+
+# A provider for managing packages with apt tools
+is_suitable() {
+    type -p dpkg apt-get apt-cache > /dev/null && return 0 || return 1
+}
+
+describe() {
+    local suitable
+    is_suitable && suitable=true || suitable=false
+    cat <<EOF
+---
+provider:
+  type: package
+  invoke: simple
+  actions: [list, find]
+  suitable: ${suitable}
+  attributes:
+    name:
+      desc: the name of the package
+    ensure:
+      desc: what state the package should be in
+      # Our type system is not strong enough to be more precise. ensure is
+      # either one of enum[present,installed,absent,purged,held,latest] or
+      # a version number (so string might be as tightly as this can be
+      # typed anyway
+      type: string
+    platform:
+      desc: the platform (architecture) for which the package was built
+      kind: r
+EOF
+}
+
+list() {
+    echo '# simple'
+    dpkg -l | awk '$1 ~ /ii/ { printf "name: %s\nensure: %s\nplatform: %s\n",$2,$3,$4}'
+}
+
+# Determine the state of the resource with name $name
+find_state() {
+    [ -z "$name" ] && die "find: missing a name"
+
+    read is_ensure is_platform < <(dpkg -l $name 2>/dev/null | awk '$1 ~ /ii/ { printf "%s %s",$3,$4}')
+    [ -z "$is_ensure" ] && is_ensure=absent
+}
+
+find() {
+    echo "# simple"
+    find_state
+    echo "name: $name"
+    echo "ensure: $is_ensure"
+    [ -n "$is_platform" ] && echo "platform: $is_platform"
+    return 0
+}
+
+update() {
+    echo "# simple"
+
+    case "$ensure"
+    in
+        present|installed)
+            # Install if needed
+        ;;
+        absent)
+            # Remove if existing
+        ;;
+        purged)
+        ;;
+        latest)
+        ;;
+        *)
+        ;;
+    esac
+    echo "ral_error: not implemented"
+    exit 1
+}
+
+
+eval "$@"
+
+case "$ral_action"
+in
+    list) list;;
+    find) find;;
+    update) update;;
+    describe) describe;;
+    *)
+        die "Unknown action: $ral_action"
+esac
