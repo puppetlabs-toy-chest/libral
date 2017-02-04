@@ -270,19 +270,38 @@ int main(int argc, char **argv) {
             }
           }
           auto res = type->update(name, attrs);
-          type->flush();
-          print_update(*type, *(res.first), res.second);
+          if (!res) {
+            boost::nowide::cerr << color::red <<
+              _("failed to update {1}: {2}", name,
+                res.err().detail) << color::reset << endl;
+            return EXIT_FAILURE;
+          } else {
+            type->flush();
+            print_update(*type, *(res->first), res->second);
+          }
         } else {
           // No attributes, dump the resource
           auto inst = type->find(name);
-          if (inst) {
-            print_resource(*type, **inst);
+          if (!inst) {
+            boost::nowide::cerr << color::red <<
+              _("failed to find {1}: {2}", name,
+                inst.err().detail) << color::reset << endl;
+            return EXIT_FAILURE;
+          }
+          if (*inst) {
+            print_resource(*type, ***inst);
           }
         }
       } else {
         // No resource name, dump all resources of the type
         auto insts = type->instances();
-        for (auto inst = insts.begin(); inst != insts.end(); ++inst) {
+        if (!insts) {
+            boost::nowide::cerr << color::red <<
+              _("failed to list {1}: {2}", type->name(),
+                insts.err().detail) << color::reset << endl;
+            return EXIT_FAILURE;
+        }
+        for (auto inst = insts->begin(); inst != insts->end(); ++inst) {
           print_resource(*type, **inst);
         }
       }

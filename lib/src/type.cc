@@ -8,34 +8,38 @@
 
 namespace libral {
 
-  boost::optional<std::unique_ptr<resource>>
+  result<boost::optional<resource_uptr>>
   type::find(const std::string &name) {
     return _prov->find(name);
   }
 
-  std::vector<std::unique_ptr<resource>> type::instances(void) {
+  result<std::vector<resource_uptr>> type::instances(void) {
     auto result = _prov->instances();
     _prov->flush();
 
     return result;
   }
 
-  std::pair<std::unique_ptr<resource>, result<changes>>
+  result<std::pair<resource_uptr, changes>>
   type::update(const std::string& name,
                const attr_map& attrs) {
     auto opt_rsrc = _prov->find(name);
-    std::unique_ptr<resource> res;
 
-    if (opt_rsrc) {
-      res = std::move(*opt_rsrc);
+    if (!opt_rsrc) {
+      return opt_rsrc.err();
+    }
+
+    resource_uptr res;
+    if (*opt_rsrc) {
+      res = std::move(**opt_rsrc);
     } else {
       res = _prov->create(name);
     }
     auto ch = res->update(attrs);
-    return
-      std::pair<std::unique_ptr<resource>,
-                result<changes>>(std::move(res),
-                                 std::move(ch));
+    if (!ch) {
+      return ch.err();
+    }
+    return std::pair<resource_uptr, changes>(std::move(res), std::move(*ch));
   }
 
   result<value> type::parse(const std::string &name, const std::string &v) {

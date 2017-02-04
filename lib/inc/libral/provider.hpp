@@ -120,6 +120,7 @@ namespace libral {
     attr_map _attrs;
   };
 
+  using resource_uptr = std::unique_ptr<resource>;
 
   /* Class provider, that knows how to manage lots of things that are
      accessed in the same way
@@ -148,13 +149,13 @@ namespace libral {
        update(name, attrs) and let that sort out whether a resource needs
        to be created or not
      */
-    virtual std::unique_ptr<resource> create(const std::string &name) = 0;
+    virtual resource_uptr create(const std::string &name) = 0;
 
-    virtual boost::optional<std::unique_ptr<resource>>
+    virtual result<boost::optional<resource_uptr>>
       find(const std::string &name);
 
     /* Retrieve all resources managed by this provider */
-    virtual std::vector<std::unique_ptr<resource>> instances() = 0;
+    virtual result<std::vector<resource_uptr>> instances() = 0;
 
     /**
      * Reads the string representation v for attribute name and returns the

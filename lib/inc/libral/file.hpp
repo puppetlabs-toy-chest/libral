@@ -83,8 +83,8 @@ namespace libral {
 
     /* Always returns an empty vector for now, can't list all files this
        way. The API is missing a way to indicate an error from instances */
-    std::vector<std::unique_ptr<resource>> instances();
-    boost::optional<std::unique_ptr<resource>> find(const std::string &name);
+    result<std::vector<resource_uptr>> instances() override;
+    result<boost::optional<resource_uptr>> find(const std::string &name) override;
 
     std::unique_ptr<resource> create(const std::string& name);
   protected:

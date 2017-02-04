@@ -28,8 +28,8 @@ namespace libral {
     result<bool> suitable();
     void flush();
     std::unique_ptr<resource> create(const std::string& name);
-    boost::optional<std::unique_ptr<resource>> find(const std::string &name);
-    std::vector<std::unique_ptr<resource>> instances();
+    result<boost::optional<resource_uptr>> find(const std::string &name) override;
+    result<std::vector<resource_uptr>> instances() override;
 
     const std::string& source() const { return _path; }
   protected:

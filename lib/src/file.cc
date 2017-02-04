@@ -84,10 +84,10 @@ namespace libral {
     return prov::spec::read("file", desc);
   }
 
-  std::vector<std::unique_ptr<resource>> fprov::instances() {
-    std::vector<std::unique_ptr<resource>> result;
+  result<std::vector<resource_uptr>> fprov::instances() {
+    std::vector<resource_uptr> result;
 
-    return result;
+    return std::move(result);
   }
 
   std::unique_ptr<resource> fprov::create(const std::string& name) {
@@ -102,14 +102,14 @@ namespace libral {
   }
 
 
-  boost::optional<std::unique_ptr<resource>>
+  result<boost::optional<resource_uptr>>
   fprov::find(const std::string &name) {
     auto result = create(name);
     auto& res = *result;
 
     load(res);
 
-    return std::move(result);
+    return boost::optional<resource_uptr>(std::move(result));
   }
 
   // Load file attributes into res from whatever is on disk

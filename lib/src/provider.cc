@@ -125,13 +125,17 @@ namespace libral {
   /*
    * Implementation for provider
    */
-  boost::optional<std::unique_ptr<resource>>
+  result<boost::optional<resource_uptr>>
   provider::find(const std::string &name) {
-    for (auto& inst : instances()) {
+    auto insts = instances();
+    if (!insts)
+      return insts.err();
+
+    for (auto& inst : *insts) {
       if (inst->name() == name)
-        return std::move(inst);
+        return boost::optional<resource_uptr>(std::move(inst));
     }
-    return boost::none;
+    return boost::optional<resource_uptr>(boost::none);
   }
 
   result<value> provider::parse(const std::string& name, const std::string& v) {

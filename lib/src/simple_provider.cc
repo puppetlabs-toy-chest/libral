@@ -76,7 +76,7 @@ namespace libral {
     return std::unique_ptr<resource>(new simple_resource(shared_this, name));
   }
 
-  boost::optional<std::unique_ptr<resource>>
+  result<boost::optional<resource_uptr>>
   simple_provider::find(const std::string &name) {
     std::unique_ptr<resource> rsrc;
 
@@ -92,24 +92,26 @@ namespace libral {
       }
     };
     auto r = run_action("find", cb, { "name='" + name + "'" });
+    boost::optional<resource_uptr> res;
     if (r.is_err()) {
       // FIXME: return error instead of logging it
       LOG_ERROR(r.err().detail);
-      return boost::none;
+      res = boost::none;
     } else {
-      return std::move(rsrc);
+      res = std::move(rsrc);
     }
+    return std::move(res);
   }
 
-  std::vector<std::unique_ptr<resource>> simple_provider::instances() {
+  result<std::vector<resource_uptr>> simple_provider::instances() {
     // run script with ral_action == list
-    std::vector<std::unique_ptr<resource>> result;
+    std::vector<resource_uptr> res;
     std::unique_ptr<resource> rsrc;
 
-    auto cb = [this, &result, &rsrc](std::string key, std::string value) {
+    auto cb = [this, &res, &rsrc](std::string key, std::string value) {
       if (key == "name") {
         if (rsrc != nullptr) {
-          result.push_back(std::move(rsrc));
+          res.push_back(std::move(rsrc));
         }
         rsrc = create(value);
       } else {
@@ -118,11 +120,10 @@ namespace libral {
       return true;
     };
     auto r = run_action("list", cb);
-    if (r.is_err()) {
-      // FIXME: this function needs to return a result<..>
-      LOG_ERROR(r.err().detail);
+    if (!r) {
+      return r.err();
     };
-    return result;
+    return std::move(res);
   }
 
   result<bool>

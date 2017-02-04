@@ -17,7 +17,7 @@ namespace libral {
   auto& prv = *ptr;
 
   SCENARIO("instances() returns an empty vector") {
-    REQUIRE(prv.instances().empty());
+    REQUIRE(prv.instances()->empty());
   }
 
   SCENARIO("suitable() is always true") {
@@ -30,7 +30,7 @@ namespace libral {
       auto res = prv.find("/tmp/not_there");
 
       REQUIRE(*res);
-      auto& rsc = **res;
+      auto& rsc = ***res;
       REQUIRE(rsc["ensure"] == value("absent"));
     }
 
@@ -40,7 +40,7 @@ namespace libral {
       auto res = prv.find(tmp.get_file_name());
 
       REQUIRE(*res);
-      auto& rsc = **res;
+      auto& rsc = ***res;
       REQUIRE(rsc["ensure"] == value("file"));
       auto full_name = fs::canonical(tmp.get_file_name());
       REQUIRE(rsc.name() == full_name);
@@ -53,7 +53,7 @@ namespace libral {
       try {
         auto res = prv.find(tmp.native());
         REQUIRE(*res);
-        auto& rsc = **res;
+        auto& rsc = ***res;
         REQUIRE(rsc["ensure"] == value("absent"));
 
         auto attrs = attr_map();
@@ -84,7 +84,7 @@ namespace libral {
       auto tmp = temp_file("original");
       auto res = prv.find(tmp.get_file_name());
       REQUIRE(*res);
-      auto& rsc = **res;
+      auto& rsc = ***res;
 
       // mutate file to link
       {

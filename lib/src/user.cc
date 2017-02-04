@@ -30,7 +30,7 @@ namespace libral {
     return std::unique_ptr<resource>(new user_resource(shared_this, name, false));
   }
 
-  std::vector<std::unique_ptr<resource>> user_provider::instances() {
+  result<std::vector<resource_uptr>> user_provider::instances() {
     std::vector<std::unique_ptr<resource>> result;
     auto shared_this = std::static_pointer_cast<user_provider>(shared_from_this());
     struct passwd *p = NULL;
@@ -49,7 +49,7 @@ namespace libral {
     }
     endpwent();
 
-    return result;
+    return std::move(result);
   }
 
   result<changes>

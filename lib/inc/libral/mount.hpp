@@ -65,8 +65,8 @@ namespace libral {
 
     result<bool> suitable();
     void flush();
-    std::vector<std::unique_ptr<resource>> instances();
-    std::unique_ptr<resource> create(const std::string& name);
+    result<std::vector<resource_uptr>> instances() override;
+    resource_uptr create(const std::string& name);
   protected:
     result<prov::spec> describe() override;
   private:

@@ -40,8 +40,8 @@ namespace libral {
     aug->save();
   }
 
-  std::vector<std::unique_ptr<resource>> mount_provider::instances() {
-    std::map<std::string, std::unique_ptr<resource>> resources;
+  result<std::vector<resource_uptr>> mount_provider::instances() {
+    std::map<std::string, resource_uptr> resources;
     auto shared_this = std::static_pointer_cast<mount_provider>(shared_from_this());
 
     for(const auto& node
@@ -49,7 +49,7 @@ namespace libral {
       auto name = node["file"];
       if (name) {
         auto mr = new mount_resource(shared_this, *name, node);
-        auto res = std::unique_ptr<mount_resource>(mr);
+        auto res = resource_uptr(mr);
         resources.emplace(res->name(), std::move(res));
       }
     }
@@ -74,7 +74,7 @@ namespace libral {
     for (auto pair = resources.begin(); pair != resources.end(); ++pair) {
       result.push_back(std::move(pair->second));
     }
-    return result;
+    return std::move(result);
   }
 
   std::unique_ptr<resource> mount_provider::create(const std::string& name) {
