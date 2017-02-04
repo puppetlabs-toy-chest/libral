@@ -117,6 +117,9 @@ namespace libral {
       return true;
     };
     auto r = run_action("list", cb);
+    if (rsrc) {
+      res.push_back(std::move(rsrc));
+    }
     if (!r) {
       return r.err();
     };
