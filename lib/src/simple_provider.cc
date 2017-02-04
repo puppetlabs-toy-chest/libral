@@ -78,7 +78,7 @@ namespace libral {
 
   result<boost::optional<resource_uptr>>
   simple_provider::find(const std::string &name) {
-    std::unique_ptr<resource> rsrc;
+    resource_uptr rsrc;
 
     auto cb = [this, &rsrc, &name](std::string key, std::string value) -> result<bool> {
       if (key == "name") {
@@ -91,16 +91,13 @@ namespace libral {
         return true;
       }
     };
+
     auto r = run_action("find", cb, { "name='" + name + "'" });
-    boost::optional<resource_uptr> res;
-    if (r.is_err()) {
-      // FIXME: return error instead of logging it
-      LOG_ERROR(r.err().detail);
-      res = boost::none;
-    } else {
-      res = std::move(rsrc);
+    if (!r) {
+      return r.err();
     }
-    return std::move(res);
+
+    return boost::optional<resource_uptr>(std::move(rsrc));
   }
 
   result<std::vector<resource_uptr>> simple_provider::instances() {
