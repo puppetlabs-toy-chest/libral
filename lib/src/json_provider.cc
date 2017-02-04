@@ -119,6 +119,10 @@ namespace libral {
                   _path, name, message));
       }
     }
+    if (!out->includes("resource")) {
+      return error(_("provider[{1}]: find did not produce a 'resource' entry",
+                     _path));
+    }
     auto json_rsrc = out->get<json::JsonContainer>("resource");
     auto rsrc = resource_from_json(json_rsrc);
     if (!rsrc) {
