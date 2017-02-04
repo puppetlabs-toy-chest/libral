@@ -85,9 +85,7 @@ namespace libral {
   }
 
   result<std::vector<resource_uptr>> fprov::instances() {
-    std::vector<resource_uptr> result;
-
-    return std::move(result);
+    return error(_("the file provider does not support listing all files"));
   }
 
   std::unique_ptr<resource> fprov::create(const std::string& name) {

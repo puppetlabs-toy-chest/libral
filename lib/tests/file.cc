@@ -17,7 +17,7 @@ namespace libral {
   auto& prv = *ptr;
 
   SCENARIO("instances() returns an empty vector") {
-    REQUIRE(prv.instances()->empty());
+    REQUIRE(! prv.instances());
   }
 
   SCENARIO("suitable() is always true") {
