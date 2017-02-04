@@ -7,7 +7,6 @@
 #include <leatherman/execution/execution.hpp>
 
 #include <leatherman/locale/locale.hpp>
-#include <leatherman/logging/logging.hpp>
 
 #include <libral/result.hpp>
 
@@ -107,31 +106,27 @@ namespace libral {
 
     auto out=run_action("find", inp);
     if (!out) {
-      LOG_ERROR("provider[{1}]: {2}", _path, out.err().detail);
-      return boost::optional<resource_uptr>(boost::none);
+      return error(_("provider[{1}]: {2}", _path, out.err().detail));
     }
 
     std::string message, kind;
     if (contains_error(*out, message, kind)) {
       if (kind == "unknown") {
-        // expected outcome
+        return boost::optional<resource_uptr>(boost::none);
       } else {
-        LOG_WARNING("provider[{1}]: find for name '{2}' failed with error {3}",
-                    _path, name, message);
+        return
+          error(_("provider[{1}]: find for name '{2}' failed with error {3}",
+                  _path, name, message));
       }
-      return boost::optional<resource_uptr>(boost::none);
     }
     auto json_rsrc = out->get<json::JsonContainer>("resource");
     auto rsrc = resource_from_json(json_rsrc);
     if (!rsrc) {
-      // FIXME: We need to return errors like this
-      LOG_ERROR("provider[{1}]: find of '{2}': {3}",
-                _path, name, rsrc.err().detail);
-      return boost::optional<resource_uptr>(boost::none);
+      return error(_("provider[{1}]: find of '{2}': {3}",
+                     _path, name, rsrc.err().detail));
     }
     if ((*rsrc)->name() != name) {
-      LOG_ERROR("provider[{1}]: find of name '{2}' returned resource named '{3}'", _path, name, (*rsrc)->name());
-      return boost::optional<resource_uptr>(boost::none);
+      return error(_("provider[{1}]: find of name '{2}' returned resource named '{3}'", _path, name, (*rsrc)->name()));
     }
     return boost::optional<resource_uptr>(std::move(*rsrc));
   }
@@ -142,28 +137,23 @@ namespace libral {
     auto inp = json::JsonContainer();
     auto out = run_action("list", inp);
     if (!out) {
-      LOG_ERROR("provider[{1}]: {2}", _path, out.err().detail);
-      return std::move(result);
+      return error(_("provider[{1}]: {2}", _path, out.err().detail));
     }
     std::string message, kind;
     if (contains_error(*out, message, kind)) {
-      LOG_ERROR("provider[{1}]: list failed with error {2}",
-                _path, message);
-      // FIXME: We really need a way to return errors from instances()
-      return std::move(result);
+      return error(_("provider[{1}]: list failed with error {2}",
+                     _path, message));
     }
     if (!out->includes("resources")) {
-      LOG_ERROR("provider[{1}]: list did not produce a 'resources' entry",
-                _path);
-      // FIXME: We really need a way to return errors from instances()
-      return std::move(result);
+      return error(_("provider[{1}]: list did not produce a 'resources' entry",
+                     _path));
     }
     auto json_rsrcs = out->get<std::vector<json::JsonContainer>>("resources");
     for (auto json_rsrc : json_rsrcs) {
       auto rsrc = resource_from_json(json_rsrc);
       if (!rsrc) {
-        LOG_ERROR("provider[{1}]: list failed: {2}", _path, rsrc.err().detail);
-        return std::move(result);
+        return error(_("provider[{1}]: list failed: {2}",
+                       _path, rsrc.err().detail));
       }
       result.push_back(std::move(*rsrc));
     }
