@@ -2,6 +2,8 @@
 
 #include <libral/provider.hpp>
 
+#include <libral/command.hpp>
+
 namespace libral {
   /* User provider for posix systems
 
@@ -68,9 +70,9 @@ namespace libral {
   protected:
     result<prov::spec> describe() override;
   private:
-    std::string                  _cmd_useradd;
-    std::string                  _cmd_usermod;
-    std::string                  _cmd_userdel;
+    boost::optional<command>     _cmd_useradd;
+    boost::optional<command>     _cmd_usermod;
+    boost::optional<command>     _cmd_userdel;
     std::string                  _data_dir;
   };
 

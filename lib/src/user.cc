@@ -1,9 +1,11 @@
 #include <libral/user.hpp>
 
-#include <leatherman/execution/execution.hpp>
+#include <leatherman/locale/locale.hpp>
 
 #include <sys/types.h>
 #include <pwd.h>
+
+using namespace leatherman::locale;
 
 namespace libral {
   result<prov::spec> user_provider::describe() {
@@ -14,11 +16,10 @@ namespace libral {
   }
 
   result<bool> user_provider::suitable() {
-    _cmd_useradd = leatherman::execution::which("useradd");
-    _cmd_usermod = leatherman::execution::which("usermod");
-    _cmd_userdel = leatherman::execution::which("userdel");
-    return !_cmd_useradd.empty() && !_cmd_usermod.empty()
-      && !_cmd_userdel.empty();
+    _cmd_useradd = command::create("useradd");
+    _cmd_usermod = command::create("usermod");
+    _cmd_userdel = command::create("userdel");
+    return _cmd_useradd && _cmd_usermod && _cmd_userdel;;
   }
 
   void user_provider::flush() {
@@ -100,16 +101,19 @@ namespace libral {
           args.push_back(self["uid"].to_string());
         }
         args.push_back(name());
-        // FIXME: handle errors from running these
+        result<bool> run_result;
         if (_exists) {
-          leatherman::execution::execute(_prov->_cmd_usermod, args);
+          run_result = _prov->_cmd_usermod->run(args);
         } else {
-
-          leatherman::execution::execute(_prov->_cmd_useradd, args);
+          run_result = _prov->_cmd_useradd->run(args);
         }
+        if (! run_result)
+          return run_result.err();
       }
     } else if (ensure == "absent") {
-      leatherman::execution::execute(_prov->_cmd_userdel, { "-r", name() });
+      auto run_result = _prov->_cmd_userdel->run({ "-r", name() });
+      if (! run_result)
+        return run_result.err();
     } else if (ensure == "role") {
       return error("can not ensure=role with this provider");
     }

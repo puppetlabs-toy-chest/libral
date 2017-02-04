@@ -2,7 +2,9 @@
 
 #include <sstream>
 
-#include <leatherman/execution/execution.hpp>
+#include <leatherman/locale/locale.hpp>
+
+using namespace leatherman::locale;
 
 namespace libral {
 
@@ -31,9 +33,9 @@ namespace libral {
       aug->load();
       // FIXME: Check for errors from load()
     }
-    _cmd_mount = leatherman::execution::which("mount");
-    _cmd_umount = leatherman::execution::which("umount");
-    return !_cmd_mount.empty() && !_cmd_umount.empty();
+    _cmd_mount = command::create("mount");
+    _cmd_umount = command::create("umount");
+    return _cmd_mount && _cmd_umount;;
   }
 
   void mount_provider::flush() {
@@ -155,18 +157,24 @@ namespace libral {
       update_fstab(should, changes);
     } else if (ensure == "absent") {
       // unmount, remove from fstab
-      unmount(state);
+      auto run_res = unmount(state);
+      if (! run_res)
+        return run_res.err();
       remove_from_fstab();
     } else if (ensure == "unmounted") {
       // unmount, make sure in fstab
-      unmount(state);
+      auto run_res = unmount(state);
+      if (! run_res)
+        return run_res.err();
       update_fstab(should, changes);
     } else if (ensure == "mounted") {
       // mount, make sure in fstab
       update_fstab(should, changes);
-      mount(state);
+      auto run_res = mount(state);
+      if (! run_res)
+        return run_res.err();
     } else {
-      // raise "illegal value error"
+      return error(_("ensure has illegal value '{1}'", ensure));
     }
 
     if (state != ensure) {
@@ -195,19 +203,19 @@ namespace libral {
     _base.rm();
   }
 
-  void mount_provider::mount_resource::unmount(const std::string& state) {
+  result<bool> mount_provider::mount_resource::unmount(const std::string& state) {
     _prov->flush();
     if (state != "unmounted" && state != "absent") {
-      // FIXME: check results and return update_res
-      leatherman::execution::execute(_prov->_cmd_umount, { this->name() });
+      return _prov->_cmd_umount->run({ this->name() });
     }
+    return true;
   }
 
-  void mount_provider::mount_resource::mount(const std::string& state) {
+  result<bool> mount_provider::mount_resource::mount(const std::string& state) {
     _prov->flush();
     if (state != "mounted") {
-      // FIXME: check results and return update_res
-      leatherman::execution::execute(_prov->_cmd_mount, { this->name() });
+      return _prov->_cmd_mount->run({ this->name() });
     }
+    return true;
   }
 }

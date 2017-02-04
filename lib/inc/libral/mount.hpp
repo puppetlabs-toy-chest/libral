@@ -1,5 +1,6 @@
 #pragma once
 
+#include <libral/command.hpp>
 #include <libral/ral.hpp>
 #include <libral/provider.hpp>
 #include <libral/augeas.hpp>
@@ -53,8 +54,8 @@ namespace libral {
 
       void update_fstab(const attr_map& should, changes &changes);
       void remove_from_fstab();
-      void unmount(const std::string& state);
-      void mount(const std::string& state);
+      result<bool> unmount(const std::string& state);
+      result<bool> mount(const std::string& state);
 
       std::shared_ptr<mount_provider> _prov;
       aug::node                       _base;
@@ -71,8 +72,8 @@ namespace libral {
     result<prov::spec> describe() override;
   private:
     std::shared_ptr<aug::handle>  aug;
-    std::string                  _cmd_mount;
-    std::string                  _cmd_umount;
+    boost::optional<command>     _cmd_mount;
+    boost::optional<command>     _cmd_umount;
     std::shared_ptr<ral>         _ral;
     // We use this to create new paths in the augeas tree when creating entries
     int                          _seq;
