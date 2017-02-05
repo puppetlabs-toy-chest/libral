@@ -16,7 +16,6 @@ namespace libral {
    */
   using value_base = boost::variant<
     boost::none_t,
-    std::int64_t,
     bool,
     std::string
     >;

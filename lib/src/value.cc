@@ -20,10 +20,6 @@ namespace libral {
       return "(none)";
     }
 
-    result_type operator()(const std::int64_t& i) const {
-      return std::to_string(i);
-    }
-
     result_type operator()(const bool& b) const {
       return b ? "true" : "false";
     }
