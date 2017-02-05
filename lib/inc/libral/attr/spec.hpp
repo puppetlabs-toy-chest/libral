@@ -40,6 +40,8 @@ namespace libral { namespace attr {
 
   std::ostream& operator<<(std::ostream& os, boolean_type const& bt);
 
+  /* Read an array in the form '[s1, s2, s3]'. No support for quoting
+     currently */
   struct array_type {
     result<value> read_string(const std::string& s) const;
   };

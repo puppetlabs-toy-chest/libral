@@ -55,7 +55,17 @@ namespace libral { namespace attr {
   }
 
   result<value> array_type::read_string(const std::string& s) const {
-    return not_implemented_error();
+    array ary;
+    if (! s.empty()) {
+      boost::split(ary, s, boost::is_any_of(","));
+      for (auto& elt : ary) {
+        boost::trim(elt);
+        if (elt.empty()) {
+          return error(_("bad array: entries in '{1}' can not be blank", s));
+        }
+      }
+    }
+    return value(ary);
   }
 
   std::ostream& operator<<(std::ostream& os, array_type const& at) {
