@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <boost/variant.hpp>
 #include <boost/none.hpp>
 
@@ -14,10 +16,13 @@ namespace libral {
   /**
    * Represents all possible value types.
    */
+  using array = std::vector<std::string>;
+
   using value_base = boost::variant<
     boost::none_t,
     bool,
-    std::string
+    std::string,
+    array
     >;
 
   /**

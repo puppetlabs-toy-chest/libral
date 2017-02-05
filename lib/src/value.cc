@@ -2,6 +2,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <sstream>
+
 namespace libral {
 
   value& value::operator=(char const* string)
@@ -26,6 +28,20 @@ namespace libral {
 
     result_type operator()(const std::string& s) const {
       return s;
+    }
+
+    result_type operator()(const array& ary) const {
+      std::stringstream buf;
+      bool first = true;
+      buf << "[";
+      for (auto s : ary) {
+        if (! first)
+          buf << ", ";
+        first = false;
+        buf << s;
+      }
+      buf << "]";
+      return buf.str();
     }
   };
 
