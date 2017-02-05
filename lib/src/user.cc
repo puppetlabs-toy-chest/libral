@@ -158,9 +158,11 @@ namespace libral {
           return run_result.err();
       }
     } else if (ensure == "absent") {
-      auto run_result = _prov->_cmd_userdel->run({ "-r", name() });
-      if (! run_result)
-        return run_result.err();
+      if (state != "absent") {
+        auto run_result = _prov->_cmd_userdel->run({ "-r", name() });
+        if (! run_result)
+          return run_result.err();
+      }
     } else if (ensure == "role") {
       return error("can not ensure=role with this provider");
     }
