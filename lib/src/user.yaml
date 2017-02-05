@@ -18,7 +18,7 @@ provider:
       desc: the user's primary group id
       kind: rw
     groups:
-      desc: list of supplementary groups this user belongs to (not implemented)
+      desc: list of supplementary groups this user belongs to
       type: array[string]
       kind: rw
     home:

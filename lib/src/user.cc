@@ -4,6 +4,9 @@
 
 #include <sys/types.h>
 #include <pwd.h>
+#include <grp.h>
+
+#include <stdlib.h>
 
 using namespace leatherman::locale;
 
@@ -26,6 +29,26 @@ namespace libral {
     return; // Noop, no batching
   }
 
+  /* Find all the groups user belongs to and add it to rsrc["groups"] */
+  static result<bool> add_group_list(resource& rsrc,
+                                     const char* user, gid_t group) {
+    int ngroups = 0;
+    gid_t *groups = nullptr;
+    getgrouplist(user, group, nullptr, &ngroups);
+    groups = new gid_t[ngroups];
+    getgrouplist(user, group, groups, &ngroups);
+    auto group_names = array();
+    for (int i=0; i < ngroups; i++) {
+      struct group *gr = getgrgid(groups[i]);
+      if (gr != nullptr) {
+        group_names.push_back(gr->gr_name);
+      }
+    }
+    delete[] groups;
+    rsrc["groups"] = std::move(group_names);
+    return true;
+  }
+
   std::unique_ptr<resource> user_provider::create(const std::string& name) {
     auto shared_this = std::static_pointer_cast<user_provider>(shared_from_this());
     return std::unique_ptr<resource>(new user_resource(shared_this, name, false));
@@ -46,6 +69,7 @@ namespace libral {
       (*res)["home"]    = std::string(p->pw_dir);
       (*res)["shell"]   = std::string(p->pw_shell);
       (*res)["uid"]     = std::to_string(p->pw_uid);
+      add_group_list(*res, p->pw_name, p->pw_gid);
       result.push_back(std::move(res));
     }
     endpwent();
@@ -77,6 +101,15 @@ namespace libral {
           self[prop] = *p;
         }
       }
+      auto is_groups = lookup<array>("groups", array());
+      auto groups = should.lookup<array>("groups", is_groups);
+      auto is_groups_set = std::set<std::string>(is_groups.begin(),
+                                                 is_groups.end());
+      auto groups_set = std::set<std::string>(groups.begin(), groups.end());
+      if (is_groups_set != groups_set) {
+        chgs.add("groups", groups, is_groups);
+        self["groups"] = groups;
+      }
 
       if (!_exists || !chgs.empty()) {
         std::vector<std::string> args;
@@ -99,6 +132,20 @@ namespace libral {
         if (self["uid"].is_present()) {
           args.push_back("-u");
           args.push_back(self["uid"].to_string());
+        }
+        if (groups_set != is_groups_set) {
+          args.push_back("-G");
+          std::stringstream buf;
+          bool first = true;
+          for (auto g : groups) {
+            if (first) {
+              first = false;
+            } else {
+              buf << ",";
+            }
+            buf << g;
+          }
+          args.push_back(buf.str());
         }
         args.push_back(name());
         result<bool> run_result;
