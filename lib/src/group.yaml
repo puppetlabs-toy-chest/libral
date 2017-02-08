@@ -1,0 +1,25 @@
+R"yaml(
+---
+provider:
+  name: groupadd
+  type: group
+  desc: |
+    Manage groups with groupadd/groupmod/groupdel
+  attributes:
+    name:
+      desc: the groupname
+    ensure:
+      type: enum[present, absent]
+      kind: rw
+    gid:
+      desc: the group's id
+      kind: rw
+    members:
+      desc: list of supplementary groups this group belongs to
+      type: array[string]
+      kind: r
+    system:
+      desc: whether this should be a system group (not implemented)
+      type: boolean
+      kind: w
+)yaml";

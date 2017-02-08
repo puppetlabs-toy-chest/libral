@@ -148,7 +148,7 @@ To start a new provider, follow these steps:
 - more core providers
   - [ ] cron
   - [X] file
-  - [ ] group
+  - [X] group (groupXXX)
   - [ ] host
   - [ ] package
   - [ ] service (besides systemd)
