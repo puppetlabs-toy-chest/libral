@@ -71,3 +71,10 @@ enable_cpplint()
 
 add_cppcheck_dirs("${PROJECT_SOURCE_DIR}/lib" "${PROJECT_SOURCE_DIR}/exe")
 enable_cppcheck()
+
+# This will be used to install all data:
+file(GLOB_RECURSE ALL_LENSES "${CMAKE_SOURCE_DIR}/data/lenses/*.aug")
+file(GLOB_RECURSE ALL_PROVIDERS "${CMAKE_SOURCE_DIR}/data/providers/*.prov")
+
+install(FILES ${ALL_LENSES} DESTINATION "${LIBRAL_DATA_DIR}/lenses/")
+install(PROGRAMS ${ALL_PROVIDERS} DESTINATION "${LIBRAL_DATA_DIR}/providers/")
