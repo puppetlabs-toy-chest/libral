@@ -8,11 +8,10 @@ project(libral VERSION 0.0.1)
 
 # Whether to build a static executable. Only works with pl-build-tools for
 # now since Fedora is missing augeas-static, icu-static, and yaml-cpp-static
-option(RAL_STATIC "Build a static executable")
+option(LIBRAL_STATIC "Build a static executable")
 
 # The default data dir. Providers should be placed into
-# RALSH_DATA_DIR/providers.
-set(RALSH_DATA_DIR "/usr/share/libral/data" CACHE STRING "where to look for providers etc. by default")
+set(LIBRAL_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/libral/data" CACHE STRING "where to look for providers etc. by default")
 
 string(MAKE_C_IDENTIFIER ${PROJECT_NAME} PROJECT_C_NAME)
 string(TOUPPER ${PROJECT_C_NAME} PROJECT_NAME_UPPER)
@@ -28,12 +27,12 @@ enable_testing()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${RAL_STATIC})
+option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${LIBRAL_STATIC})
 find_package(YAMLCPP REQUIRED)
 
 # Leatherman setup
 SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution json_container)
-SET(BOOST_STATIC ${RAL_STATIC})
+SET(BOOST_STATIC ${LIBRAL_STATIC})
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 
 # Now that we have leatherman, we can pull in its options file, which
@@ -47,10 +46,10 @@ add_definitions(${LEATHERMAN_DEFINITIONS})
 include(leatherman)
 
 # Add other dependencies
-set(Boost_USE_STATIC_LIBS ${RAL_STATIC})
+set(Boost_USE_STATIC_LIBS ${LIBRAL_STATIC})
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
-set(AUGEAS_STATIC ${RAL_STATIC})
+set(AUGEAS_STATIC ${LIBRAL_STATIC})
 find_package(Augeas REQUIRED)
 add_definitions(${AUGEAS_DEFINITIONS})
 
