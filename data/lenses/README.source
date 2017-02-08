@@ -1,0 +1,5 @@
+- mount_fstab.aug
+- tests/test_mount_fstab.aug
+
+Forks of augeas/lenses/fstab.aug, augeas/lenses/tests/test_fstab.aug from
+commit c887c7cc630eb359dc900a32ffa8517bc80ea356.
