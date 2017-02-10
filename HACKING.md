@@ -94,7 +94,7 @@ Assuming you have that toolchain, you need to do the following:
     cd libral
     mkdir build && cd build
     PKG_CONFIG_PATH=/opt/puppetlabs/puppet/lib/pkgconfig \
-      pl-cmake -DRAL_STATIC=ON ..
+      pl-cmake -DLIBRAL_STATIC=ON ..
     make
     # Put everything into one place so it can be easily copied
     # into VM's or containers

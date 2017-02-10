@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
         data_dirs.push_back(absolute_path(dir));
       }
     }
-    data_dirs.push_back(absolute_path(RALSH_DATA_DIR));
+    data_dirs.push_back(absolute_path(LIBRAL_DATA_DIR));
 
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);
