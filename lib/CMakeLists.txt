@@ -35,7 +35,8 @@ set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/user.cc" "src/value.cc" "src/file.cc"
   "src/prov/spec.cc" "src/attr/spec.cc"
   "src/command.cc" "src/resource.cc" "src/context.cc"
-  "src/environment.cc")
+  "src/environment.cc"
+  "src/emitter/puppet_emitter.cc")
 
 ## An object target is generated that can be used by both the library and test executable targets.
 ## Without the intermediate target, unexported symbols can't be tested.

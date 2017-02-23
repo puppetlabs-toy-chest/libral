@@ -5,6 +5,8 @@
 #include <leatherman/logging/logging.hpp>
 #include <leatherman/util/environment.hpp>
 
+#include <libral/emitter/puppet_emitter.hpp>
+
 #include <iomanip>
 
 #include <config.hpp>
@@ -60,38 +62,6 @@ The positional arguments make ralsh behave in the following way:
 Options:
 )txt";
   boost::nowide::cout << help1 << desc << endl;
-}
-
-static void print_resource_attr(const std::string& name,
-                                const lib::value& v,
-                                uint maxlen) {
-  cout << "  " << color::green << left << setw(maxlen) << name << color::reset
-       << " => '" << v << "'," << endl;
-}
-
-static void print_resource(lib::type& type, const lib::resource& res) {
-  cout << color::blue << type.qname() << color::reset << " { '"
-       << color::blue << res.name() << color::reset << "':" << endl;
-  uint maxlen = 0;
-  for (const auto& a : res.attrs()) {
-    if (a.first.length() > maxlen) maxlen = a.first.length();
-  }
-  auto ens = res.lookup<std::string>("ensure");
-  if (ens) {
-    print_resource_attr("ensure", *ens, maxlen);
-  }
-  for (const auto& a : res.attrs()) {
-    if (a.first == "ensure")
-      continue;
-    print_resource_attr(a.first, a.second, maxlen);
-  }
-  cout << "}" << endl;
-}
-
-static void print_update(lib::type& type, const lib::update& upd,
-                         const lib::changes& chgs) {
-  print_resource(type, type.prov().create(upd, chgs));
-  cout << chgs << endl;
 }
 
 static void print_attr_explanation(const std::string& name,
@@ -223,6 +193,7 @@ int main(int argc, char **argv) {
 
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);
+    auto em = lib::puppet_emitter();
 
     if (vm.count("type")) {
       // We have a type name
@@ -268,39 +239,26 @@ int main(int argc, char **argv) {
               }
             }
           }
+
           auto res = type->set(should);
+          em.print_set(*type, res);
           if (!res) {
-            boost::nowide::cerr << color::red <<
-              _("failed to update {1}: {2}", name,
-                res.err().detail) << color::reset << endl;
             return EXIT_FAILURE;
-          } else {
-            print_update(*type, res->first, res->second);
           }
         } else {
           // No attributes, dump the resource
           auto inst = type->find(name);
+          em.print_find(*type, inst);
           if (!inst) {
-            boost::nowide::cerr << color::red <<
-              _("failed to find {1}: {2}", name,
-                inst.err().detail) << color::reset << endl;
             return EXIT_FAILURE;
-          }
-          if (*inst) {
-            print_resource(*type, **inst);
           }
         }
       } else {
         // No resource name, dump all resources of the type
         auto insts = type->instances();
+        em.print_list(*type, insts);
         if (!insts) {
-            boost::nowide::cerr << color::red <<
-              _("failed to list {1}: {2}", type->qname(),
-                insts.err().detail) << color::reset << endl;
             return EXIT_FAILURE;
-        }
-        for (const auto& inst : insts.ok()) {
-          print_resource(*type, inst);
         }
       }
     } else {
