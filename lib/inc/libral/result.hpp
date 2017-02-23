@@ -166,11 +166,25 @@ namespace libral {
     R& operator*() { return ok(); }
 
     /**
+     * Returns the const ok value.
+     *
+     * @throws std::logic_error if the result is an error and not ok
+     */
+    const R& operator*() const { return ok(); }
+
+    /**
      * Returns a pointer to the ok value.
      *
      * @throws std::logic_error if the result is an error and not ok
      */
     R* operator->() { return &ok(); }
+
+    /**
+     * Returns a const pointer to the ok value.
+     *
+     * @throws std::logic_error if the result is an error and not ok
+     */
+    const R* operator->() const { return &ok(); }
 
     static std::unique_ptr<result<R>> make_unique() {
       return std::unique_ptr<result<R>>(new result<R>(R()));
