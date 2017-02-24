@@ -64,10 +64,10 @@ namespace libral {
     mount_provider(std::shared_ptr<ral> ral)
       : aug(nullptr), _ral(ral), _seq(1) { };
 
-    result<bool> suitable();
-    void flush();
+    result<bool> suitable() override;
+    void flush() override;
     result<std::vector<resource_uptr>> instances() override;
-    resource_uptr create(const std::string& name);
+    resource_uptr create(const std::string& name) override;
   protected:
     result<prov::spec> describe() override;
   private:

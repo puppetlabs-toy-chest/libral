@@ -79,14 +79,14 @@ namespace libral {
       shared_provider_ptr _prov;
     };
 
-    result<bool> suitable() { return true; };
+    result<bool> suitable() override { return true; };
 
     /* Always returns an empty vector for now, can't list all files this
        way. The API is missing a way to indicate an error from instances */
     result<std::vector<resource_uptr>> instances() override;
     result<boost::optional<resource_uptr>> find(const std::string &name) override;
 
-    std::unique_ptr<resource> create(const std::string& name);
+    std::unique_ptr<resource> create(const std::string& name) override;
   protected:
     result<prov::spec> describe() override;
   private:
