@@ -6,6 +6,7 @@
 #include <leatherman/util/environment.hpp>
 
 #include <libral/emitter/puppet_emitter.hpp>
+#include <libral/emitter/json_emitter.hpp>
 
 #include <iomanip>
 
@@ -131,6 +132,7 @@ int main(int argc, char **argv) {
       ("help,h", "produce help message")
       ("include,I", po::value<std::vector<std::string>>(), "search directory '$arg/providers' for providers.")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
+      ("json,j", "produce JSON output")
       ("version", "print the version and exit");
 
     po::options_description all_options(command_line_options);
@@ -193,7 +195,13 @@ int main(int argc, char **argv) {
 
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);
-    auto em = lib::puppet_emitter();
+    std::unique_ptr<lib::emitter> emp;
+    if (vm.count("json")) {
+      emp = std::unique_ptr<lib::emitter>(new lib::json_emitter());
+    } else {
+      emp = std::unique_ptr<lib::emitter>(new lib::puppet_emitter());
+    }
+    lib::emitter& em = *emp;
 
     if (vm.count("type")) {
       // We have a type name
