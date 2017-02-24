@@ -9,6 +9,7 @@ include_directories(
     ../lib/inc
     ${PROJECT_BINARY_DIR}/inc
     ${Boost_INCLUDE_DIRS}
+    ${LIBXML2_INCLUDE_DIRS}
     ${LEATHERMAN_INCLUDE_DIRS}
 )
 

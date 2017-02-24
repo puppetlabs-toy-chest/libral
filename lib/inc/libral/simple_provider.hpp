@@ -25,13 +25,13 @@ namespace libral {
     simple_provider(const std::string& path, YAML::Node &node)
       : provider(), _path(path), _node(node) { };
 
-    result<bool> suitable();
-    void flush();
-    std::unique_ptr<resource> create(const std::string& name);
+    result<bool> suitable() override;
+    void flush() override;
+    std::unique_ptr<resource> create(const std::string& name) override;
     result<boost::optional<resource_uptr>> find(const std::string &name) override;
     result<std::vector<resource_uptr>> instances() override;
 
-    const std::string& source() const { return _path; }
+    const std::string& source() const override { return _path; }
   protected:
     result<prov::spec> describe() override;
   private:

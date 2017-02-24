@@ -21,6 +21,7 @@ include_directories(
   ${AUGEAS_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}
+  ${LIBXML2_INCLUDE_DIRS}
   ${LEATHERMAN_INCLUDE_DIRS})
 
 link_directories(

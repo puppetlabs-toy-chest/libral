@@ -8,6 +8,13 @@
 
 #include <stdlib.h>
 
+#ifndef HAVE_UNSIGNED_GID_T
+typedef gid_t getgroups_t;
+#else
+// Group list argument to getgrouplist() is a signed int (not gid_t) on OS X
+typedef int getgroups_t;
+#endif
+
 using namespace leatherman::locale;
 
 namespace libral {
@@ -33,9 +40,9 @@ namespace libral {
   static result<bool> add_group_list(resource& rsrc,
                                      const char* user, gid_t group) {
     int ngroups = 0;
-    gid_t *groups = nullptr;
+    getgroups_t *groups = nullptr;
     getgrouplist(user, group, nullptr, &ngroups);
-    groups = new gid_t[ngroups];
+    groups = new getgroups_t[ngroups];
     getgrouplist(user, group, groups, &ngroups);
     auto group_names = array();
     for (int i=0; i < ngroups; i++) {

@@ -41,13 +41,28 @@ include(options)
 ## Pull in common cflags setting from leatherman. Don't override CMAKE_CXX_FLAGS at the project root to avoid impacting 3rd party code.
 include(cflags)
 set(${PROJECT_NAME_UPPER}_CXX_FLAGS "${LEATHERMAN_CXX_FLAGS}")
+
+# On OS X, git_t is an unsigned int, though signed int on most other platforms
+if (APPLE)
+    list(APPEND LEATHERMAN_DEFINITIONS -DHAVE_UNSIGNED_GID_T)
+endif()
+
 add_definitions(${LEATHERMAN_DEFINITIONS})
+
 ## Pull in helper macros for working with leatherman libraries
 include(leatherman)
 
 # Add other dependencies
 set(Boost_USE_STATIC_LIBS ${LIBRAL_STATIC})
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
+
+find_package(LibXml2 REQUIRED)
+if ("${LIBXML2_INCLUDE_DIRS}" STREQUAL "")
+    find_path(LIBXML2_INCLUDE_DIRS libxml/tree.h PATH_SUFFIXES libxml2)
+    if ("${LIBXML2_INCLUDE_DIRS}" STREQUAL "LIBXML2_INCLUDE_DIRS-NOTFOUND")
+        message(FATAL_ERROR "LibXml2 was not found")
+    endif()
+endif()
 
 set(AUGEAS_STATIC ${LIBRAL_STATIC})
 find_package(Augeas REQUIRED)
