@@ -37,6 +37,11 @@ that should work on any Linux machine that has glibc 2.12 or later. (It
 might actually work with glibc 2.8 or later.) If you succeed in that, please
 let [us](mailto:libral@googlegroups.com) know.
 
+We have reports of the precompiled binaries working on 64-bit Fedora 21-25,
+RHEL 5-7 (and related distributions like CentOS), Debian 6-9,
+Ubuntu 10.04-16.10, and SLES 11-12. The binaries will not work on
+32-bit and pre-glibc 2.8 systems: RHEL 4, SLES 10, ...
+
 ## Usage
 
 After you build `libral`, or after you download and unpack the
