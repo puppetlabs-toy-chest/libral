@@ -101,6 +101,23 @@ Assuming you have that toolchain, you need to do the following:
     ../examples/dpack
 ```
 
+## Building in Docker
+
+One additional option is to use a container-based build environment, allowing
+you to build and test libral on any platform that supports Docker.
+
+### Build and run container image
+
+```bash
+    docker build -t libral-build examples
+    docker run --rm -ti -v $(pwd):/usr/src/libral libral-build
+```
+
+You will now have a bash command-line running inside the top-level source
+directory (inside a Fedora container), and you can build and run `libral`
+as described above. Source code changes and the build/ directory will remain
+on the Docker host even after the Docker container is destroyed.
+
 ## Building on OS X
 
 Libral builds successfully with Clang 5.0+ and libraries installed with the
