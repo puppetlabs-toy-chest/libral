@@ -36,7 +36,7 @@ namespace libral {
         res = prov->prepare();
         if (res && *res) {
           auto t = new type(name, prov);
-          types.push_back(std::move(std::unique_ptr<type>(t)));
+          types.push_back(std::unique_ptr<type>(t));
           return true;
         } else {
           LOG_ERROR("provider[{1}]: preparing failed: {2}",

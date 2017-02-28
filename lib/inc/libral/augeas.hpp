@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <vector>
 #include <memory>
+#include <string>
 #include <boost/optional.hpp>
 
 #include <augeas.h>

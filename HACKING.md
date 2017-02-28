@@ -117,3 +117,40 @@ You will now have a bash command-line running inside the top-level source
 directory (inside a Fedora container), and you can build and run `libral`
 as described above. Source code changes and the build/ directory will remain
 on the Docker host even after the Docker container is destroyed.
+
+## Building on OS X
+
+Libral builds successfully with Clang 5.0+ and libraries installed with the
+[Homebrew](https://brew.sh) package manager.
+
+### Install packages (homebrew)
+
+```bash
+    brew install cmake boost openssl libxml2 yaml-cpp augeas
+```
+
+### Build Leatherman
+
+Follow the same instructions as building on Linux.
+
+```bash
+    git clone https://github.com/puppetlabs/leatherman.git
+    cd leatherman
+    git checkout 0.10.1
+    mkdir build && cd build
+    cmake ..
+    make
+    sudo make install
+```
+
+### Build libral
+
+Again, following the same instructions as Linux.
+
+```bash
+    git clone https://github.com/puppetlabs/libral
+    cd libral
+    mkdir build && cd build
+    cmake ..
+    make
+```
