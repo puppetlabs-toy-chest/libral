@@ -79,6 +79,7 @@ feature_summary(WHAT ALL)
 
 add_subdirectory(lib)
 add_subdirectory(exe)
+add_subdirectory(mruby)
 
 configure_file("${PROJECT_SOURCE_DIR}/config.hpp.in"
                "${PROJECT_BINARY_DIR}/inc/config.hpp")

@@ -16,6 +16,11 @@ Linux distros if you adjust for differences in package names.
       curl-devel yaml-cpp-devel augeas-devel
 ```
 
+You will also need to have `ruby` and `rake` installed, as the embedded
+build of `mruby` needs these tools; the versions aren't very important,
+anything recent and supported should suffice. They are only needed at build
+time, not at runtime.
+
 ### Build Leatherman
 
 ```bash
@@ -66,8 +71,13 @@ Assuming you have that toolchain, you need to do the following:
       rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-pc1-el-6.noarch.rpm
       rpm -ivh http://$INTERNAL_HOST_FOR_PL_BUILD_TOOLS/yum/el/6/x86_64/pl-build-tools-release-22.0.3-1.el6.noarch.rpm
       yum -y install puppet-agent pl-boost pl-cmake pl-yaml-cpp pl-gcc
-      yum -y install zlib-static libselinux-static
+      yum -y install zlib-static libselinux-static readline-static ncurses-static
 ```
+
+You will also need to have `ruby` and `rake` installed, as the embedded
+build of `mruby` needs these tools; the versions aren't very important,
+anything recent and supported should suffice. They are only needed at build
+time, not at runtime.
 
 ### Build Leatherman
 
@@ -128,6 +138,11 @@ Libral builds successfully with Clang 5.0+ and libraries installed with the
 ```bash
     brew install cmake boost openssl libxml2 yaml-cpp augeas
 ```
+
+You will also need to have `ruby` and `rake` installed, as the embedded
+build of `mruby` needs these tools; the versions aren't very important,
+anything recent and supported should suffice. They are only needed at build
+time, not at runtime.
 
 ### Build Leatherman
 

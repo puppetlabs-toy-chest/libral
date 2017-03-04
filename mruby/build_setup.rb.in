@@ -1,0 +1,53 @@
+# This template is expanded by CMake and helps configure the mruby build
+module Libral
+  STATIC=("@LIBRAL_STATIC@" == "ON")
+
+  PREFIX="@CMAKE_INSTALL_PREFIX@"
+
+  CC="@CMAKE_C_COMPILER@"
+  CXX="@CMAKE_CXX_COMPILER@"
+  AR="@CMAKE_AR@"
+
+  AUGEAS_INCLUDE_DIRS="@AUGEAS_INCLUDE_DIRS@".split(";")
+  AUGEAS_LIBRARIES="@AUGEAS_LIBRARIES@".split(";")
+
+  SOURCE_DIR="@PROJECT_SOURCE_DIR@"
+  BUILD_DIR="@PROJECT_BINARY_DIR@"
+
+  # Whether to enable or disable readline in static builds of mirb
+  # For now, we always enable it as that's a little friendlier to users.
+  ENABLE_READLINE = false
+end
+
+def libral_configure_mruby_augeas(gem)
+  if Libral::STATIC
+    gem.cc.include_paths += Libral::AUGEAS_INCLUDE_DIRS
+    gem.linker.flags_after_libraries = Libral::AUGEAS_LIBRARIES
+    # mruby-augeas sets this to 'augeas', but that's already included in
+    # the above
+    gem.linker.libraries = []
+  end
+end
+
+def libral_configure_mirb(gem)
+  if Libral::STATIC
+    if Libral::ENABLE_READLINE
+      # Make sure mirb links statically to readline and ncurses.
+      gem.linker.flags_after_libraries =
+        ["-Wl,-Bstatic",
+         "-lreadline", "-lhistory", "-lncurses", "-ltinfo",
+         "-Wl,-Bdynamic"]
+    else
+      gem.cc.defines.reject! { |d| d == "ENABLE_READLINE" }
+    end
+    # Suppress the libraries that the gem sets up
+    gem.linker.libraries = []
+  end
+end
+
+def libral_configure_toolchain(conf)
+  conf.cc.command = Libral::CC
+  conf.cxx.command = Libral::CXX
+  conf.linker.command = Libral::CXX
+  conf.archiver.command = Libral::AR
+end

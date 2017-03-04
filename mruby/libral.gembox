@@ -1,0 +1,99 @@
+# -*- ruby -*-
+MRuby::GemBox.new do |conf|
+  # Use standard Kernel#sprintf method
+  conf.gem :core => "mruby-sprintf"
+
+  # Use standard print/puts/p
+  conf.gem :core => "mruby-print"
+
+  # Use standard Math module
+  conf.gem :core => "mruby-math"
+
+  # Use standard Time class
+  conf.gem :core => "mruby-time"
+
+  # Use standard Struct class
+  conf.gem :core => "mruby-struct"
+
+  # Use Enumerable module extension
+  conf.gem :core => "mruby-enum-ext"
+
+  # Use String class extension
+  conf.gem :core => "mruby-string-ext"
+
+  # Use Numeric class extension
+  conf.gem :core => "mruby-numeric-ext"
+
+  # Use Array class extension
+  conf.gem :core => "mruby-array-ext"
+
+  # Use Hash class extension
+  conf.gem :core => "mruby-hash-ext"
+
+  # Use Range class extension
+  conf.gem :core => "mruby-range-ext"
+
+  # Use Proc class extension
+  conf.gem :core => "mruby-proc-ext"
+
+  # Use Symbol class extension
+  conf.gem :core => "mruby-symbol-ext"
+
+  # Use Random class
+  conf.gem :core => "mruby-random"
+
+  # Use Object class extension
+  conf.gem :core => "mruby-object-ext"
+
+  # Use ObjectSpace class
+  # conf.gem :core => "mruby-objectspace"
+
+  # Use Fiber class
+  # conf.gem :core => "mruby-fiber"
+
+  # Use Enumerator class (require mruby-fiber)
+  conf.gem :core => "mruby-enumerator"
+
+  # Kernel#exit method
+  conf.gem :core => "mruby-exit"
+
+  # Use Enumerable::Lazy class (require mruby-enumerator)
+  # conf.gem :core => "mruby-enum-lazy"
+
+  # Use toplevel object (main) methods extension
+  conf.gem :core => "mruby-toplevel-ext"
+
+  # Generate mirb command
+  conf.gem :core => "mruby-bin-mirb" do |g|
+    libral_configure_mirb(g)
+  end
+
+  # Generate mruby command
+  conf.gem :core => "mruby-bin-mruby"
+
+  # Generate mruby-strip command
+  conf.gem :core => "mruby-bin-strip"
+
+  # Use Kernel module extension
+  conf.gem :core => "mruby-kernel-ext"
+
+  # Use mruby-compiler to build other mrbgems
+  conf.gem :core => "mruby-compiler"
+
+  # IO, File class implementation
+  conf.gem :github => 'iij/mruby-io'
+
+  # JSON parser and generator
+  conf.gem :github => 'iij/mruby-iijson'
+
+  # Bindings to augeas
+  conf.gem :github => "hercules-team/mruby-augeas" do |g|
+    libral_configure_mruby_augeas(g)
+  end
+
+  # Libral-specific special sauce
+  conf.gem "#{MRUBY_ROOT}/../mruby-libral"
+
+  # Any GEM after this one will be built as a DSO
+  conf.gem :github => 'mattn/mruby-require'
+end
