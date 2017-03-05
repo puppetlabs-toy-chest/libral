@@ -29,17 +29,19 @@ make
 
 # Reduce the executable as best we can
 cd bin
-strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s  ralsh
+strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s  ralsh mruby mirb
 [ -x upx ] && upx ralsh
 
 cd ..
 rm -rf ral
 mkdir -p ral/bin
 cp ./bin/ralsh ral/bin/ralsh.bin
+cp ./bin/mruby ./bin/mirb ral/bin
 cat > ral/bin/ralsh <<'EOF'
 #! /bin/bash
 topdir=$(readlink --canonicalize $(dirname $0)/..)
 export RALSH_DATA_DIR=$topdir/data
+export RALSH_LIBEXEC_DIR=$topdir
 exec $topdir/bin/ralsh.bin "$@"
 EOF
 chmod a+x ral/bin/ralsh
