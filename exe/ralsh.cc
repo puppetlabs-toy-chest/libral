@@ -25,6 +25,7 @@ namespace lib = libral;
 namespace po = boost::program_options;
 using namespace leatherman::locale;
 namespace fs = boost::filesystem;
+namespace util = leatherman::util;
 
 namespace color {
   // Very poor man's output coloring. Call init() to fill these
@@ -187,9 +188,23 @@ int main(int argc, char **argv) {
     // Figure out our include path
     std::vector<std::string> data_dirs;
     std::string env_data_dir;
-    if (leatherman::util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
+    if (util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
       data_dirs.push_back(absolute_path(env_data_dir));
     }
+    std::string env_libexec_dir;
+    if (!util::environment::get("RALSH_LIBEXEC_DIR", env_libexec_dir)) {
+      env_libexec_dir = "/usr/libexec/libral";
+    }
+    // FIXME: lop trailing '/' off env_libexec_dir
+    std::string path;
+    if (util::environment::get("PATH", path)) {
+      util::environment::set("PATH", env_libexec_dir + "/bin:" + path);
+    } else {
+      // This is extremely strange .. no path ?
+      util::environment::set("PATH", env_libexec_dir + "/bin");
+    }
+    // FIXME: Check that mruby is there and warn otherwise
+
     if (vm.count("include")) {
       for (const auto& dir : vm["include"].as<std::vector<std::string>>()) {
         data_dirs.push_back(absolute_path(dir));
