@@ -27,12 +27,7 @@ githash=$(cd $srcdir && git describe --always)
 
 make
 
-# Reduce the executable as best we can
-cd bin
-strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s  ralsh mruby mirb
-[ -x upx ] && upx ralsh
-
-cd ..
+# Assemble stuff in ral/
 rm -rf ral
 mkdir -p ral/bin
 cp ./bin/ralsh ral/bin/ralsh.bin
@@ -61,6 +56,14 @@ cp -p $lns_src/sep.aug $lns_src/util.aug $lns_src/rx.aug $lns_src/build.aug ral/
 rm -rf ral/data/lenses/tests
 
 find ral/ -name \*~ -delete
+
+# Reduce the executable as best we can
+strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s ral/bin/*
+UPX=$(type -p upx)
+if [ -n "$UPX" ]
+then
+    $UPX -qq ral/bin/*
+fi
 
 tarball=ralsh-$(date +%Y-%m-%dT%H.%M)-$githash.tgz
 tar czf $tarball ral
