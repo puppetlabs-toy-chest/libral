@@ -53,6 +53,8 @@ cp -pr ${topdir}/data ral
 # Snarf up some augeas lenses that we need
 lns_src=/usr/share/augeas/lenses/dist
 cp -p $lns_src/sep.aug $lns_src/util.aug $lns_src/rx.aug $lns_src/build.aug ral/data/lenses
+cp -p $lns_src/authorized_keys.aug ral/data/lenses
+
 rm -rf ral/data/lenses/tests
 
 find ral/ -name \*~ -delete
