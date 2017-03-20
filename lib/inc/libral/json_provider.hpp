@@ -11,6 +11,9 @@ namespace libral {
      convention */
   class json_provider : public provider {
   public:
+    using json_container = leatherman::json_container::JsonContainer;
+    using json_keys = std::vector<leatherman::json_container::JsonContainerKey>;
+
     json_provider(const std::string& path, YAML::Node &node)
       : provider(), _path(path), _node(node) { };
 
@@ -26,16 +29,21 @@ namespace libral {
   private:
     result<void> set(context &ctx, const update &upd);
 
-    result<leatherman::json_container::JsonContainer>
+    result<json_container>
     run_action(const std::string& action,
-               const leatherman::json_container::JsonContainer& json);
+               const json_container& json);
 
-    bool contains_error(const leatherman::json_container::JsonContainer& json,
+    bool contains_error(const json_container& json,
                         std::string& message,
                         std::string& kind);
 
     result<resource>
-    resource_from_json(const leatherman::json_container::JsonContainer& json);
+    resource_from_json(const json_container& json);
+
+    result<boost::optional<value>>
+    value_from_json(const std::string &name,
+                    const json_container& json,
+                    const json_keys& key);
 
     std::string _path;
     YAML::Node _node;

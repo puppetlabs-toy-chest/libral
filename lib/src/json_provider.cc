@@ -1,5 +1,6 @@
 #include <libral/json_provider.hpp>
 
+#include <sstream>
 #include <iostream>
 #include <string>
 
@@ -15,10 +16,28 @@
 
 using namespace leatherman::locale;
 namespace exe = leatherman::execution;
-namespace json = leatherman::json_container;
 namespace fs = boost::filesystem;
+namespace json = leatherman::json_container;
+using json_container = json::JsonContainer;
+using json_keys = std::vector<json::JsonContainerKey>;
+
 
 namespace libral {
+
+  result<boost::optional<value>>
+  json_provider::value_from_json(const std::string &name,
+                                 const json_container& json,
+                                 const json_keys& key) {
+    const auto& attr = spec()->attr(name);
+    if (!attr) {
+      // silently skip extraneous attributes
+      return boost::optional<value>(boost::none);
+    }
+
+    auto v = attr->from_json(json, key);
+    err_ret(v);
+    return boost::optional<value>(v.ok());
+  }
 
   result<void>
   json_provider::set(context &ctx, const updates& upds) {
@@ -32,13 +51,12 @@ namespace libral {
 
   result<void>
   json_provider::set(context &ctx, const update &upd) {
-    auto inp = json::JsonContainer();
+    auto inp = json_container();
     inp.set<bool>({ "ral", "noop" }, false);
     inp.set<std::string>({ "resource", "name" }, upd.name());
 
     for (auto& k : upd.should.attrs()) {
-      // FIXME: We should really map libral values <-> JSON values (e.g. bool)
-      inp.set<std::string>({ "resource", k.first }, k.second.to_string());
+      k.second.to_json(inp, { "resource", k.first });
     }
     auto out=run_action("update", inp);
     if (!out) {
@@ -58,7 +76,7 @@ namespace libral {
       return result<void>();
     }
 
-    auto json_chgs = out->get<json::JsonContainer>("changes");
+    auto json_chgs = out->get<json_container>("changes");
     for (auto k : json_chgs.keys()) {
       if (! json_chgs.includes({ k, "is" })) {
         return error(_("malformed change: entry for {1} does not contain 'is'",
@@ -69,9 +87,11 @@ namespace libral {
                        k));
       }
 
-      auto is = value(json_chgs.get<std::string>({ k, "is"}));
-      auto was = value(json_chgs.get<std::string>({ k, "was"}));
-      chgs.add(k, is, was);
+      auto is = value_from_json(k, json_chgs, { k, "is"});
+      err_ret(is);
+      auto was = value_from_json(k, json_chgs, { k, "was"});
+      err_ret(was);
+      chgs.add(k, *is.ok(), *was.ok());
     }
     return result<void>();
   }
@@ -85,7 +105,7 @@ namespace libral {
 #if 0
   result<boost::optional<resource_uptr>>
   json_provider::find(const std::string &name) {
-    auto inp = json::JsonContainer();
+    auto inp = json_container();
     inp.set<std::string>({ "resource", "name" }, name);
 
     auto out=run_action("find", inp);
@@ -107,7 +127,7 @@ namespace libral {
       return error(_("provider[{1}]: find did not produce a 'resource' entry",
                      _path));
     }
-    auto json_rsrc = out->get<json::JsonContainer>("resource");
+    auto json_rsrc = out->get<json_container>("resource");
     auto rsrc = resource_from_json(json_rsrc);
     if (!rsrc) {
       return error(_("provider[{1}]: find of '{2}': {3}",
@@ -126,7 +146,7 @@ namespace libral {
                      const resource::attributes& config) {
     // run script with ral_action == list
     std::vector<resource> result;
-    auto inp = json::JsonContainer();
+    auto inp = json_container();
     auto out = run_action("list", inp);
     if (!out) {
       return error(_("provider[{1}]: {2}", _path, out.err().detail));
@@ -140,7 +160,7 @@ namespace libral {
       return error(_("provider[{1}]: list did not produce a 'resources' entry",
                      _path));
     }
-    auto json_rsrcs = out->get<std::vector<json::JsonContainer>>("resources");
+    auto json_rsrcs = out->get<std::vector<json_container>>("resources");
     for (auto json_rsrc : json_rsrcs) {
       auto rsrc = resource_from_json(json_rsrc);
       if (!rsrc) {
@@ -152,9 +172,9 @@ namespace libral {
     return std::move(result);
   }
 
-  result<json::JsonContainer>
+  result<json_container>
   json_provider::run_action(const std::string& action,
-                            const json::JsonContainer& json) {
+                            const json_container& json) {
     auto inp = json.toString();
     auto res = exe::execute(_path, { "ral_action=" + action },
                             inp,
@@ -184,14 +204,14 @@ namespace libral {
     }
 
     try {
-      return json::JsonContainer(res.output);
+      return json_container(res.output);
     } catch (json::data_parse_error& e) {
       return error(_("action '{1}' returned invalid JSON '{2}'",
                      action, res.output));
     }
   }
 
-  bool json_provider::contains_error(const json::JsonContainer& json,
+  bool json_provider::contains_error(const json_container& json,
                                      std::string& message,
                                      std::string& kind) {
     auto res = json.includes("error");
@@ -203,7 +223,7 @@ namespace libral {
   }
 
   result<resource>
-  json_provider::resource_from_json(const json::JsonContainer& json) {
+  json_provider::resource_from_json(const json_container& json) {
     if (!json.includes("name")) {
       return error(_("resource does not have a name"));
     }
@@ -215,7 +235,10 @@ namespace libral {
       if (k == "name") {
         continue;
       }
-      rsrc[k] = value(json.get<std::string>(k));
+      auto v = value_from_json(k, json, { k });
+      err_ret(v);
+      if (v.ok())
+        rsrc[k] = *v.ok();
     }
     return rsrc;
   }
