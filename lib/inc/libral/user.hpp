@@ -45,31 +45,21 @@ namespace libral {
   */
   class user_provider : public provider {
   public:
-
-    using provider_ptr = std::shared_ptr<user_provider>;
-
-    class user_resource : public resource {
-    public:
-      user_resource(provider_ptr& prov, const std::string& name, bool exists)
-        : resource(name), _prov(prov), _exists(exists) { }
-
-      result<changes> update(const attr_map& should) override;
-    private:
-      provider_ptr   _prov;
-      /* Indicate whether this resource already exists on the system or is
-         brand new. We use this to determine whether to call useradd or
-         usermod when we update the user */
-      bool           _exists;
-    };
-
     const std::string& description();
     result<bool> suitable() override;
-    void flush() override;
-    result<std::vector<resource_uptr>> instances() override;
-    std::unique_ptr<resource> create(const std::string& name) override;
+
+    result<std::vector<resource>>
+    get(context &ctx, const std::vector<std::string>& names,
+        const resource::attributes& config) override;
+
+    result<void>
+    set(context &ctx, const updates& upds);
+
   protected:
     result<prov::spec> describe() override;
   private:
+    result<void> set(context &ctx, const update& upd);
+
     boost::optional<command>     _cmd_useradd;
     boost::optional<command>     _cmd_usermod;
     boost::optional<command>     _cmd_userdel;

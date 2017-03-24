@@ -69,33 +69,29 @@ static void print_resource_attr(const std::string& name,
        << " => '" << v << "'," << endl;
 }
 
-static void print_resource(lib::type& type, lib::resource& res) {
+static void print_resource(lib::type& type, const lib::resource& res) {
   cout << color::blue << type.name() << color::reset << " { '"
        << color::blue << res.name() << color::reset << "':" << endl;
   uint maxlen = 0;
-  for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
-    if (a->first.length() > maxlen) maxlen = a->first.length();
+  for (const auto& a : res.attrs()) {
+    if (a.first.length() > maxlen) maxlen = a.first.length();
   }
   auto ens = res.lookup<std::string>("ensure");
   if (ens) {
     print_resource_attr("ensure", *ens, maxlen);
   }
-  for (auto a = res.attr_begin(); a != res.attr_end(); ++a) {
-    if (a->first == "ensure")
+  for (const auto& a : res.attrs()) {
+    if (a.first == "ensure")
       continue;
-    print_resource_attr(a->first, a->second, maxlen);
+    print_resource_attr(a.first, a.second, maxlen);
   }
   cout << "}" << endl;
 }
 
-static void print_update(lib::type& type, lib::resource& res,
-                         const lib::result<lib::changes>& rslt) {
-  if (rslt) {
-    print_resource(type, res);
-    cout << rslt.ok() << endl;
-  } else {
-    cout << color::red << _("failed: {1}", rslt.err().detail) << color::reset << endl;
-  }
+static void print_update(lib::type& type, const lib::update& upd,
+                         const lib::changes& chgs) {
+  print_resource(type, type.prov().create(upd, chgs));
+  cout << chgs << endl;
 }
 
 static void print_attr_explanation(const std::string& name,
@@ -215,7 +211,7 @@ int main(int argc, char **argv) {
       data_dirs.push_back(absolute_path(env_data_dir));
     }
     if (vm.count("include")) {
-      for (auto dir : vm["include"].as<std::vector<std::string>>()) {
+      for (const auto& dir : vm["include"].as<std::vector<std::string>>()) {
         data_dirs.push_back(absolute_path(dir));
       }
     }
@@ -250,16 +246,15 @@ int main(int argc, char **argv) {
         if (vm.count("attr-value")) {
           // We have attributes, modify resource
           auto av = vm["attr-value"].as<std::vector<std::string>>();
-          lib::attr_map attrs;
+          lib::resource should = type->prov().create(name);
 
-          attrs["name"] = name;
-          for (auto arg = av.begin(); arg != av.end(); arg++) {
-            auto found = arg->find("=");
+          for (const auto& arg : av) {
+            auto found = arg.find("=");
             if (found != string::npos) {
-              auto attr = arg->substr(0, found);
-              auto value = type->parse(attr, arg->substr(found+1));
+              auto attr = arg.substr(0, found);
+              auto value = type->parse(attr, arg.substr(found+1));
               if (value) {
-                attrs[attr] = value.ok();
+                should[attr] = value.ok();
               } else {
                 boost::nowide::cerr << color::red <<
                   _("failed to read attribute {1}: {2}", attr,
@@ -269,7 +264,7 @@ int main(int argc, char **argv) {
               }
             }
           }
-          auto res = type->update(name, attrs);
+          auto res = type->set(should);
           if (!res) {
             boost::nowide::cerr << color::red <<
               _("failed to update {1}: {2}", name,
@@ -277,7 +272,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
           } else {
             type->flush();
-            print_update(*type, *(res->first), res->second);
+            print_update(*type, res->first, res->second);
           }
         } else {
           // No attributes, dump the resource
@@ -289,7 +284,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
           }
           if (*inst) {
-            print_resource(*type, ***inst);
+            print_resource(*type, **inst);
           }
         }
       } else {
@@ -301,8 +296,8 @@ int main(int argc, char **argv) {
                 insts.err().detail) << color::reset << endl;
             return EXIT_FAILURE;
         }
-        for (auto inst = insts->begin(); inst != insts->end(); ++inst) {
-          print_resource(*type, **inst);
+        for (const auto& inst : insts.ok()) {
+          print_resource(*type, inst);
         }
       }
     } else {
@@ -315,8 +310,8 @@ int main(int argc, char **argv) {
       }
       // No type given, list known types
       auto types = ral->types();
-      for (auto t = types.begin(); t != types.end(); ++t) {
-        boost::nowide::cout << (*t)->name() << endl;
+      for (const auto& t : types) {
+        boost::nowide::cout << t->name() << endl;
       }
     }
   } catch (domain_error& ex) {

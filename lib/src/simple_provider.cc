@@ -17,37 +17,36 @@ using namespace leatherman::locale;
 
 namespace libral {
 
-  result<changes>
-  simple_provider::simple_resource::update(const attr_map &should) {
-    std::vector<std::string> args;
-    result<changes> rslt;
-    auto& chgs = rslt.ok();
+  result<void>
+  simple_provider::set(context &ctx, const updates& upds) {
+    for (auto upd : upds) {
+      std::vector<std::string> args;
+      auto& name = upd.name();
+      auto& chgs = ctx.changes_for(name);
 
-    auto cb = [this, &chgs](std::string& key, std::string& value)
-      -> result<bool> {
-      if (key == "name") {
-        if (value != name()) {
-          return error(_("wrong name changed by update: '{1}' instead of '{2}'",
-                         value, name()));
+      auto cb = [&name, &chgs](std::string& key, std::string& value)
+        -> result<bool> {
+        if (key == "name") {
+          if (value != name) {
+            return error(_("wrong name changed by update: '{1}' instead of '{2}'",
+                           value, name));
+          }
+        } else if (key == "ral_was") {
+          chgs.back().was = value;
+        } else {
+          chgs.push_back(change(key, value));
         }
-      } else if (key == "ral_was") {
-        chgs.back().was = value;
-      } else {
-        chgs.push_back(change(key, value));
-        (*this)[key] = value;
-      }
-      return true;
-    };
+        return true;
+      };
 
-    for (auto p : should) {
-      args.push_back(p.first + "='" + p.second.to_string() + "'");
+      for (auto p : upd.should.attrs()) {
+        args.push_back(p.first + "='" + p.second.to_string() + "'");
+      }
+      auto r = run_action("update", cb, args);
+      if (!r)
+        return r.err();
     }
-    auto r = _prov->run_action("update", cb, args);
-    if (!r) {
-      return r.err();
-    } else {
-      return rslt;
-    }
+    return result<void>();
   }
 
   result<prov::spec> simple_provider::describe() {
@@ -66,28 +65,29 @@ namespace libral {
     return (s == "true");
   }
 
-  void simple_provider::flush() {
-    // Noop. Not supported/needed
+  result<std::vector<resource>>
+  simple_provider::get(context &ctx,
+      const std::vector<std::string>& names,
+      const resource::attributes& config) {
+    if (names.size() == 1) {
+      return find(names.front());
+    } else {
+      return instances();
+    }
   }
 
-  std::unique_ptr<resource> simple_provider::create(const std::string& name) {
-    auto shared_this =
-      std::static_pointer_cast<simple_provider>(shared_from_this());
-    return std::unique_ptr<resource>(new simple_resource(shared_this, name));
-  }
-
-  result<boost::optional<resource_uptr>>
+  result<std::vector<resource>>
   simple_provider::find(const std::string &name) {
-    resource_uptr rsrc;
+    std::vector<resource> res;
 
-    auto cb = [this, &rsrc, &name](std::string key, std::string value) -> result<bool> {
+    auto cb = [this, &res, &name](std::string key, std::string value) -> result<bool> {
       if (key == "name") {
-        rsrc = create(value);
+        res.push_back(create(value));
         return true;
       } else if (key == "ral_unknown") {
-        return error(_("unknown resource %s", name));
+        return error(_("unknown resource {1}", name));
       } else {
-        (*rsrc)[key] = value;
+        res.back()[key] = value;
         return true;
       }
     };
@@ -97,33 +97,31 @@ namespace libral {
       return r.err();
     }
 
-    return boost::optional<resource_uptr>(std::move(rsrc));
+    return res;
   }
 
-  result<std::vector<resource_uptr>> simple_provider::instances() {
+  result<std::vector<resource>> simple_provider::instances() {
     // run script with ral_action == list
-    std::vector<resource_uptr> res;
-    std::unique_ptr<resource> rsrc;
+    std::vector<resource> res;
 
-    auto cb = [this, &res, &rsrc](std::string key, std::string value) {
+    auto cb = [this, &res](std::string key, std::string value) -> result<bool> {
       if (key == "name") {
-        if (rsrc != nullptr) {
-          res.push_back(std::move(rsrc));
-        }
-        rsrc = create(value);
+        res.push_back(create(value));
       } else {
-        (*rsrc)[key] = value;
+        if (res.size() == 0) {
+          return error(_("format error: attribute values must come after the name"));
+        }
+        // FIXME: check that KEY is a valid attribute and VALUE is a valid
+        // for the attribute's type
+        res.back()[key] = value;
       }
       return true;
     };
     auto r = run_action("list", cb);
-    if (rsrc) {
-      res.push_back(std::move(rsrc));
-    }
     if (!r) {
       return r.err();
     };
-    return std::move(res);
+    return res;
   }
 
   result<bool>

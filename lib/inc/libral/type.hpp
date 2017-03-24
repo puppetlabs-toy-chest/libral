@@ -17,11 +17,9 @@ namespace libral {
     type(const std::string name, std::shared_ptr<provider> prov)
       : _name(name), _prov(prov) { }
     const std::string& name(void) const { return _name; }
-    result<boost::optional<resource_uptr>> find(const std::string &name);
-    result<std::vector<resource_uptr>> instances(void);
-    // @todo lutter 2016-06-08: some error indication might be nice
-    result<std::pair<resource_uptr, changes>>
-    update(const std::string& name, const attr_map& attrs);
+    result<boost::optional<resource>> find(const std::string &name);
+    result<std::vector<resource>> instances(void);
+    result<std::pair<update, changes>> set(const resource& should);
     void flush() { _prov->flush(); }
 
     /* Turn a string into a value. Return an error message if that is not

@@ -136,6 +136,12 @@ namespace libral {
     bool is_present() const { return type() != typeid(boost::none_t); };
 
     /**
+     * Determines if the given value is anything but none.
+     * @return Returns false for none values or true for anything else.
+     */
+    operator bool() const { return type()  != typeid(boost::none_t); };
+
+    /**
      * Determines if a value is the "true" value.
      * @return Returns true if the value is exactly "true", or false if not.
      */
@@ -167,6 +173,8 @@ namespace libral {
      */
     array to_array(bool convert_hash = true);
 #endif
+
+    static const value none;
   };
 
   /**

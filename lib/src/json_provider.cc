@@ -18,33 +18,42 @@ namespace json = leatherman::json_container;
 
 namespace libral {
 
-  result<changes>
-  json_provider::json_resource::update(const attr_map &should) {
+  result<void>
+  json_provider::set(context &ctx, const updates& upds) {
+    for (auto upd : upds) {
+      auto res = set(ctx, upd);
+      if (!res)
+        return res.err();
+    }
+    return result<void>();
+  }
+
+  result<void>
+  json_provider::set(context &ctx, const update &upd) {
     auto inp = json::JsonContainer();
     inp.set<bool>({ "ral", "noop" }, false);
-    inp.set<std::string>({ "resource", "name" }, name());
+    inp.set<std::string>({ "resource", "name" }, upd.name());
 
-    for (auto k : should) {
+    for (auto& k : upd.should.attrs()) {
       // FIXME: We should really map libral values <-> JSON values (e.g. bool)
       inp.set<std::string>({ "resource", k.first }, k.second.to_string());
     }
-    auto out=_prov->run_action("update", inp);
+    auto out=run_action("update", inp);
     if (!out) {
       return out.err();
     }
 
     std::string message, kind;
-    if (_prov->contains_error(*out, message, kind)) {
+    if (contains_error(*out, message, kind)) {
       return error(_("update failed: {1}", message));
     }
 
-    result<changes> res;
-    auto& chgs = res.ok();
+    auto& chgs = ctx.changes_for(upd.name());
 
     // FIXME: should we consider this an error or an indication that no
     // changes were made ?
     if (! out->includes("changes")) {
-      return chgs;
+      return result<void>();
     }
 
     auto json_chgs = out->get<json::JsonContainer>("changes");
@@ -62,12 +71,7 @@ namespace libral {
       auto was = value(json_chgs.get<std::string>({ k, "was"}));
       chgs.add(k, is, was);
     }
-    for (auto ch : chgs) {
-      if (ch.attr != "name") {
-        operator[](ch.attr) = ch.is;
-      }
-    }
-    return res;
+    return result<void>();
   }
 
   result<prov::spec> json_provider::describe() {
@@ -92,13 +96,7 @@ namespace libral {
     // Noop. Not supported/needed
   }
 
-  std::unique_ptr<resource> json_provider::create(const std::string& name) {
-    // Same as simple_provider
-    auto shared_this =
-      std::static_pointer_cast<json_provider>(shared_from_this());
-    return std::unique_ptr<resource>(new json_resource(shared_this, name));
-  }
-
+#if 0
   result<boost::optional<resource_uptr>>
   json_provider::find(const std::string &name) {
     auto inp = json::JsonContainer();
@@ -134,10 +132,14 @@ namespace libral {
     }
     return boost::optional<resource_uptr>(std::move(*rsrc));
   }
+#endif
 
-  result<std::vector<resource_uptr>> json_provider::instances() {
+  result<std::vector<resource>>
+  json_provider::get(context &ctx,
+                     const std::vector<std::string>& names,
+                     const resource::attributes& config) {
     // run script with ral_action == list
-    std::vector<resource_uptr> result;
+    std::vector<resource> result;
     auto inp = json::JsonContainer();
     auto out = run_action("list", inp);
     if (!out) {
@@ -214,22 +216,21 @@ namespace libral {
     return res;
   }
 
-  result<std::unique_ptr<resource>>
+  result<resource>
   json_provider::resource_from_json(const json::JsonContainer& json) {
-    std::unique_ptr<resource> rsrc;
     if (!json.includes("name")) {
       return error(_("resource does not have a name"));
     }
 
     auto name = json.get<std::string>("name");
-    rsrc = create(name);
+    auto rsrc = create(name);
 
     for (auto k : json.keys()) {
       if (k == "name") {
         continue;
       }
-      (*rsrc)[k] = value(json.get<std::string>(k));
+      rsrc[k] = value(json.get<std::string>(k));
     }
-    return std::move(rsrc);
+    return rsrc;
   }
 }

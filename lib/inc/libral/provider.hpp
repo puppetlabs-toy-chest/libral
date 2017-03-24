@@ -9,64 +9,11 @@
 
 #include <libral/result.hpp>
 #include <libral/value.hpp>
+#include <libral/resource.hpp>
+#include <libral/context.hpp>
 #include <libral/prov/spec.hpp>
 
 namespace libral {
-  /* Nomenclature warning: a provider here is the thing that knows how to
-     deal with a certain kind of resources, e.g., that knows how to list
-     all users on a system.
-
-     We call the representation of an individual user a 'resource'
-  */
-
-  /* A map of attribute names to values. */
-  // FIXME: we really need to combine attr_map and resource, maybe make
-  // resource a subclass of atr_map ?
-  struct attr_map : std::map<std::string, value> {
-
-    /**
-     * Looks up the value associated with key. If no entry exists, returns
-     * boost::none.
-     */
-    const value operator[](const std::string& key) const;
-    value& operator[](const std::string& attr);
-
-    /**
-     * Looks up the value of a given attribute.
-     * @param key The name of the attribute
-     * @param deflt The value to use if there is no suitable value for key
-     * @return Returns the value associated with key if one exists and has
-     * type T and deflt otherwise.
-     */
-    template<typename T>
-    const T& lookup(const std::string& key, const T& deflt) const;
-
-    /**
-     * Looks up the value of a given attribute.
-     * @param key The name of the attribute
-     * @return Returns the value associated with key if one exists and has
-     * type T and nullptr otherwise.
-     */
-    template<typename T>
-    const T* lookup(const std::string& key) const;
-  };
-
-  /* Record the change of attribute ATTR from WAS to IS */
-  struct change {
-    change(const std::string &a, const value &i, const value &w = boost::none)
-      : attr(a), is(i), was(w) {};
-    std::string attr;
-    value is;
-    value was;
-  };
-
-  /* A list of changes */
-  struct changes : std::vector<change> {
-    void add(const std::string &attr, const value &is,
-             const value &was = boost::none);
-    bool exists(const std::string &attr);
-  };
-
   /**
    * Stream insertion operator for changes.
    * @param os The output stream to write the changes to.
@@ -74,53 +21,6 @@ namespace libral {
    * @return Returns the given output stream.
    */
   std::ostream& operator<<(std::ostream& os, changes const& chgs);
-
-  /* An individual thing that we manage */
-  /* The resource only has one set of attributes, therefore it's not clear
-     whether those represent 'should' or 'is' state; that information is
-     contextual but might need to get incorporated into the notion of a
-     resource. Maybe. */
-  class resource {
-  protected:
-    /* Resources are created by one of the provider methods: create, find,
-       or instances, but should not be instantiated directly. */
-    resource(const std::string name) : _name(name){ }
-  public:
-    virtual ~resource() = default;
-
-    const std::string& name() { return _name; }
-
-    /* Return the current state of attribute ATTR */
-    const value operator[](const std::string& key) const;
-    value& operator[](const std::string& attr);
-    void erase(const std::string attr) { _attrs.erase(attr); }
-    attr_map::iterator attr_begin() { return _attrs.begin(); }
-    attr_map::iterator attr_end() { return _attrs.end(); }
-    template<typename T>
-    const T& lookup(const std::string& key, const T& deflt) const;
-    template<typename T>
-    const T* lookup(const std::string& key) const;
-
-    /* Update this resource's properties to the values in SHOULD. Only the
-     * attributes mentioned in SHOULD should be modified, all others need
-     * to be left alone. It is safe to assume that the current attributes
-     * of the resource represent the 'is' state.
-     */
-    virtual result<changes> update(const attr_map& should) = 0;
-  protected:
-    /* Check if any of the attributes named in props differ between what we
-       have and what is in should. If they differ, add a change entry to
-       chgs. Nonexistant entries in should are ignored, and will never lead
-       to a change.
-     */
-    void check(changes& chgs, const attr_map& should,
-               const std::vector<std::string>& props);
-  private:
-    std::string _name;
-    attr_map _attrs;
-  };
-
-  using resource_uptr = std::unique_ptr<resource>;
 
   /* Class provider, that knows how to manage lots of things that are
      accessed in the same way
@@ -143,19 +43,28 @@ namespace libral {
        created by this provider */
     virtual void flush() { };
 
-    /* Create a new resource
-
-       @todo lutter 2016-06-08: do we really need that ? Why not have a
-       update(name, attrs) and let that sort out whether a resource needs
-       to be created or not
+    /**
+     * Retrieve the resources managed by this provider. At least the
+     * resources mentioned in NAMES must be included in the returned
+     * vector, though more may be returned.
+     *
+     * The CONFIG can contain parameters that influence how the provider
+     * retrieves resources and where it looks for them. Config parameters
+     * that were used to retrieve a resource must be reflected in the
+     * returned resource.
      */
-    virtual resource_uptr create(const std::string &name) = 0;
+    // IOW, this needs to be true:
+    // auto rsrcs = get(names, config);
+    // for (auto r : rsrcs) {
+    //   assert(r == get( { r.name() }, r.attributes())
+    // }
+    virtual result<std::vector<resource>>
+    get(context &ctx,
+        const std::vector<std::string>& names,
+        const resource::attributes& config) = 0;
 
-    virtual result<boost::optional<resource_uptr>>
-      find(const std::string &name);
-
-    /* Retrieve all resources managed by this provider */
-    virtual result<std::vector<resource_uptr>> instances() = 0;
+    virtual result<void>
+    set(context &ctx, const updates& upds) = 0;
 
     /**
      * Reads the string representation v for attribute name and returns the
@@ -174,8 +83,23 @@ namespace libral {
      * provider came from.
      */
     virtual const std::string& source() const;
+
+    /**
+     * Creates a new resource object. This does not make any changes on the
+     *  system, it only hides the mechanics of instantiating a resource
+     *  object.
+     */
+    resource create(const std::string &name) const;
+
+    /**
+     * Creates a resource reflecting the state after the update has been
+     * made. Attributes mentioned in UPD.SHOULD take precedence over
+     * attributes mentioned in UPD.IS
+     */
+    resource create(const update &upd, const changes& chgs) const;
   protected:
     friend class ral;
+
     /**
      * Sets up internal data structures and is called after suitable() is
      */

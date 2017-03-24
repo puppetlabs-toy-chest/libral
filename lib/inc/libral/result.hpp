@@ -3,6 +3,8 @@
 #include <ostream>
 #include <memory>
 
+#include <boost/optional.hpp>
+
 namespace libral {
   /*
      A poor man's emulation of Rust's Result construct. The basic idea is
@@ -265,4 +267,62 @@ namespace libral {
     return os;
   }
 
+  /* Specialication for void */
+  template <>
+  class result<void> {
+  public:
+    result() : _err(boost::none) {};
+    result(error& err) : _err(err) {};
+    result(const error& err) : _err(err) {};
+    result(error&& err) : _err(std::move(err)) {};
+
+    /**
+     * Returns true if the result is ok
+     */
+    operator bool() const { return (bool) _err; }
+
+    /**
+     * Returns the err value.
+     *
+     * @throws std::logic_error if the result is ok and not an error
+     */
+    error& err() {
+      if (is_err()) {
+        return *_err;
+      } else {
+        throw std::logic_error("tried to get error from ok result");
+      }
+    };
+
+    /**
+     * Returns the err value.
+     *
+     * @throws std::logic_error if the result is ok and not an error
+     */
+    const error& err() const {
+      if (is_err()) {
+        return *_err;
+      } else {
+        throw std::logic_error("tried to get error from ok result");
+      }
+    };
+
+    /**
+     * Returns true if the result is ok
+     */
+    bool is_ok()  const { return ! _err; }
+
+    /**
+     * Returns true if the result is an error
+     */
+    bool is_err() const { return (bool) _err; }
+
+    /**
+     * Returns true if the result is an error
+     */
+    bool operator!() const noexcept { return is_err(); }
+
+  private:
+    boost::optional<error> _err;
+  };
 }

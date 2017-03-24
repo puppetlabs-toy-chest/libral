@@ -58,38 +58,30 @@ namespace libral {
    */
   class file_provider : public provider {
   public:
-
-    using shared_provider_ptr = std::shared_ptr<file_provider>;
-
-    class file_resource : public resource {
-    public:
-      file_resource(shared_provider_ptr& prov, const std::string& name)
-        : resource(name), _prov(prov) { }
-
-      result<changes> update(const attr_map& should) override;
-    private:
-      void update_metadata(result<changes>& res, const attr_map& should);
-      void update_content(result<changes>& res, const attr_map& should);
-      void update_target(result<changes>& res, std::string& state,
-                         const std::string& target);
-      void remove(result<changes>& res, std::string& state, bool force);
-      void create_file(result<changes>& res);
-      void create_directory(result<changes>& res);
-
-      shared_provider_ptr _prov;
-    };
-
     result<bool> suitable() override { return true; };
 
-    /* Always returns an empty vector for now, can't list all files this
-       way. The API is missing a way to indicate an error from instances */
-    result<std::vector<resource_uptr>> instances() override;
-    result<boost::optional<resource_uptr>> find(const std::string &name) override;
+    result<std::vector<resource>>
+    get(context &ctx,
+        const std::vector<std::string>& names,
+        const resource::attributes& config);
 
-    std::unique_ptr<resource> create(const std::string& name) override;
+    result<void> set(context &ctx, const updates& upds);
+
   protected:
     result<prov::spec> describe() override;
   private:
+    result<void> set(context &ctx, const update& upd);
+
+    result<void> update_metadata(context &ctx, const update& upd);
+    result<void> update_content(context &ctx, const update& upd);
+    result<void> update_target(context &ctx, const update& upd);
+
+    result<void>
+    remove(const std::string& path, const std::string& state, bool force);
+
+    result<void> create_file(const std::string& path);
+    result<void> create_directory(const std::string& path);
+
     void load(resource &res);
     void find_from_stat(resource &res);
     std::string time_as_iso_string(std::time_t *time);

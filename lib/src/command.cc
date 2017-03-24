@@ -7,14 +7,14 @@ using namespace leatherman::locale;
 namespace exe = leatherman::execution;
 
 namespace libral {
-  result<bool> command::run(const std::vector<std::string> &args) {
+  result<void> command::run(const std::vector<std::string> &args) {
     static const lth_util::option_set<exe::execution_options> options = {
       exe::execution_options::trim_output,
       exe::execution_options::merge_environment };
     auto status = exe::execute(_cmd, args, 0, options);
 
     if (status.success)
-      return true;
+      return result<void>();
 
     if (status.output.empty()) {
       if (status.error.empty()) {

@@ -2,7 +2,8 @@
 
 #include <boost/nowide/iostream.hpp>
 
-namespace libral {
+namespace libral { namespace augeas {
+
   void handle::include(const std::string& lens, const std::string& glob) {
     aug_transform(_augeas, lens.c_str(), glob.c_str(), 0);
     check_error();
@@ -75,7 +76,7 @@ namespace libral {
   }
 
   node handle::make_node(const std::string& path) {
-    return aug::node(shared_from_this(), path);
+    return node(shared_from_this(), path);
   }
 
   void handle::check_error() const {
@@ -88,4 +89,5 @@ namespace libral {
       throw error { msg };
     }
   }
-}
+
+} }

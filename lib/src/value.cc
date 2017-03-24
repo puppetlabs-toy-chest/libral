@@ -6,6 +6,8 @@
 
 namespace libral {
 
+  const value value::none = value();
+
   value& value::operator=(char const* string)
   {
     value_base::operator=(std::string(string));
@@ -51,37 +53,33 @@ namespace libral {
 
   /* operator==, operator!= */
   struct equality_visitor : boost::static_visitor<bool> {
-    /**
-     * Compares two strings.
-     * @param left The left operand.
-     * @param right The right operand.
-     * @return Returns true if the strings are equal (case insensitive) or false if not.
-     */
-    template <typename T>
-    result_type operator()(T const& left,T const& right) const {
-      return left == right;
+    // For some reason, leaving this to the templated operator leads to
+    // infinite recursion, at least with gcc 6.3.1 when left and right are
+    // value::none
+    result_type
+    operator()(boost::none_t const& left, boost::none_t const& right) const {
+      return true;
     }
 
-    /**
-     * Compares two different value types.
-     * @tparam T The left hand type.
-     * @tparam U The right hand type.
-     * @return Always returns false since two values of different types cannot be equal.
-     */
     template <typename T, typename U>
     result_type operator()(T const&, U const&) const {
       // Not the same type
       return false;
     }
+
+    template <typename T>
+    result_type operator()(T const& left,T const& right) const {
+      return left == right;
+    }
   };
 
-
   bool operator==(value const& left, value const& right) {
+    //return (static_cast<value_base>(left) == static_cast<value_base>(right));
     return boost::apply_visitor(equality_visitor(), left, right);
   }
 
-
   bool operator!=(value const& left, value const& right)  {
+    //return (static_cast<value_base>(left) != static_cast<value_base>(right));
     return ! boost::apply_visitor(equality_visitor(), left, right);
   }
 

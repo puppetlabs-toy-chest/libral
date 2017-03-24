@@ -6,6 +6,41 @@ considered stable just yet; but if you contribute a provider to the
 project, we will make sure it is updated as we make changes to the provider
 API.
 
+## Provider interface
+
+The general interface for a provider is defined by the class
+`libral::provider` and has the following important methods:
+
+```cpp
+
+   // value is how libral represents attribute values
+   using resource = std::map<std::string, value>
+
+   struct update {
+     update(const& resource is, const& resource should);
+
+     resource is;
+     resource should;
+   };
+
+   class provider {
+     result<bool> suitable(runtime &rt);
+
+     result<std::vector<resource>>
+     get(runtime &rt,
+         const& std::vector<std::string> names,
+         const& std::map<std::string, value> config = { }) = 0;
+
+     result<void>
+     set(runtime &rt,
+         const &std::vector<update> updates) = 0;
+
+     result<void> flush(runtime &rt) { };
+
+     result<void> close(runtime &rt) { };
+   };
+```
+
 ## Provider lifecycle
 
 The lifecycle for providers written in C++ follows the outline below. This
@@ -14,40 +49,50 @@ lifecycle which is described in the section above for each calling
 convention.
 
 ```cpp
+    // The runtime object provides helpers for providers that they can use
+    // to interact with their environment.
+    libral::runtime rt;
+
     some_provider prov();
 
     // A call to suitable() must also initialize any provider internals.
     // Once suitable() returns true, the provider must be ready to use.
-    if (prov.suitable()) {
-      // Called by libral once when it sets up a provider
-      auto metadata = prov.describe();
+    // The suitable method most call rt.register(metadata) where metadata
+    // is the provider metadata
+    if (prov.suitable(rt)) {
+      // List all resources
+      auto all = prov.get(rt, { });
 
-      // Loop over all resources
-      for (auto rsrc : prov.instances()) {
-        auto should = get_new_attrs_from_somewhere(rsrc.name());
-        rsrc.update(should);
-      }
+      // Find one resource
+      auto one = prov.get(rt, { "name" });
 
-      // or do something to a specific resource
-      auto rsrc = prov.find(some_name);
+      // Find a few resources
+      auto some = prov.get(rt, { "name1", "name2", "name3" });
+
+      // Find a resource with additional provider configuration
+      auto one_conf = prov.get(rt, { "name" }, { "target", "/etc/my_fstab" });
+
+      // do something to a specific resource
+      auto rsrc = prov.get(rt, { "some_name" });
       attr_map should = { { "ensure", "absent" } };
-      rsrc.update(should);
+      prov.set(rt, { update(rsrc, should) });
 
-      // or create a new one
-      auto rsrc = prov.create("new_one");
-      auto should = get_new_attrs_from_somewhere_else();
-      rsrc.update(should);
+      // create a new one
+      auto creat = get_new_attrs_from_somewhere_else();
+      prov.set(rt, { update(nullptr, creat) });
 
       // make sure all changes have been written to disk
-      prov.flush();
+      prov.flush(rt);
 
       // not sure yet if we need an explicit 'close' call
-      prov.close()
+      prov.close(rt)
     }
 ```
 
-* Rather than returning just a `bool`, at some point `suitable()` will need
-  to return more details about what the provider does and whether it can be
-  used
-* At some point, we'll need a notion of a context that tells providers
-  about system details (like facts) and some settings
+## Runtime interface
+
+```cpp
+
+    class runtime {
+
+    };

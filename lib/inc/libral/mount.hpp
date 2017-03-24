@@ -34,44 +34,32 @@ namespace libral {
 
   class mount_provider : public provider {
   public:
-
-    class mount_resource : public resource {
-    public:
-      mount_resource(std::shared_ptr<mount_provider>& prov, const std::string& name, const aug::node& base)
-        : resource(name), _prov(prov), _base(base) { extract_base(); }
-
-      result<changes> update(const attr_map& should) override;
-    private:
-      // Copy properties from _base into _values
-      void extract_base();
-      // Copy properties from _values into _base
-      void update_base();
-      void extract(const std::string &attr,
-                   const boost::optional<std::string>& from,
-                   const std::string& deflt);
-      void extract(const std::string &attr,
-                   const boost::optional<std::string>& from);
-
-      void update_fstab(const attr_map& should, changes &changes);
-      void remove_from_fstab();
-      result<bool> unmount(const std::string& state);
-      result<bool> mount(const std::string& state);
-
-      std::shared_ptr<mount_provider> _prov;
-      aug::node                       _base;
-    };
-
     mount_provider(std::shared_ptr<ral> ral)
-      : aug(nullptr), _ral(ral), _seq(1) { };
+      : _aug(nullptr), _ral(ral), _seq(1) { };
 
     result<bool> suitable() override;
     void flush() override;
-    result<std::vector<resource_uptr>> instances() override;
-    resource_uptr create(const std::string& name) override;
+
+    result<std::vector<resource>>
+    get(context &ctx, const std::vector<std::string>& names,
+        const resource::attributes& config) override;
+
+    result<void> set(context &ctx, const updates& upds) override;
+
   protected:
     result<prov::spec> describe() override;
   private:
-    std::shared_ptr<aug::handle>  aug;
+    augeas::node base(const std::string &name);
+    resource make(const std::string& name,
+                  const augeas::node& base, const std::string& ens);
+    void update_base(const update &upd);
+    result<void> set(context &ctx, const update &upd);
+    void update_fstab(const update& upd, changes& changes);
+    void remove_from_fstab(const update &upd);
+    result<void> unmount(const std::string& name, const std::string& state);
+    result<void> mount(const std::string& name, const std::string& state);
+
+    std::shared_ptr<augeas::handle> _aug;
     boost::optional<command>     _cmd_mount;
     boost::optional<command>     _cmd_umount;
     std::shared_ptr<ral>         _ral;

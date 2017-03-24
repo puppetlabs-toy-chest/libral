@@ -13,11 +13,14 @@ namespace fs = boost::filesystem;
 namespace libral {
   // We need to create a shared_ptr here because provider uses
   // shared_from_this and that only works if a shared_ptr already exists
-  auto ptr = std::make_shared<file_provider>();
-  auto& prv = *ptr;
+  file_provider prv;
+
+  resource::attributes config;
 
   SCENARIO("instances() returns an empty vector") {
-    REQUIRE(! prv.instances());
+    libral::context ctx;
+
+    REQUIRE(! prv.get(ctx, {}, config));
   }
 
   SCENARIO("suitable() is always true") {
@@ -26,21 +29,25 @@ namespace libral {
   }
 
   SCENARIO("find()") {
-    SECTION("returns resource for nonexistent file") {
-      auto res = prv.find("/tmp/not_there");
+    libral::context ctx;
 
-      REQUIRE(*res);
-      auto& rsc = ***res;
+    SECTION("returns resource for nonexistent file") {
+      auto res = prv.get(ctx, { "/tmp/not_there" }, config);
+
+      REQUIRE(res.is_ok());
+      REQUIRE(res.ok().size() == 1);
+      auto& rsc = res.ok().front();
       REQUIRE(rsc["ensure"] == value("absent"));
     }
 
     SECTION("finds an existing file") {
       auto tmp = temp_file("");
 
-      auto res = prv.find(tmp.get_file_name());
+      auto res = prv.get(ctx, { tmp.get_file_name() }, config);
 
-      REQUIRE(*res);
-      auto& rsc = ***res;
+      REQUIRE(res.is_ok());
+      REQUIRE(res.ok().size() == 1);
+      auto& rsc = res.ok().front();
       REQUIRE(rsc["ensure"] == value("file"));
       auto full_name = fs::canonical(tmp.get_file_name());
       REQUIRE(rsc.name() == full_name);
@@ -48,27 +55,35 @@ namespace libral {
   }
 
   SCENARIO("update()") {
+    libral::context ctx;
+
     SECTION("create a new file") {
       auto tmp = unique_fixture_path();
       try {
-        auto res = prv.find(tmp.native());
-        REQUIRE(*res);
-        auto& rsc = ***res;
+        auto res = prv.get(ctx, { tmp.native() }, config);
+        REQUIRE(res.is_ok());
+        REQUIRE(res.ok().size() == 1);
+        auto& rsc = res.ok().front();
         REQUIRE(rsc["ensure"] == value("absent"));
 
-        auto attrs = attr_map();
-        attrs["ensure"] = "present";
-        attrs["mode"] = "0660";
-        attrs["content"] = "stuff";
-        auto upd = rsc.update(attrs);
-        REQUIRE(upd);
-        auto& chgs = upd.ok();
-        REQUIRE(chgs.exists("ensure"));
-        REQUIRE(chgs.exists("mode"));
-        REQUIRE(rsc["ensure"] == value("file"));
-        REQUIRE(rsc["mode"] == value("0660"));
-        REQUIRE(rsc["content"] == value("stuff"));
+        resource should = prv.create(tmp.native());
+        should["ensure"] = "present";
+        should["mode"] = "0660";
+        should["content"] = "stuff";
 
+        {
+          updates upds = { { .is = rsc, .should = should } };
+          auto res = prv.set(ctx, upds);
+          REQUIRE(res.is_ok());
+          auto& chgs = ctx.changes_for(rsc.name());
+          REQUIRE(chgs.exists("ensure"));
+          REQUIRE(chgs.exists("mode"));
+
+          auto changed = prv.create(upds.front(), chgs);
+          REQUIRE(changed["ensure"] == value("file"));
+          REQUIRE(changed["mode"] == value("0660"));
+          REQUIRE(changed["content"] == value("stuff"));
+        }
         fs::remove(tmp);
       } catch(...) {
           fs::remove(tmp);
@@ -82,49 +97,62 @@ namespace libral {
       //     AA AF FF FD DF FA AD DD DL LD DA AL LF FL LL LA
       // Right now, we have tests for AF FL LD
       auto tmp = temp_file("original");
-      auto res = prv.find(tmp.get_file_name());
-      REQUIRE(*res);
-      auto& rsc = ***res;
+      auto res = prv.get(ctx, { tmp.get_file_name() }, config);
+      REQUIRE(res.is_ok());
+      REQUIRE(res.ok().size() == 1);
+      auto& rsc = res.ok().front();
 
-      // mutate file to link
-      {
-        auto attrs = attr_map();
-        attrs["ensure"] = "link";
-        attrs["target"] = "/tmp";
-        auto upd = rsc.update(attrs);
-        REQUIRE(upd);
-        auto& chgs = upd.ok();
+      SECTION("file -> link") {
+        auto should = prv.create(rsc.name());
+        should["ensure"] = "link";
+        should["target"] = "/tmp";
+
+        updates upds = { { .is = rsc, .should = should } };
+        auto res = prv.set(ctx, upds);
+        if (!res) {
+          std::cout << res.err().detail << std::endl;
+        }
+        REQUIRE(res.is_ok());
+        auto& chgs = ctx.changes_for(rsc.name());
         REQUIRE(chgs.size() == 2);
         REQUIRE(chgs.exists("ensure"));
         REQUIRE(chgs.exists("target"));
-        REQUIRE(rsc["ensure"] == value("link"));
-        REQUIRE(rsc["target"] == value("/tmp"));
+
+        auto changed = prv.create(upds.front(), chgs);
+        REQUIRE(changed["ensure"] == value("link"));
+        REQUIRE(changed["target"] == value("/tmp"));
       }
 
-      // change link target
-      {
-        auto attrs = attr_map();
-        attrs.clear();
-        attrs["target"] = "/var/tmp";
-        auto upd = rsc.update(attrs);
-        REQUIRE(upd);
-        auto& chgs = upd.ok();
-        REQUIRE(chgs.size() == 1);
+      SECTION("change link target") {
+        auto should = prv.create(rsc.name());
+        should["ensure"] = "link";
+        should["target"] = "/var/tmp";
+
+        updates upds = { { .is = rsc, .should = should } };
+        auto res = prv.set(ctx, upds);
+        REQUIRE(res.is_ok());
+        auto& chgs = ctx.changes_for(rsc.name());
+        REQUIRE(chgs.size() == 2);
         REQUIRE(chgs.exists("target"));
-        REQUIRE(rsc["ensure"] == value("link"));
-        REQUIRE(rsc["target"] == value("/var/tmp"));
+
+        auto changed = prv.create(upds.front(), chgs);
+        REQUIRE(changed["ensure"] == value("link"));
+        REQUIRE(changed["target"] == value("/var/tmp"));
       }
 
-      // change link to directory
-      {
-        auto attrs = attr_map();
-        attrs["ensure"] = "directory";
-        auto upd = rsc.update(attrs);
-        REQUIRE(upd);
-        auto& chgs = upd.ok();
+      SECTION("link -> directory") {
+        auto should = prv.create(rsc.name());
+        should["ensure"] = "directory";
+
+        updates upds = { { .is = rsc, .should = should } };
+        auto res = prv.set(ctx, upds);
+        REQUIRE(res.is_ok());
+        auto& chgs = ctx.changes_for(rsc.name());
         REQUIRE(chgs.size() == 1);
         REQUIRE(chgs.exists("ensure"));
-        REQUIRE(rsc["ensure"] == value("directory"));
+
+        auto changed = prv.create(upds.front(), chgs);
+        REQUIRE(changed["ensure"] == value("directory"));
       }
     }
   }

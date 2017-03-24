@@ -11,7 +11,7 @@ namespace libral {
   public:
     /* Run the command with the given args. If the command exits with a
        non-zero exit code, return an error result */
-    result<bool> run(const std::vector<std::string>& args);
+    result<void> run(const std::vector<std::string>& args);
 
     /* Create a new command for running cmd, which will be looked up on the
        PATH */

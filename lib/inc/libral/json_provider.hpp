@@ -11,39 +11,33 @@ namespace libral {
      convention */
   class json_provider : public provider {
   public:
-
-    class json_resource : public resource {
-    public:
-      json_resource(std::shared_ptr<json_provider>& prov,
-                      const std::string& name)
-        : resource(name), _prov(prov) { }
-
-      result<changes> update(const attr_map &should) override;
-    private:
-      std::shared_ptr<json_provider> _prov;
-      attr_map                         _attrs;
-    };
-
     json_provider(const std::string& path, YAML::Node &node)
       : provider(), _path(path), _node(node) { };
 
     result<bool> suitable() override;
     void flush() override;
-    std::unique_ptr<resource> create(const std::string& name) override;
-    result<boost::optional<resource_uptr>> find(const std::string &name) override;
-    result<std::vector<resource_uptr>> instances() override;
+
+    result<std::vector<resource>>
+    get(context& ctx, const std::vector<std::string>& names,
+        const resource::attributes& config) override;
+
+    result<void> set(context &ctx, const updates& upds) override;
 
     const std::string& source() const override { return _path; }
   protected:
     result<prov::spec> describe() override;
   private:
+    result<void> set(context &ctx, const update &upd);
+
     result<leatherman::json_container::JsonContainer>
     run_action(const std::string& action,
                const leatherman::json_container::JsonContainer& json);
+
     bool contains_error(const leatherman::json_container::JsonContainer& json,
                         std::string& message,
                         std::string& kind);
-    result<std::unique_ptr<resource>>
+
+    result<resource>
     resource_from_json(const leatherman::json_container::JsonContainer& json);
 
     std::string _path;

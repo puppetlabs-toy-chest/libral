@@ -24,8 +24,6 @@ using namespace leatherman::locale;
 
 namespace libral {
 
-  using fprov = file_provider;
-
   /* A map from ftype to the strings we use for the ensure
    * and type attributes
    *
@@ -70,48 +68,42 @@ namespace libral {
 
   /* Get a string representation for the given ftype */
   const fdesc& fdesc_from_ftype(const ftype& t) {
-    for (auto it = ftype_ensure.begin(); it != ftype_ensure.end(); it++) {
-      if (t == it->ftyp)
-        return *it;
+    for (auto& fd : ftype_ensure) {
+      if (t == fd.ftyp)
+        return fd;
     }
     return ftype_ensure[0];
   }
 
-  result<prov::spec> fprov::describe() {
+  result<prov::spec> file_provider::describe() {
     static const std::string desc =
 #include "file.yaml"
       ;
     return prov::spec::read("file", desc);
   }
 
-  result<std::vector<resource_uptr>> fprov::instances() {
-    return error(_("the file provider does not support listing all files"));
-  }
-
-  std::unique_ptr<resource> fprov::create(const std::string& name) {
-    auto shared_this = std::static_pointer_cast<file_provider>(shared_from_this());
-    boost::system::error_code ec;
-    // FIXME: we really want to call lexically_normal() on the path to get
-    // rid of redundant .. etc. That function is in Boost 1.60, but not in
-    // Boost 1.58 which pl-build-tools has on CentOS 6
-    auto cname = fs::absolute(fs::path(name));
-    auto ptr = new file_resource(shared_this, cname.native());
-    return std::unique_ptr<resource>(ptr);
-  }
-
-
-  result<boost::optional<resource_uptr>>
-  fprov::find(const std::string &name) {
-    auto result = create(name);
-    auto& res = *result;
-
-    load(res);
-
-    return boost::optional<resource_uptr>(std::move(result));
+  result<std::vector<resource>>
+  file_provider::get(context &ctx, const std::vector<std::string>& names,
+                     const resource::attributes &config) {
+    if (names.empty()) {
+      return error(_("the file provider does not support listing all files"));
+    } else {
+      std::vector<resource> res;
+      for (auto name : names) {
+        // FIXME: we really want to call lexically_normal() on the path to get
+        // rid of redundant .. etc. That function is in Boost 1.60, but not in
+        // Boost 1.58 which pl-build-tools has on CentOS 6
+        auto cname = fs::absolute(fs::path(name));
+        auto rsrc = create(cname.native());
+        load(rsrc);
+        res.push_back(rsrc);
+      }
+      return res;
+    }
   }
 
   // Load file attributes into res from whatever is on disk
-  void fprov::load(resource &res) {
+  void file_provider::load(resource &res) {
     /* Look up file and fill in attributes */
     boost::system::error_code ec;
     auto st = fs::symlink_status(res.name(), ec);
@@ -155,7 +147,7 @@ namespace libral {
 
   /* Fill in attributes we can only get via stat(2) and not from
      boost::filesystem, most notably owner, group, and ctime */
-  void fprov::find_from_stat(resource &res) {
+  void file_provider::find_from_stat(resource &res) {
     struct stat buf;
     int r = lstat(res.name().c_str(), &buf);
     if (r < 0) {
@@ -210,16 +202,23 @@ namespace libral {
    *   same row
    * - 'metadata', 'content', 'target' are short for 'update_metadata' etc.
    */
-  result<changes>
-  fprov::file_resource::update(const attr_map& should) {
-    auto& is = *this;
-    result<changes> res;
-
-    auto state = lookup<std::string>("ensure", s_absent);
-    if (state == s_present) {
-      state = lookup<std::string>("type", s_file);
+  result<void>
+  file_provider::set(context &ctx, const updates &upds) {
+    for (auto& upd : upds) {
+      auto res = set(ctx, upd);
+      if (!res)
+        return res;
     }
-    auto ensure = should.lookup<std::string>("ensure", state);
+    return result<void>();
+  }
+
+  result<void>
+  file_provider::set(context &ctx, const update& upd) {
+    auto state = upd.is.lookup<std::string>("ensure", s_absent);
+    if (state == s_present) {
+      state = upd.is.lookup<std::string>("type", s_file);
+    }
+    auto ensure = upd.should.lookup<std::string>("ensure", state);
 
     // Change ensure == "present" to something else, either "file" when we
     // need to create it, or the type it is right now
@@ -231,62 +230,65 @@ namespace libral {
       }
     }
 
-    auto force = (should.lookup<std::string>("force", "false") == "true");
+    auto force = (upd.should.lookup<std::string>("force", "false") == "true");
 
     // See if we would have to mutate a directory to something else without
     // the force flag
     if (state == s_directory && state != ensure && !force) {
-      res = error(_("Cannot change file '{1}' from directory to {2}",
-                    name(), ensure));
-      return res;
+      return error(_("Cannot change file '{1}' from directory to {2}",
+                     upd.name(), ensure));
     }
 
-    // Any sort of change os the file type is always 'remove old' followed
+    // Any sort of change of the file type is always 'remove old' followed
     // by doing the same as if the file was absent
     if (ensure != state) {
       if (state != s_absent) {
-        remove(res, state, force);
-        if (!res) {
-          return res;
-        }
+        auto r = remove(upd.name(), state, force);
+        if (!r)
+          return r;
+        state = s_absent;
       }
 
-      changes& chgs = res.ok();
-      is["ensure"] = ensure;
-      chgs.add("ensure", ensure, state);
+      ctx.changes_for(upd.name()).add("ensure", ensure, state);
     }
 
     if (ensure == s_file) {
       if (state == s_absent) {
-        create_file(res);
+        auto r = create_file(upd.name());
+        if (!r)
+          return r;
       }
-      update_metadata(res, should);
-      update_content(res, should);
+      auto r = update_metadata(ctx, upd);
+      if (!r)
+        return r;
+      r = update_content(ctx, upd);
+      if (!r)
+        return r;
     } else if (ensure == s_directory) {
       if (state == s_absent) {
-        create_directory(res);
+        auto r = create_directory(upd.name());
+        if (!r)
+          return r;
       }
-      update_metadata(res, should);
+      auto r = update_metadata(ctx, upd);
+      if (!r)
+        return r.err();
     } else if (ensure == s_link) {
-      auto target = should.lookup<std::string>("target");
-      if (!target) {
-        res = error(_("ensure for '{1}' is 'link', but target is not set",
-                       name()));
-        return res;
-      }
-      update_target(res, state, *target);
-      update_metadata(res, should);
+      auto r = update_target(ctx, upd);
+      if (!r)
+        return r;
+      r = update_metadata(ctx, upd);
+      if (!r)
+        return r;
     } else if (ensure == s_absent) {
-      remove(res, state, force);
+      auto r = remove(upd.name(), state, force);
+      if (!r)
+        return r;
     } else {
-      res = error(_("Illegal ensure value '{1}'", ensure));
+      return error(_("Illegal ensure value '{1}'", ensure));
     }
 
-    if (res && res.ok().size() > 0) {
-      // If we made any changes, just restat all metadata
-      _prov->load(is);
-    }
-    return res;
+    return result<void>();
   }
 
   static result<uid_t> owner_to_uid(const std::string& owner) {
@@ -312,213 +314,179 @@ namespace libral {
   /*
    * Update owner, group, mode as needed
    */
-  void fprov::file_resource::update_metadata(result<changes>& res,
-                                            const attr_map& should) {
-    if (!res)
-      return;
+  result<void> file_provider::update_metadata(context &ctx, const update& upd) {
+    fs::path p = upd.name();
+    changes& chgs = ctx.changes_for(upd.name());
 
-    auto& is = *this;
-    changes& chgs = *res;
-    fs::path p = name();
-
-    check(chgs, should, { "owner", "group", "mode" });
+    chgs.add({ "owner", "group", "mode" }, upd);
 
     if (chgs.exists("owner") || chgs.exists("group")) {
       uid_t uid = -1;
       gid_t gid = -1;
-      auto owner = should.lookup<std::string>("owner");
-      auto group = should.lookup<std::string>("group");
+      auto owner = upd.should.lookup<std::string>("owner");
+      auto group = upd.should.lookup<std::string>("group");
       if (owner) {
         auto uid_res = owner_to_uid(*owner);
         if (!uid_res) {
-          res = uid_res.err();
-          return;
+          return uid_res.err();
         }
         uid = *uid_res;
       }
       if (group) {
         auto gid_res = group_to_gid(*group);
         if (!gid_res) {
-          res = gid_res.err();
-          return;
+          return gid_res.err();
         }
         gid = *gid_res;
       }
 
       errno = 0;
-      int r = lchown(name().c_str(), uid, gid);
+      int r = lchown(upd.name().c_str(), uid, gid);
       if (r < 0) {
-        res = error(_("cannot set owner/group [lchown, errno={1}]: {2}",
-                      errno, strerror(errno)));
-        return;
-      }
-      if (owner) {
-        is["owner"] = should["owner"];
-      }
-      if (group) {
-        is["group"] = should["group"];
+        return error(_("cannot set owner/group [lchown, errno={1}]: {2}",
+                       errno, strerror(errno)));
       }
     }
     if (chgs.exists("mode")) {
-      auto s = should.lookup<std::string>("mode");
+      auto s = upd.should.lookup<std::string>("mode");
       fs::perms mode;
 
       if (!s) {
         // This should not happen - how did we figure out that we needed to
         // change mode ?
-        res = error(_("internal error: should['mode'] is not a string"));
-        return;
+        return error(_("internal error: should['mode'] is not a string"));
       }
       try {
         std::size_t pos;
         mode = static_cast<fs::perms>(std::stoi(*s, &pos, 8));
         if (pos != s->length()) {
-          res = error(_("mode '{1}' is not a valid octal number", *s));
-          return;
+          return error(_("mode '{1}' is not a valid octal number", *s));
         }
       } catch (const std::exception& e) {
-        res = error(_("failed to parse mode '{1}': {2}", *s, e.what()));
-        return;
+        return error(_("failed to parse mode '{1}': {2}", *s, e.what()));
       }
 
       if (mode & ~fs::perms_mask) {
         // FIXME: convert perms_mask to octal
-        res = error(_("mode '{1}' sets bits outside of mask {2}",
-                      *s, fs::perms_mask));
-        return;
+        return error(_("mode '{1}' sets bits outside of mask {2}",
+                       *s, fs::perms_mask));
       }
       boost::system::error_code ec;
       permissions(p, mode, ec);
       if (ec) {
-        res = error(_("failed to change mode to '{1}': {2}",
-                      *s, ec.message()));
-        return;
+        return error(_("failed to change mode to '{1}': {2}",
+                       *s, ec.message()));
       }
-      is["mode"] = should["mode"];
     }
+    return result<void>();
   }
 
-  void fprov::file_resource::update_content(result<changes>& res,
-                                           const attr_map& should) {
-    if (!res)
-      return;
-
-    auto content = should.lookup<std::string>("content");
+  result<void> file_provider::update_content(context &ctx,
+                                             const update& upd) {
+    auto content = upd.should.lookup<std::string>("content");
     if (!content) {
       // either, 'content' was not set, which is ok, or its value is something
       // other than a string
-      if (should.count("content") > 0) {
+      if (upd.should["content"]) {
         // not sure how that could actually happen
-        res = error(_("illegal value for 'content': it must be a string"));
+        return error(_("illegal value for 'content': it must be a string"));
       }
-      return;
+      return result<void>();
     }
 
     // This way of reading/checking/writing file contents will of course
     // not work for large files ...
-    boost::nowide::ifstream ifs(name());
+    boost::nowide::ifstream ifs(upd.name());
     std::stringstream buf;
     if (!ifs.is_open()) {
-      res = error(_("Could not open file '{1}' for reading", name()));
-      return;
+      return error(_("Could not open file '{1}' for reading", upd.name()));
     }
     buf << ifs.rdbuf();
     ifs.close();
 
     if (buf.str() != *content) {
-      boost::nowide::ofstream ofs(name());
+      boost::nowide::ofstream ofs(upd.name());
       if (!ofs.is_open()) {
-        res = error(_("Could not create file '{1}'", name()));
-        return;
+        return error(_("Could not create file '{1}'", upd.name()));
       }
       ofs << *content;
       ofs.close();
 
-      auto& is = *this;
-      changes& chgs = *res;
-      is["content"] = *content;
-      // FIXME: add some hash of the contents here rather than the real
-      // values (???)
-      chgs.add("content", *content, buf.str());
+      ctx.changes_for(upd.name()).add("content", *content, buf.str());
     }
+    return result<void>();
   }
 
-  void fprov::file_resource::update_target(result<changes>& res,
-                                          std::string& state,
-                                          const std::string& target) {
-    if (!res)
-      return;
+  result<void> file_provider::update_target(context &ctx,
+                                            const update& upd) {
+    auto target = upd.should.lookup<std::string>("target");
+    if (!target) {
+      return error(_("ensure for '{1}' is 'link', but target is not set",
+                     upd.name()));
+    }
 
+    auto state = upd.is.lookup<std::string>("ensure", s_absent);
     if (state != s_absent) {
-      remove(res, state, false);
-      if (!res)
-        return;
-      state = s_absent;
+      auto r = remove(upd.name(), state, false);
+      if (!r)
+        return r;
     }
 
     boost::system::error_code ec;
-    fs::create_symlink(target, name(), ec);
+    fs::create_symlink(*target, upd.name(), ec);
     if (ec) {
-      res = error(_("failed to create symlink '{1}' with target '{2}': {3}",
-                    name(), target, ec.message()));
-      return;
+      return error(_("failed to create symlink '{1}' with target '{2}': {3}",
+                     upd.name(), *target, ec.message()));
     }
-    state = s_link;
 
-    auto& is = *this;
-    res.ok().add("target", target, is["target"]);
-    is["target"] = target;
+    ctx.changes_for(upd.name()).add("target", upd);
+
+    return result<void>();
   }
 
-  // Remove the current file (precise type in 'state') and set 'state' to
-  // 'absent'
-  void fprov::file_resource::remove(result<changes>& res,
-                                   std::string& state,
-                                   bool force) {
-    if (!res || state == s_absent)
-      return;
+  // Remove the current file if it exists
+  result<void>
+  file_provider::remove(const std::string& path, const std::string& state,
+                        bool force) {
+    if (state == s_absent)
+      return result<void>();
 
     if (state == s_directory && !force) {
-      res = error(_("file '{1}' is a directory. Can not remove that since force is not set to true"));
-      return;
+      return error(_("file '{1}' is a directory. Can not remove that since force is not set to true"));
     }
     if (state == s_directory || state == s_file || state == s_link) {
       boost::system::error_code ec;
-      fs::remove_all(name(), ec);
+      fs::remove_all(path, ec);
       if (ec) {
-        res = error(_("failed to remove '{1}': {2}", name(), ec.message()));
-        return;
+        return error(_("failed to remove '{1}': {2}", path, ec.message()));
       }
     } else {
-      res = error(_("can not remove a '{1}' - unknown file type", state));
-      return;
+      return error(_("can not remove a '{1}' - unknown file type", state));
     }
-    state = s_absent;
+    return result<void>();
   }
 
   // Create an empty file
-  void fprov::file_resource::create_file(result<changes>& res) {
-    if (!res)
-      return;
-    boost::nowide::ofstream ofs(name());
+  result<void> file_provider::create_file(const std::string& name) {
+    boost::nowide::ofstream ofs(name);
     if (!ofs.is_open()) {
-      res = error(_("Could not create file '{1}'", name()));
+      return error(_("Could not create file '{1}'", name));
     }
     ofs.close();
+    return result<void>();
   }
 
-  void fprov::file_resource::create_directory(result<changes>& res) {
-    if (!res)
-      return;
+  result<void> file_provider::create_directory(const std::string& name) {
     boost::system::error_code ec;
-    fs::create_directory(name(), ec);
+    fs::create_directory(name, ec);
     if (ec) {
-      res = error(_("failed to create directory '{1}': {2}",
-                    name(), ec.message()));
+      return error(_("failed to create directory '{1}': {2}",
+                     name, ec.message()));
     }
+    return result<void>();
   }
 
-  std::string fprov::time_as_iso_string(std::time_t *time) {
+  std::string file_provider::time_as_iso_string(std::time_t *time) {
     char buf[100];
     strftime(buf, sizeof(buf), iso_8601_format.c_str(), std::localtime(time));
     return std::string(buf);
