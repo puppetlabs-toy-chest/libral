@@ -38,8 +38,8 @@ namespace libral {
     return _cmd_mount && _cmd_umount;;
   }
 
-  void mount_provider::flush() {
-    _aug->save();
+  result<void> mount_provider::flush() {
+    return _aug->save();
   }
 
   aug::node mount_provider::base(const update &upd) {

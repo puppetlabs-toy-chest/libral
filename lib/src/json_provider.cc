@@ -92,10 +92,6 @@ namespace libral {
     return (s == "true");
   }
 
-  void json_provider::flush() {
-    // Noop. Not supported/needed
-  }
-
 #if 0
   result<boost::optional<resource_uptr>>
   json_provider::find(const std::string &name) {

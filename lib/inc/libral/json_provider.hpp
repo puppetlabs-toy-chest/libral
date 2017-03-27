@@ -15,7 +15,6 @@ namespace libral {
       : provider(), _path(path), _node(node) { };
 
     result<bool> suitable() override;
-    void flush() override;
 
     result<std::vector<resource>>
     get(context& ctx, const std::vector<std::string>& names,

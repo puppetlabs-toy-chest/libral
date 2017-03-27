@@ -38,7 +38,7 @@ namespace libral {
       : _aug(nullptr), _ral(ral), _seq(1) { };
 
     result<bool> suitable() override;
-    void flush() override;
+    result<void> flush() override;
 
     result<std::vector<resource>>
     get(context &ctx, const std::vector<std::string>& names,

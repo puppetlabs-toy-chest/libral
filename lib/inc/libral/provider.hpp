@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <map>
 
@@ -25,7 +24,7 @@ namespace libral {
   /* Class provider, that knows how to manage lots of things that are
      accessed in the same way
   */
-  class provider : public std::enable_shared_from_this<provider> {
+  class provider {
   public:
     provider() { };
     virtual ~provider() = default;
@@ -41,7 +40,7 @@ namespace libral {
 
     /* Perform all changes that may have been queued up by the resources
        created by this provider */
-    virtual void flush() { };
+    virtual result<void> flush() { return result<void>(); }
 
     /**
      * Retrieve the resources managed by this provider. At least the
