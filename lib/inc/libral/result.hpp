@@ -31,6 +31,15 @@ namespace libral {
     not_implemented_error() : error("not implemented") { }
   };
 
+  /**
+   * Immediately return if res is an error
+   */
+#define err_ret(res)                                         \
+  do {                                                       \
+    decltype(res) _x = (res);                                \
+    if (_x.is_err()) return _x.err();                        \
+  } while(0)
+
   /* A result is either an error or whatever we really wanted */
   template <class R>
   class result {
