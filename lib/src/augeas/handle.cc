@@ -1,77 +1,132 @@
 #include <libral/augeas.hpp>
 
+#include <sstream>
+
 #include <boost/nowide/iostream.hpp>
+
+#include <leatherman/locale/locale.hpp>
+
+using namespace leatherman::locale;
 
 namespace libral { namespace augeas {
 
-  void handle::include(const std::string& lens, const std::string& glob) {
+  result<void>
+  handle::include(const std::string& lens, const std::string& glob) {
     aug_transform(_augeas, lens.c_str(), glob.c_str(), 0);
-    check_error();
+    return check_error();
   }
 
-  void handle::load(void) {
+  result<void> handle::load(void) {
     aug_load(this->_augeas);
-    // @todo lutter 2016-06-03: give callers a decent way to figure out if
-    // all their files were read successfully; not convinced that
-    // check_error() in this case is the right interface
+    return check_error();
   }
 
-  void handle::save(void) {
+  result<void> handle::save(void) {
     aug_save(this->_augeas);
-    check_error();
-    for (const auto &e : match("/augeas//error")) {
-      std::cerr << "error:" << e.path() << std::endl;
+    auto r = check_error();
+    if (!r) return r;
+
+    auto matches = match("/augeas/files//error");
+    if (!matches) return matches.err();
+
+    if (matches.ok().size() > 0) {
+      static const std::string augeas_files = "/augeas/files";
+
+      std::ostringstream os;
+      bool first = true;
+      for (const auto &e : matches.ok()) {
+        auto line     = e["line"];
+        auto char_pos = e["char"];
+        auto lens     = e["lens"];
+        auto last     = e["lens/last_matched"];
+        auto next     = e["lens/next_not_matched"];
+        auto msg      = e["message"];
+        auto path     = e["path"];
+        auto kind     = *e.get();
+
+        auto filename = e.path();
+        {
+          // Strip off '/augeas/files' at the beginning and '/error' at the end
+          filename.erase(0, augeas_files.size());
+          auto pos = filename.rfind("/error");
+          if (pos != std::string::npos) {
+            filename.erase(pos);
+          }
+        }
+
+        if (!first)
+          os << std::endl;
+        first = false;
+
+        if (line && line.ok()) {
+          os << _("Error in {1}:{2}.{3} ({4})",
+                  filename, **line, **char_pos, *kind) << std::endl;
+        } else if (path && path.ok()) {
+          os << _("Error in {1} at node {2} ({3})", filename, **path, *kind)
+             << std::endl;
+        } else {
+          os << _("Error in {1} ({2})", filename, *kind) << std::endl;
+        }
+
+        if (msg && msg.ok())
+          os << "  " << *msg.ok() << std::endl;
+        if (lens && lens.ok())
+          os << _("  Lens: {1}", *lens.ok()) << std::endl;
+        if (last && last.ok())
+          os << _("    Last matched: {1}\n", *last.ok()) << std::endl;
+        if (next && next.ok())
+          os << _("    Next (no match): {1}\n", *next.ok()) << std::endl;
+      }
+      return error(os.str());
     }
+    return result<void>();
   }
 
-  std::vector<node> handle::match(const std::string& pathx) {
-    std::vector<node> result;
+  result<std::vector<node>>
+  handle::match(const std::string& pathx) {
+    std::vector<node> nodes;
     char **matches;
-    int r = aug_match(_augeas, pathx.c_str(), &matches);
-    check_error();
+
+    aug_match(_augeas, pathx.c_str(), &matches);
+    auto r = check_error();
+    if (!r) return r.err();
 
     for (int i=0; i < r; i++) {
-      result.push_back(make_node(std::string(matches[i])));
+      nodes.push_back(make_node(std::string(matches[i])));
       free(matches[i]);
     }
     free(matches);
-    return result;
+    return nodes;
   }
 
-  // @todo lutter 2016-06-03: really ? No return type ?
-  void handle::set(const std::string& path, const std::string& value) {
+  result<void>
+  handle::set(const std::string& path, const std::string& value) {
     aug_set(_augeas, path.c_str(), value.c_str());
-    check_error();
+    return check_error();
   }
 
-  void handle::clear(const std::string& path) {
+  result<void> handle::clear(const std::string& path) {
     aug_set(_augeas, path.c_str(), NULL);
-    check_error();
+    return check_error();
   }
 
-  // @todo lutter 2016-06-03: really ? No return type ?
-  void handle::rm(const std::string& path) {
+  result<void> handle::rm(const std::string& path) {
     aug_rm(_augeas, path.c_str());
-    check_error();
+    return check_error();
   }
 
-  boost::optional<std::string> handle::value(const std::string& pathx) const {
+  result<boost::optional<std::string>>
+  handle::get(const std::string& pathx) const {
     const char *value;
 
     aug_get(_augeas, pathx.c_str(), &value);
-    check_error();
-    if (value == NULL) {
-      return boost::none;
-    } else {
-      return std::string(value);
-    }
-  }
+    auto r = check_error();
+    if (!r) return r.err();
 
-  static std::string to_string(const char *s) {
-    if (s == NULL) {
-      return "";
+    if (value == NULL) {
+      return result<boost::optional<std::string>>(boost::none);
     } else {
-      return std::string(s);
+      return boost::optional<std::string>(std::string(value));
     }
   }
 
@@ -79,15 +134,22 @@ namespace libral { namespace augeas {
     return node(shared_from_this(), path);
   }
 
-  void handle::check_error() const {
+  result<void> handle::check_error() const {
     if (aug_error(_augeas) != AUG_NOERROR) {
-      // @todo lutter 2016-05-10: produce real error messages
-      // these will be impossible ot comprehend
-      auto msg = to_string(aug_error_message(_augeas)) +
-        "\n" + to_string(aug_error_minor_message(_augeas)) +
-        "\n" + to_string(aug_error_details(_augeas));
-      throw error { msg };
+      std::ostringstream os;
+      const char *msg    = aug_error_message(_augeas);
+      const char *minor  = aug_error_minor_message(_augeas);
+      const char *detail = aug_error_details(_augeas);
+
+      os << msg;
+      if (minor != nullptr)
+        os << ": " << minor;
+      if (detail != nullptr)
+        os << ": " << detail;
+      os << std::endl;
+      return error(os.str());
     }
+    return result<void>();
   }
 
 } }

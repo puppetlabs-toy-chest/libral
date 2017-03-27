@@ -49,13 +49,13 @@ namespace libral {
   protected:
     result<prov::spec> describe() override;
   private:
-    augeas::node base(const std::string &name);
-    resource make(const std::string& name,
-                  const augeas::node& base, const std::string& ens);
-    void update_base(const update &upd);
+    augeas::node base(const update &upd);
+    result<resource> make(const std::string& name,
+                          const augeas::node& base, const std::string& ens);
+    result<void> update_base(const update &upd);
     result<void> set(context &ctx, const update &upd);
-    void update_fstab(const update& upd, changes& changes);
-    void remove_from_fstab(const update &upd);
+    result<void> update_fstab(const update& upd, changes& changes);
+    result<void> remove_from_fstab(const update &upd);
     result<void> unmount(const std::string& name, const std::string& state);
     result<void> mount(const std::string& name, const std::string& state);
 

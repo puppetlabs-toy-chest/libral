@@ -2,7 +2,7 @@
 
 namespace libral { namespace augeas {
 
-  node::node(std::shared_ptr<handle> aug, const std::string path)
+  node::node(std::shared_ptr<handle> aug, const std::string& path)
     : _aug(aug), _path(path) { }
 
   std::string node::append(const std::string& p2) const {
@@ -16,43 +16,38 @@ namespace libral { namespace augeas {
     }
   }
 
-  boost::optional<std::string> node::operator[](const std::string& path) const {
-    return _aug->value(append(path));
+  result<boost::optional<std::string>>
+  node::operator[](const std::string& path) const {
+    return _aug->get(append(path));
   }
 
-  void node::set(const std::string& path, const value& v) {
+  result<void>
+  node::set(const std::string& path, const value& v) {
     if (v) {
-      _aug->set(append(path), v.to_string());
+      return _aug->set(append(path), v.to_string());
     }
+    return result<void>();
   }
 
-  void node::set(const std::string& path,
-                 const value& v,
-                 const std::string& deflt) {
+  result<void>
+  node::set(const std::string& path, const value& v, const std::string& deflt) {
     if (v) {
-      _aug->set(append(path), v.to_string());
+      return _aug->set(append(path), v.to_string());
     } else {
-      _aug->set(append(path), deflt);
+      return _aug->set(append(path), deflt);
     }
   }
 
-  void node::set_maybe(const std::string& path,
-                       const boost::optional<std::string>& value) {
-    if (value) {
-      _aug->set(append(path), *value);
-    }
+  result<void> node::erase() {
+    return _aug->rm(append("*"));
   }
 
-  void node::erase() {
-    _aug->rm(append("*"));
+  result<void> node::rm() {
+    return _aug->rm(_path);
   }
 
-  void node::rm() {
-    _aug->rm(_path);
-  }
-
-  void node::clear() {
-    _aug->clear(_path);
+  result<void> node::clear() {
+    return _aug->clear(_path);
   }
 
 } }

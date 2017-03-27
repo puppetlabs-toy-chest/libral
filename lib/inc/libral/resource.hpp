@@ -103,6 +103,11 @@ namespace libral {
         return should[attr];
       return is[attr];
     }
+
+    bool present() const {
+      // This makes 'ensure' and the value 'absent' very special
+      return is.lookup<std::string>("ensure", "absent") == "present";
+    }
   };
 
   using updates = std::vector<update>;

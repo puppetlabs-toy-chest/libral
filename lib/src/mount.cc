@@ -17,7 +17,6 @@ namespace libral {
     return prov::spec::read("mount", desc);
   }
 
-
   result<bool> mount_provider::suitable() {
     if (_aug == nullptr) {
       std::stringstream buf;
@@ -30,10 +29,9 @@ namespace libral {
       }
       _aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
 
-      _aug->include("Mount_Fstab.lns", "/etc/fstab");
-      _aug->include("Mount_Fstab.lns", "/etc/mtab");
-      _aug->load();
-      // FIXME: Check for errors from load()
+      err_ret( _aug->include("Mount_Fstab.lns", "/etc/fstab") );
+      err_ret( _aug->include("Mount_Fstab.lns", "/etc/mtab") );
+      err_ret( _aug->load() );
     }
     _cmd_mount = command::create("mount");
     _cmd_umount = command::create("umount");
@@ -44,29 +42,38 @@ namespace libral {
     _aug->save();
   }
 
-  aug::node mount_provider::base(const std::string &name) {
-    // FIXME: create if it doesn't exist yet
-    return aug::node(_aug, "/files/etc/fstab/*[file = '" + name + "']");
+  aug::node mount_provider::base(const update &upd) {
+    if (upd.present()) {
+      return _aug->make_node("/files/etc/fstab/*[file = '" + upd.name() + "']");
+    } else {
+      return _aug->make_node("/files/etc/fstab/0" + ++_seq);
+    }
   }
 
   /* Set RES[ATTR] to the corresponding value in BASE[LBL]; if that does
    * not exist, use DEFLT. If DEFLT is none, do not set RES[ATTR]
    */
-  void extract(resource& res, const aug::node& base,
-               const std::string& attr, const std::string& label,
-               const boost::optional<std::string>& deflt = boost::none) {
+  result<void>
+  extract(resource& res, const aug::node& base,
+          const std::string& attr, const std::string& label,
+          const boost::optional<std::string>& deflt = boost::none) {
     auto from = base[label];
-    if (from) {
-      res[attr] = *from;
+    if (!from) return from.err();
+
+    if (from.ok()) {
+      res[attr] = *from.ok();
     } else if (deflt) {
       res[attr] = *deflt;
     }
+    return result<void>();
   }
 
-  void extract(resource& res, const aug::node& base,
-               const std::string& attr, const std::string& label,
-               const char * deflt) {
-    extract(res, base, attr, label, std::string(deflt));
+  result<void>
+  extract(resource& res, const aug::node& base,
+          const std::string& attr, const std::string& label,
+          const char * deflt) {
+    err_ret(extract(res, base, attr, label, std::string(deflt)));
+    return result<void>();
   }
 
   /**
@@ -74,16 +81,16 @@ namespace libral {
    * be filled in from the node BASE which must point to an fstab entry
    * in the augeas tree. The ensure attribute will be set to ENS
    */
-  resource
+  result<resource>
   mount_provider::make(const std::string& name, const aug::node& base,
                        const std::string& ens) {
     auto res = create(name);
 
-    extract(res, base, "device", "spec");
-    extract(res, base, "fstype", "vfstype");
-    extract(res, base, "options", "options", "defaults");
-    extract(res, base, "dump", "dump", "0");
-    extract(res, base, "pass", "passno", "0");
+    err_ret(extract(res, base, "device", "spec"));
+    err_ret(extract(res, base, "fstype", "vfstype"));
+    err_ret(extract(res, base, "options", "options", "defaults"));
+    err_ret(extract(res, base, "dump", "dump", "0"));
+    err_ret(extract(res, base, "pass", "passno", "0"));
     res["ensure"] = ens;
     // @todo lutter 2016-05-20: we actually need to pay attention to target
     res["target"] = "/etc/fstab";
@@ -97,24 +104,44 @@ namespace libral {
                       const resource::attributes& config) {
     std::map<std::string, resource> resources;
 
-    for(const auto& node
-          : _aug->match("/files/etc/fstab/*[label() != '#comment']")) {
+    auto nodes = _aug->match("/files/etc/fstab/*[label() != '#comment']");
+    if (!nodes) return nodes.err();
+
+    for(const auto& node : nodes.ok()) {
       auto name = node["file"];
-      if (name) {
-        resources.emplace(*name, std::move(make(*name, node, "unmounted")));
+      err_ret(name);
+
+      if (name.ok()) {
+        auto r = make(**name, node, "unmounted");
+        err_ret(r);
+
+        resources.emplace(**name, std::move(*r));
+      } else {
+        // Can't happen, the lens makes sure we always have a 'file' entry
+        return error(_("Missing file/mountpoint"));
       }
     }
 
-    for(const auto& node
-          : _aug->match("/files/etc/mtab/*[label() != '#comment']")) {
+    nodes = _aug->match("/files/etc/mtab/*[label() != '#comment']");
+    if (!nodes) return nodes.err();
+
+    for(const auto& node : nodes.ok()) {
       auto name = node["file"];
-      if (name) {
-        auto rsrc_iter = resources.find(*name);
+      err_ret(name);
+
+      if (name.ok()) {
+        auto rsrc_iter = resources.find(*name.ok());
         if (rsrc_iter != resources.end()) {
           rsrc_iter->second["ensure"] = "mounted";
         } else {
-          resources.emplace(*name, std::move(make(*name, node, "ghost")));
+          auto r = make(*name.ok(), node, "ghost");
+          err_ret(r);
+
+          resources.emplace(**name, std::move(*r));
         }
+      } else {
+        // Can't happen, the lens makes sure we always have a 'file' entry
+        return error(_("Missing file/mountpoint"));
       }
     }
 
@@ -125,28 +152,27 @@ namespace libral {
     return std::move(result);
   }
 
-  void mount_provider::update_base(const update &upd) {
-    auto bs = base(upd.name());
+  result<void>
+  mount_provider::update_base(const update &upd) {
+    auto bs = base(upd);
 
-    bs.erase();
+    err_ret( bs.erase() );
     // FIXME: spec, file, and vfstype are mandatory, but we don't have a
     // way to report that they are missing right now, so we just make up
     // default values
-    bs.set("spec", upd["device"], "NODEVICE");
-    bs.set("file", upd.name(), "NONAME");
-    bs.set("vfstype", upd["fstype"], "NOFSTYPE");
-    bs.set("options", upd["options"], "defaults");
-    bs.set("dump", upd["dump"], "0");
-    bs.set("passno", upd["pass"], "0");
+    err_ret( bs.set("spec", upd["device"], "NODEVICE") );
+    err_ret( bs.set("file", upd.name(), "NONAME") );
+    err_ret( bs.set("vfstype", upd["fstype"], "NOFSTYPE") );
+    err_ret( bs.set("options", upd["options"], "defaults") );
+    err_ret( bs.set("dump", upd["dump"], "0") );
+    return bs.set("passno", upd["pass"], "0");
   }
 
   result<void>
   mount_provider::set(context &ctx,
                       const updates& upds) {
     for (auto upd : upds) {
-      result<void> res = set(ctx, upd);
-      if (!res)
-        return res.err();
+      err_ret( set(ctx, upd) );
     }
     return result<void>();
   }
@@ -168,11 +194,9 @@ namespace libral {
        Valid values are defined (also called present),
        unmounted, absent, mounted.
     */
-    auto& is = upd.is;
-    auto& should = upd.should;
 
-    auto state = is.lookup<std::string>("ensure", "absent");
-    auto ensure = should.lookup<std::string>("ensure", state);
+    auto state = upd.is.lookup<std::string>("ensure", "absent");
+    auto ensure = upd.should.lookup<std::string>("ensure", state);
 
     changes.add("ensure", upd);
 
@@ -181,16 +205,12 @@ namespace libral {
       update_fstab(upd, changes);
     } else if (ensure == "absent") {
       // unmount, remove from fstab
-      auto run_res = unmount(upd.name(), state);
-      if (! run_res)
-        return run_res.err();
-      remove_from_fstab(upd);
+      err_ret( unmount(upd.name(), state) );
+      err_ret( remove_from_fstab(upd) );
     } else if (ensure == "unmounted") {
       // unmount, make sure in fstab
-      auto run_res = unmount(upd.name(), state);
-      if (! run_res)
-        return run_res.err();
-      update_fstab(upd, changes);
+      err_ret( unmount(upd.name(), state) );
+      err_ret( update_fstab(upd, changes) );
     } else if (ensure == "mounted") {
       // mount, make sure in fstab
       update_fstab(upd, changes);
@@ -203,13 +223,15 @@ namespace libral {
     return result<void>();
   }
 
-  void mount_provider::update_fstab(const update& upd, changes& changes) {
+  result<void>
+  mount_provider::update_fstab(const update& upd, changes& changes) {
     changes.add({ "device", "fstype", "options", "dump", "pass"}, upd);
-    update_base(upd);
+    return update_base(upd);
   }
 
-  void mount_provider::remove_from_fstab(const update &upd) {
-    base(upd.name()).rm();
+  result<void>
+  mount_provider::remove_from_fstab(const update &upd) {
+    return base(upd).rm();
   }
 
   result<void>

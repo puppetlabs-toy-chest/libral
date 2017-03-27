@@ -15,39 +15,54 @@ namespace libral { namespace augeas {
 
   class node {
   public:
-    node(std::shared_ptr<handle> aug, const std::string path);
+    node(std::shared_ptr<handle> aug, const std::string& path);
     const std::string& path() const { return _path; }
-    boost::optional<std::string> operator[](const std::string& path) const;
+
+    /**
+     * Returns the value of the node \p path. If \p path is relative, it is
+     * taken as relative to this node.
+     */
+    result<boost::optional<std::string>>
+    operator[](const std::string& path) const;
+
+    /**
+     * Returns the value for the node's path
+     */
+    result<boost::optional<std::string>>
+    get() const { return _aug->get(path()); }
 
     /**
      * Set the value of the child PATH to v.to_string() unless v is none,
      * in which case no set is performed
      */
-    void set(const std::string& path, const value& v);
+    result<void>
+    set(const std::string& path, const value& v);
 
     /** Sets the value of child PATH to v.to_string() unless v is none; in
      * that case set it to DEFLT
      */
-    void set(const std::string& path,
-             const value& v,
-             const std::string& deflt);
+    result<void>
+    set(const std::string& path, const value& v, const std::string& deflt);
 
-    /* Set the value of child PATH to VALUE if it is a string; do not do
-       anything if VALUE is boost::none */
-    void set_maybe(const std::string& path,
-                   const boost::optional<std::string>& value);
+    /**
+     * Deletes this node and all its children.
+     */
+    result<void> rm();
 
-    /* Delete this node and all its children */
-    void rm();
-    /* Delete the children of this node, but leave the node alone */
-    void erase();
-    /* Set the value for this node to NULL */
-    void clear();
+    /**
+     * Deletes the children of this node, but leaves the node alone
+     */
+    result<void> erase();
+
+    /**
+     * Sets the value for this node to NULL
+     */
+    result<void> clear();
   private:
     std::string append(const std::string& p2) const;
 
     std::shared_ptr<handle> _aug;
-    const std::string _path;
+    std::string _path;
   };
 
 } }
