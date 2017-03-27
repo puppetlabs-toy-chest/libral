@@ -53,7 +53,7 @@ namespace libral {
         const resource::attributes& config) override;
 
     result<void>
-    set(context &ctx, const updates& upds);
+    set(context &ctx, const updates& upds) override;
 
   protected:
     result<prov::spec> describe() override;

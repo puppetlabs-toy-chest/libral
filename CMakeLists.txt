@@ -40,7 +40,12 @@ find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 include(options)
 ## Pull in common cflags setting from leatherman. Don't override CMAKE_CXX_FLAGS at the project root to avoid impacting 3rd party code.
 include(cflags)
-set(${PROJECT_NAME_UPPER}_CXX_FLAGS "${LEATHERMAN_CXX_FLAGS}")
+set(LIBRAL_CXX_FLAGS "${LEATHERMAN_CXX_FLAGS}")
+
+check_cxx_compiler_flag("-Wsuggest-override" HAS_SUGGEST_OVERRIDE)
+if (HAS_SUGGEST_OVERRIDE)
+  set(LIBRAL_CXX_FLAGS "${LIBRAL_CXX_FLAGS} -Wsuggest-override")
+endif(HAS_SUGGEST_OVERRIDE)
 
 # On OS X, git_t is an unsigned int, though signed int on most other platforms
 if (APPLE)

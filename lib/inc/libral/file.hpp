@@ -63,9 +63,9 @@ namespace libral {
     result<std::vector<resource>>
     get(context &ctx,
         const std::vector<std::string>& names,
-        const resource::attributes& config);
+        const resource::attributes& config) override;
 
-    result<void> set(context &ctx, const updates& upds);
+    result<void> set(context &ctx, const updates& upds) override;
 
   protected:
     result<prov::spec> describe() override;
