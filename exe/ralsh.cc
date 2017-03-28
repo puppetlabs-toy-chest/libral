@@ -275,7 +275,6 @@ int main(int argc, char **argv) {
                 res.err().detail) << color::reset << endl;
             return EXIT_FAILURE;
           } else {
-            type->flush();
             print_update(*type, res->first, res->second);
           }
         } else {

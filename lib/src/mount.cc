@@ -38,10 +38,6 @@ namespace libral {
     return _cmd_mount && _cmd_umount;;
   }
 
-  result<void> mount_provider::flush() {
-    return _aug->save();
-  }
-
   aug::node mount_provider::base(const update &upd) {
     if (upd.present()) {
       return _aug->make_node("/files/etc/fstab/*[file = '" + upd.name() + "']");
@@ -174,7 +170,7 @@ namespace libral {
     for (auto upd : upds) {
       err_ret( set(ctx, upd) );
     }
-    return result<void>();
+    return flush();
   }
 
   result<void>
@@ -236,7 +232,7 @@ namespace libral {
 
   result<void>
   mount_provider::unmount(const std::string& name, const std::string& state) {
-    flush();
+    err_ret(flush());
     if (state != "unmounted" && state != "absent") {
       return _cmd_umount->run({ name });
     }
@@ -245,10 +241,14 @@ namespace libral {
 
   result<void>
   mount_provider::mount(const std::string& name, const std::string& state) {
-    flush();
+    err_ret(flush());
     if (state != "mounted") {
       return _cmd_mount->run({ name });
     }
     return result<void>();
+  }
+
+  result<void> mount_provider::flush() {
+    return _aug->save();
   }
 }

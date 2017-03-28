@@ -38,10 +38,6 @@ namespace libral {
      * be considered not suitable in that case.  */
     virtual result<bool> suitable() = 0;
 
-    /* Perform all changes that may have been queued up by the resources
-       created by this provider */
-    virtual result<void> flush() { return result<void>(); }
-
     /**
      * Retrieve the resources managed by this provider. At least the
      * resources mentioned in NAMES must be included in the returned

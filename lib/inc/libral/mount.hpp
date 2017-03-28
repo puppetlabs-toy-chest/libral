@@ -38,7 +38,6 @@ namespace libral {
       : _aug(nullptr), _ral(ral), _seq(1) { };
 
     result<bool> suitable() override;
-    result<void> flush() override;
 
     result<std::vector<resource>>
     get(context &ctx, const std::vector<std::string>& names,
@@ -58,6 +57,7 @@ namespace libral {
     result<void> remove_from_fstab(const update &upd);
     result<void> unmount(const std::string& name, const std::string& state);
     result<void> mount(const std::string& name, const std::string& state);
+    result<void> flush();
 
     std::shared_ptr<augeas::handle> _aug;
     boost::optional<command>     _cmd_mount;
