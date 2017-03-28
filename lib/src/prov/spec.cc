@@ -6,6 +6,12 @@ using namespace leatherman::locale;
 
 namespace libral { namespace prov {
 
+  spec::spec(const std::string& name, const std::string& type,
+             const std::string& desc, attr_spec_map&& attr_specs)
+    : _name(name), _type(type), _desc(desc),
+      _qname(make_qname(name, type)),
+      _attr_specs(std::move(attr_specs)) { };
+
   boost::optional<const attr::spec&>
   spec::attr(const std::string& name) const {
     auto it = _attr_specs.find(name);
@@ -25,6 +31,14 @@ namespace libral { namespace prov {
       return error(_("provider[{1}]: could not find 'provider' entry in YAML",
                      prov_name));
     }
+
+    auto type_node = prov_node["type"];
+    if (! type_node) {
+      return error(_("provider[{1}]: missing 'type' attribute", prov_name));
+    }
+    auto name = prov_node["name"].as<std::string>(prov_name);
+    auto type = prov_node["type"].as<std::string>();
+    auto desc = prov_node["desc"].as<std::string>("");
 
     auto attrs_node = prov_node["attributes"];
     if (! attrs_node) {
@@ -54,7 +68,8 @@ namespace libral { namespace prov {
     if (attr_specs.find("name") == attr_specs.end()) {
       return error(_("provider[{1}]: no attribute 'name' has been defined, but that is mandatory", prov_name));
     }
-    return spec(std::move(attr_specs));
+
+    return spec(name, type, desc, std::move(attr_specs));
   }
 
   result<spec> spec::read(const std::string& name,
@@ -76,6 +91,11 @@ namespace libral { namespace prov {
                      name));
     }
     return spec::read(name, node);
+  }
+
+  std::string
+  spec::make_qname(const std::string& name, const std::string& type) {
+    return type + "::" + name;
   }
 
 } }

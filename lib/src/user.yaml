@@ -1,7 +1,7 @@
 R"yaml(
 ---
 provider:
-  name: user
+  name: useradd
   type: user
   desc: |
     Manage users with useradd/usermod/userdel

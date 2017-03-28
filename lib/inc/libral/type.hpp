@@ -14,9 +14,12 @@ namespace libral {
      providers */
   class type {
   public:
-    type(const std::string name, std::shared_ptr<provider> prov)
-      : _name(name), _prov(prov) { }
-    const std::string& name(void) const { return _name; }
+    type(std::shared_ptr<provider> prov) : _prov(prov) { }
+
+    const std::string& qname(void) const { return _prov->spec()->qname(); }
+    const std::string& type_name(void) const
+      { return _prov->spec()->type_name(); }
+
     result<boost::optional<resource>> find(const std::string &name);
     result<std::vector<resource>> instances(void);
     result<std::pair<update, changes>> set(const resource& should);

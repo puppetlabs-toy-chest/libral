@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <leatherman/execution/execution.hpp>
+#include <boost/filesystem.hpp>
 
 #include <leatherman/locale/locale.hpp>
 
@@ -15,6 +16,7 @@
 using namespace leatherman::locale;
 namespace exe = leatherman::execution;
 namespace json = leatherman::json_container;
+namespace fs = boost::filesystem;
 
 namespace libral {
 
@@ -75,8 +77,8 @@ namespace libral {
   }
 
   result<prov::spec> json_provider::describe() {
-    // Same as in simple_provider
-    return prov::spec::read(_path, _node);
+    auto name = fs::path(_path).filename().stem();
+    return prov::spec::read(name.native(), _node);
   }
 
   result<bool> json_provider::suitable() {

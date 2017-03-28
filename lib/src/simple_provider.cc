@@ -5,6 +5,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <leatherman/execution/execution.hpp>
+#include <boost/filesystem.hpp>
 
 #include <leatherman/locale/locale.hpp>
 #include <leatherman/logging/logging.hpp>
@@ -14,6 +15,7 @@
 #include <cstdio>
 
 using namespace leatherman::locale;
+namespace fs = boost::filesystem;
 
 namespace libral {
 
@@ -39,6 +41,7 @@ namespace libral {
         return true;
       };
 
+      args.push_back("name='" + upd.name() + "'");
       for (auto p : upd.should.attrs()) {
         args.push_back(p.first + "='" + p.second.to_string() + "'");
       }
@@ -50,7 +53,8 @@ namespace libral {
   }
 
   result<prov::spec> simple_provider::describe() {
-    return prov::spec::read(_path, _node);
+    auto name = fs::path(_path).filename().stem();
+    return prov::spec::read(name.native(), _node);
   }
 
   result<bool> simple_provider::suitable() {

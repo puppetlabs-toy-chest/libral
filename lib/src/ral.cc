@@ -35,7 +35,7 @@ namespace libral {
       if (*res) {
         res = prov->prepare();
         if (res && *res) {
-          auto t = new type(name, prov);
+          auto t = new type(prov);
           types.push_back(std::unique_ptr<type>(t));
           return true;
         } else {
@@ -113,19 +113,45 @@ namespace libral {
     for (auto dir : _data_dirs) {
       leatherman::file_util::each_file(dir + "/providers", cb , "\\.prov$");
     }
+
+    std::sort(result.begin(), result.end(),
+              [](const std::unique_ptr<type>& a,
+                 const std::unique_ptr<type>& b)
+              { return a->prov().spec()->qname() < b->prov().spec()->qname(); });
+
     return result;
   }
 
-  boost::optional<std::unique_ptr<type>> ral::find_type(const std::string& name) {
+  boost::optional<std::unique_ptr<type>>
+  ral::find_type(const std::string& name) {
+    // FIXME: Using unique_ptr here is pretty dumb, as it only works
+    // because we populate types() every time it is used
     auto types_vec = types();
-    auto type_it = std::find_if(types_vec.begin(), types_vec.end(),
-                                [name](std::unique_ptr<type> &t)
-                                { return name == t->name(); });
-    if (type_it == types_vec.end()) {
-      return boost::none;
-    } else {
-      return std::move(*type_it);
+
+
+    for (auto& t : types_vec) {
+      // FIXME: We assume that qname is unique amongst all providers, but
+      // do not enforce that
+      if (t->qname() == name) {
+        return std::move(t);
+      }
     }
+
+    std::unique_ptr<type> typ;
+    for (auto& t : types_vec) {
+      if (t->type_name() == name) {
+        if (!typ) {
+          typ = std::move(t);
+        } else {
+          // At least two providers with the same name
+          return boost::none;
+        }
+      }
+    }
+    if (typ)
+      return std::move(typ);
+    else
+      return boost::none;
   }
 
   result<YAML::Node>

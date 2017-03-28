@@ -17,6 +17,26 @@ namespace libral { namespace prov {
     boost::optional<const attr::spec &> attr(const std::string& name) const;
 
     /**
+     * Returns the name of the provider
+     */
+    const std::string& name() const { return _name; }
+
+    /**
+     * Returns the name of the provider's type
+     */
+    const std::string& type_name() const {return _type; }
+
+    /**
+     * Returns the full name (type and provider name) of the provider
+     */
+    const std::string& qname() const { return _qname; }
+
+    /**
+     * Returns the description of the provider
+     */
+    const std::string& desc() const {return _desc; }
+
+    /**
      * Reads a provider specification from a parsed YAML representation
      *
      * @param name the provider name, used in error messages
@@ -38,7 +58,15 @@ namespace libral { namespace prov {
       { return _attr_specs.cend(); }
 
   private:
-    spec(attr_spec_map&& attr_specs) : _attr_specs(std::move(attr_specs)) { };
+    spec(const std::string& name, const std::string& type,
+         const std::string& desc, attr_spec_map&& attr_specs);
+    std::string make_qname(const std::string& name, const std::string& type);
+
+    std::string   _name;
+    std::string   _type;
+    std::string   _desc;
+    std::string   _qname;
+
     attr_spec_map _attr_specs;
   };
 } }

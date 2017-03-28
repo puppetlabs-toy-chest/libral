@@ -29,13 +29,13 @@ namespace libral {
     provider() { };
     virtual ~provider() = default;
 
-    /* Returns +true+ if the provider can be used on the system. Returns
-       +false+ if the provider can not be used on the system.
-
-       If a problem is encountered that should be considered an error and
-       reported back to the user, return an error result. The provider will
-       be considered not suitable in that case.
-    */
+    /**
+     * Returns true if the provider can be used on the system. Returns
+     * false if the provider can not be used on the system.
+     *
+     * If a problem is encountered that should be considered an error and
+     * reported back to the user, return an error result. The provider will
+     * be considered not suitable in that case.  */
     virtual result<bool> suitable() = 0;
 
     /* Perform all changes that may have been queued up by the resources

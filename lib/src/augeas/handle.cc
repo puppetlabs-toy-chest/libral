@@ -87,11 +87,11 @@ namespace libral { namespace augeas {
     std::vector<node> nodes;
     char **matches;
 
-    aug_match(_augeas, pathx.c_str(), &matches);
+    auto count = aug_match(_augeas, pathx.c_str(), &matches);
     auto r = check_error();
     if (!r) return r.err();
 
-    for (int i=0; i < r; i++) {
+    for (int i=0; i < count; i++) {
       nodes.push_back(make_node(std::string(matches[i])));
       free(matches[i]);
     }

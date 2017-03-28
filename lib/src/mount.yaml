@@ -1,7 +1,7 @@
 R"yaml(
 ---
 provider:
-  name: mount
+  name: aug
   type: mount
   desc: |
     Manage mount points using the mount command on Linux.

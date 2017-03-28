@@ -70,7 +70,7 @@ static void print_resource_attr(const std::string& name,
 }
 
 static void print_resource(lib::type& type, const lib::resource& res) {
-  cout << color::blue << type.name() << color::reset << " { '"
+  cout << color::blue << type.qname() << color::reset << " { '"
        << color::blue << res.name() << color::reset << "':" << endl;
   uint maxlen = 0;
   for (const auto& a : res.attrs()) {
@@ -112,7 +112,7 @@ static void print_explanation(lib::type& type) {
   auto& prov = type.prov();
   auto& spec = prov.spec();
   if (!spec) {
-    cerr << _("internal error: failed to get metadata for {1}", type.name())
+    cerr << _("internal error: failed to get metadata for {1}", type.qname())
          << endl;
     return;
   }
@@ -122,7 +122,11 @@ static void print_explanation(lib::type& type) {
     if (a->first.length() > maxlen) maxlen = a->first.length();
   }
 
-  cout << _("Type {1} (from {2})", type.name(), prov.source()) << endl;
+  cout << color::magenta
+       << _("Provider {1}", spec->qname()) << endl
+       << "  " << _("source: {1}", prov.source())
+       << color::reset << endl;
+  cout << spec->desc() << endl;
   if (auto attr = spec->attr("name")) {
     print_attr_explanation("name", *attr, maxlen);
   }
@@ -226,9 +230,9 @@ int main(int argc, char **argv) {
       auto opt_type = ral->find_type(type_name);
       if (opt_type == boost::none) {
         boost::nowide::cout << color::red
-                            << _("unknown type: '{1}'", type_name)
+                            << _("unknown provider: '{1}'", type_name)
                             << color::reset << endl;
-        boost::nowide::cout << _("run 'ralsh' to see a list of all types")
+        boost::nowide::cout << _("run 'ralsh' to see a list of all providers")
                             << color::reset << endl;
         return EXIT_FAILURE;
       }
@@ -259,7 +263,7 @@ int main(int argc, char **argv) {
                 boost::nowide::cerr << color::red <<
                   _("failed to read attribute {1}: {2}", attr,
                     value.err().detail) << color::reset << endl;
-                boost::nowide::cerr << _("run 'ralsh -e {1}' to get a list of attributes and valid values", type->name()) << endl;
+                boost::nowide::cerr << _("run 'ralsh -e {1}' to get a list of attributes and valid values", type->qname()) << endl;
                 return EXIT_FAILURE;
               }
             }
@@ -292,7 +296,7 @@ int main(int argc, char **argv) {
         auto insts = type->instances();
         if (!insts) {
             boost::nowide::cerr << color::red <<
-              _("failed to list {1}: {2}", type->name(),
+              _("failed to list {1}: {2}", type->qname(),
                 insts.err().detail) << color::reset << endl;
             return EXIT_FAILURE;
         }
@@ -311,7 +315,7 @@ int main(int argc, char **argv) {
       // No type given, list known types
       auto types = ral->types();
       for (const auto& t : types) {
-        boost::nowide::cout << t->name() << endl;
+        boost::nowide::cout << t->qname() << endl;
       }
     }
   } catch (domain_error& ex) {
