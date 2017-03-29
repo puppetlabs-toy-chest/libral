@@ -5,7 +5,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 
-#include "provider.hpp"
+#include <libral/provider.hpp>
 
 namespace libral {
   /* type is really a misnomer for this class; it's not really the type you
@@ -28,7 +28,7 @@ namespace libral {
        possible */
     result<value> parse(const std::string &name, const std::string &v);
 
-    const provider& prov() { return *_prov; };
+    provider& prov() { return *_prov; };
   private:
     std::string _name;
     std::shared_ptr<provider> _prov;

@@ -69,7 +69,13 @@ namespace libral { namespace prov {
       return error(_("provider[{1}]: no attribute 'name' has been defined, but that is mandatory", prov_name));
     }
 
-    return spec(name, type, desc, std::move(attr_specs));
+    spec spec(name, type, desc, std::move(attr_specs));
+    auto s = prov_node["suitable"].as<std::string>("false");
+    if (s != "true" && s != "false") {
+      return error(_("provider {1} (simple): metadata 'suitable' must be either 'true' or 'false' but was '{2}'", prov_name, s));
+    }
+    spec.suitable(s == "true");
+    return spec;
   }
 
   result<spec> spec::read(const std::string& name,

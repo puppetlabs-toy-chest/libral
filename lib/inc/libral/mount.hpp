@@ -34,10 +34,7 @@ namespace libral {
 
   class mount_provider : public provider {
   public:
-    mount_provider(std::shared_ptr<ral> ral)
-      : _aug(nullptr), _ral(ral), _seq(1) { };
-
-    result<bool> suitable() override;
+    mount_provider() : _aug(nullptr), _seq(1) { };
 
     result<std::vector<resource>>
     get(context &ctx, const std::vector<std::string>& names,
@@ -46,7 +43,8 @@ namespace libral {
     result<void> set(context &ctx, const updates& upds) override;
 
   protected:
-    result<prov::spec> describe() override;
+    result<prov::spec> describe(environment& env) override;
+
   private:
     augeas::node base(const update &upd);
     result<resource> make(const std::string& name,
@@ -62,7 +60,6 @@ namespace libral {
     std::shared_ptr<augeas::handle> _aug;
     boost::optional<command>     _cmd_mount;
     boost::optional<command>     _cmd_umount;
-    std::shared_ptr<ral>         _ral;
     // We use this to create new paths in the augeas tree when creating entries
     int                          _seq;
   };

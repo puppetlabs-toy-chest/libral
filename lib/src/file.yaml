@@ -3,6 +3,7 @@ R"yaml(
 provider:
   name: posix
   type: file
+  suitable: true
   desc: |
     A provider to manage POSIX files.
   attributes:

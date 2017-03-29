@@ -5,6 +5,8 @@
 #include <libral/mount.hpp>
 #include <libral/user.hpp>
 #include <libral/file.hpp>
+#include <libral/type.hpp>
+#include <libral/provider.hpp>
 
 #include <libral/simple_provider.hpp>
 #include <libral/json_provider.hpp>
@@ -29,24 +31,19 @@ namespace libral {
   ral::ral(const std::vector<std::string>& data_dirs) : _data_dirs(data_dirs) { }
 
   bool ral::add_type(std::vector<std::unique_ptr<type>>& types,
+                     environment &env,
                      const std::string& name, std::shared_ptr<provider> prov) {
-    auto res = prov->suitable();
+    auto res = prov->prepare(env);
     if (res.is_ok()) {
-      if (*res) {
-        res = prov->prepare();
-        if (res && *res) {
-          auto t = new type(prov);
-          types.push_back(std::unique_ptr<type>(t));
-          return true;
-        } else {
-          LOG_ERROR("provider[{1}]: preparing failed: {2}",
-                    name, res.err().detail);
-        }
+      if (prov->spec()->suitable()) {
+        auto t = new type(prov);
+        types.push_back(std::unique_ptr<type>(t));
+        return true;
       } else {
         LOG_INFO("provider[{1}] for {2} is not suitable", prov->source(), name);
       }
     } else {
-      LOG_WARNING("provider[{1}] failed to report its suitability: {2}", name, res.err().detail);
+      LOG_WARNING("provider[{1}] failed to prepare: {2}", name, res.err().detail);
     }
     return false;
   }
@@ -55,17 +52,19 @@ namespace libral {
     // @todo lutter 2016-05-10:
     //   Need more magic here: need to find and register all types
     std::vector<std::unique_ptr<type>> result;
-    auto mount_prov = std::shared_ptr<provider>(new mount_provider(shared_from_this()));
-    add_type(result, "mount", mount_prov);
+    environment env = make_env();
+
+    auto mount_prov = std::shared_ptr<provider>(new mount_provider());
+    add_type(result, env, "mount", mount_prov);
 
     auto user_prov = std::shared_ptr<provider>(new user_provider());
-    add_type(result, "user", user_prov);
+    add_type(result, env, "user", user_prov);
 
     auto file_prov = std::shared_ptr<provider>(new file_provider());
-    add_type(result, "file", file_prov);
+    add_type(result, env, "file", file_prov);
 
     // Find external providers
-    auto cb = [&result,this](std::string const &path) {
+    auto cb = [&result,&env,this](std::string const &path) {
       auto res = run_describe(path);
       if (! res) {
         LOG_WARNING("provider[{1}]: {2}", path, res.err().detail);
@@ -96,7 +95,7 @@ namespace libral {
           raw_prov = new json_provider(path, node);
         }
         auto prov = std::shared_ptr<provider>(raw_prov);
-        if (add_type(result, type_name, prov)) {
+        if (add_type(result, env, type_name, prov)) {
           LOG_INFO(_("provider[{1}] ({2}) for {3} loaded",
                      path, invoke, type_name));
         }

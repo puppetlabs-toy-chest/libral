@@ -18,18 +18,18 @@ typedef int getgroups_t;
 using namespace leatherman::locale;
 
 namespace libral {
-  result<prov::spec> user_provider::describe() {
+  result<prov::spec> user_provider::describe(environment &env) {
     static const std::string desc =
 #include "user.yaml"
       ;
-    return prov::spec::read("user", desc);
-  }
 
-  result<bool> user_provider::suitable() {
-    _cmd_useradd = command::create("useradd");
-    _cmd_usermod = command::create("usermod");
-    _cmd_userdel = command::create("userdel");
-    return _cmd_useradd && _cmd_usermod && _cmd_userdel;;
+    _cmd_useradd = env.command("useradd");
+    _cmd_usermod = env.command("usermod");
+    _cmd_userdel = env.command("userdel");
+
+    auto suitable = _cmd_useradd && _cmd_usermod && _cmd_userdel;
+
+    return env.parse_spec("user", desc, suitable);
   }
 
   /* Find all the groups user belongs to and add it to rsrc["groups"] */

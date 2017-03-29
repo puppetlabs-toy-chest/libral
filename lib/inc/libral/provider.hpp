@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
@@ -10,6 +11,7 @@
 #include <libral/value.hpp>
 #include <libral/resource.hpp>
 #include <libral/context.hpp>
+#include <libral/environment.hpp>
 #include <libral/prov/spec.hpp>
 
 namespace libral {
@@ -28,15 +30,6 @@ namespace libral {
   public:
     provider() { };
     virtual ~provider() = default;
-
-    /**
-     * Returns true if the provider can be used on the system. Returns
-     * false if the provider can not be used on the system.
-     *
-     * If a problem is encountered that should be considered an error and
-     * reported back to the user, return an error result. The provider will
-     * be considered not suitable in that case.  */
-    virtual result<bool> suitable() = 0;
 
     /**
      * Retrieve the resources managed by this provider. At least the
@@ -96,14 +89,18 @@ namespace libral {
     friend class ral;
 
     /**
-     * Sets up internal data structures and is called after suitable() is
+     * Gets the provider ready for use. Calls describe() to kick off any
+     * provider-specific initialization.
      */
-    result<bool> prepare();
+    result<void> prepare(environment &env);
 
     /**
-     * Returns the provider spec for this provider.
+     * Constructs and returns the provider spec. The \p env object can be
+     * used to interact with the runtime environment. This method must also
+     * do any provider-internal initialization and check whether the
+     * provider is suitable for this system.
      */
-    virtual result<prov::spec> describe() = 0;
+    virtual result<prov::spec> describe(environment &env) = 0;
   private:
     /* This gets only intitialized when we call prepare, and we therefore
      * must allow for it to be none for a while

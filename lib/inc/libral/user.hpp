@@ -46,7 +46,6 @@ namespace libral {
   class user_provider : public provider {
   public:
     const std::string& description();
-    result<bool> suitable() override;
 
     result<std::vector<resource>>
     get(context &ctx, const std::vector<std::string>& names,
@@ -56,7 +55,7 @@ namespace libral {
     set(context &ctx, const updates& upds) override;
 
   protected:
-    result<prov::spec> describe() override;
+    result<prov::spec> describe(environment &env) override;
   private:
     result<void> set(context &ctx, const update& upd);
 

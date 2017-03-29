@@ -14,8 +14,6 @@ namespace libral {
     json_provider(const std::string& path, YAML::Node &node)
       : provider(), _path(path), _node(node) { };
 
-    result<bool> suitable() override;
-
     result<std::vector<resource>>
     get(context& ctx, const std::vector<std::string>& names,
         const resource::attributes& config) override;
@@ -24,7 +22,7 @@ namespace libral {
 
     const std::string& source() const override { return _path; }
   protected:
-    result<prov::spec> describe() override;
+    result<prov::spec> describe(environment &env) override;
   private:
     result<void> set(context &ctx, const update &upd);
 

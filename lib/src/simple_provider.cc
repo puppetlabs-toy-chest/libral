@@ -52,21 +52,10 @@ namespace libral {
     return result<void>();
   }
 
-  result<prov::spec> simple_provider::describe() {
+  result<prov::spec> simple_provider::describe(environment &env) {
     auto name = fs::path(_path).filename().stem();
-    return prov::spec::read(name.native(), _node);
-  }
 
-  result<bool> simple_provider::suitable() {
-    auto meta = _node["provider"];
-    if (! meta.IsMap()) {
-      return error(_("expected 'provider' key in metadata to contain a map"));
-    }
-    auto s = meta["suitable"].as<std::string>();
-    if (s != "true" && s != "false") {
-      return error(_("provider {1} (simple): metadata 'suitable' must be either 'true' or 'false' but was '{2}'", _path, s));
-    }
-    return (s == "true");
+    return env.parse_spec(name.native(), _node);
   }
 
   result<std::vector<resource>>

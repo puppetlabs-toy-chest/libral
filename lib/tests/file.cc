@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include <libral/file.hpp>
+#include <libral/ral.hpp>
 #include <iostream>
 #include <memory>
 
@@ -11,9 +12,10 @@
 namespace fs = boost::filesystem;
 
 namespace libral {
-  // We need to create a shared_ptr here because provider uses
-  // shared_from_this and that only works if a shared_ptr already exists
-  file_provider prv;
+  auto aral = ral::create({ });
+
+  auto type = *aral->find_type("file::posix");
+  provider& prv = type->prov();
 
   resource::attributes config;
 
@@ -24,8 +26,9 @@ namespace libral {
   }
 
   SCENARIO("suitable() is always true") {
-    auto s = prv.suitable();
-    REQUIRE((s.is_ok() && s.ok()));
+    auto spec = prv.spec();
+    REQUIRE(spec);
+    REQUIRE(spec->suitable());
   }
 
   SCENARIO("find()") {

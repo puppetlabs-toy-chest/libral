@@ -12,8 +12,6 @@ namespace libral {
     simple_provider(const std::string& path, YAML::Node &node)
       : provider(), _path(path), _node(node) { };
 
-    result<bool> suitable() override;
-
     result<std::vector<resource>>
     get(context &ctx,
         const std::vector<std::string>& names,
@@ -23,7 +21,7 @@ namespace libral {
 
     const std::string& source() const override { return _path; }
   protected:
-    result<prov::spec> describe() override;
+    result<prov::spec> describe(environment &env) override;
   private:
     result<std::vector<resource>> find(const std::string &name);
     result<std::vector<resource>> instances();

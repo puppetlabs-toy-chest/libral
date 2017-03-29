@@ -58,8 +58,6 @@ namespace libral {
    */
   class file_provider : public provider {
   public:
-    result<bool> suitable() override { return true; };
-
     result<std::vector<resource>>
     get(context &ctx,
         const std::vector<std::string>& names,
@@ -68,7 +66,7 @@ namespace libral {
     result<void> set(context &ctx, const updates& upds) override;
 
   protected:
-    result<prov::spec> describe() override;
+    result<prov::spec> describe(environment &env) override;
   private:
     result<void> set(context &ctx, const update& upd);
 

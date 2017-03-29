@@ -75,11 +75,11 @@ namespace libral {
     return ftype_ensure[0];
   }
 
-  result<prov::spec> file_provider::describe() {
+  result<prov::spec> file_provider::describe(environment &env) {
     static const std::string desc =
 #include "file.yaml"
       ;
-    return prov::spec::read("file", desc);
+    return env.parse_spec("file", desc);
   }
 
   result<std::vector<resource>>

@@ -37,6 +37,14 @@ namespace libral { namespace prov {
     const std::string& desc() const {return _desc; }
 
     /**
+     * Returns true if the provider is suitable, i.e., can be used
+     * successfully on this system
+     */
+    bool suitable() const { return _suitable; }
+
+    void suitable(bool s) { _suitable = s; }
+
+    /**
      * Reads a provider specification from a parsed YAML representation
      *
      * @param name the provider name, used in error messages
@@ -66,6 +74,7 @@ namespace libral { namespace prov {
     std::string   _type;
     std::string   _desc;
     std::string   _qname;
+    bool          _suitable;
 
     attr_spec_map _attr_specs;
   };

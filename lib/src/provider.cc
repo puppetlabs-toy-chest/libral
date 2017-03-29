@@ -23,13 +23,12 @@ namespace libral {
     return s_builtin;
   }
 
-  result<bool> provider::prepare() {
-    auto res = describe();
-    if (!res) {
-      return res.err();
-    }
-    _spec = *res;
-    return true;
+  result<void> provider::prepare(environment &env) {
+    auto res = describe(env);
+    err_ret(res);
+
+    _spec = res.ok();
+    return result<void>();
   }
 
   resource provider::create(const std::string& name) const {

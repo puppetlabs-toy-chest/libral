@@ -10,32 +10,23 @@ namespace aug = libral::augeas;
 
 namespace libral {
 
-  result<prov::spec> mount_provider::describe() {
+  result<prov::spec> mount_provider::describe(environment& env) {
     static const std::string desc =
 #include "mount.yaml"
       ;
-    return prov::spec::read("mount", desc);
-  }
 
-  result<bool> mount_provider::suitable() {
-    if (_aug == nullptr) {
-      std::stringstream buf;
-      bool first=true;
-      for (auto dir : _ral->data_dirs()) {
-        if (!first)
-          buf << ":";
-        first=false;
-        buf << dir << "/lenses";
-      }
-      _aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
+    auto aug = env.augeas({ { "Mount_Fstab.lns", "/etc/fstab" },
+                            { "Mount_Fstab.lns", "/etc/mtab"  } });
+    err_ret(aug);
 
-      err_ret( _aug->include("Mount_Fstab.lns", "/etc/fstab") );
-      err_ret( _aug->include("Mount_Fstab.lns", "/etc/mtab") );
-      err_ret( _aug->load() );
-    }
-    _cmd_mount = command::create("mount");
-    _cmd_umount = command::create("umount");
-    return _cmd_mount && _cmd_umount;;
+    _aug = aug.ok();
+
+    _cmd_mount = env.command("mount");
+    _cmd_umount = env.command("umount");
+
+    auto suitable = _cmd_mount && _cmd_umount;
+
+    return env.parse_spec("mount", desc, suitable);
   }
 
   aug::node mount_provider::base(const update &upd) {
