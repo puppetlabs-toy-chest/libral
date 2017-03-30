@@ -111,7 +111,7 @@ update() {
     fi
 
     # Check enablement
-    if [ -n "$enable" -a "$enable" != "$is_enable" ]
+    if [ -n "$enable" ]
     then
         case $enable
         in
@@ -128,7 +128,7 @@ update() {
         echo "ral_was: $is_enable"
     fi
 
-    if [ -n "$ensure" -a "$ensure" != "$is_ensure" ]
+    if [ -n "$ensure" ]
     then
         case $ensure
         in
@@ -142,8 +142,6 @@ update() {
                 die "illegal value for ensure: '$ensure'"
                 ;;
         esac
-        echo "ensure: $ensure"
-        echo "ral_was: $is_ensure"
     fi
 }
 

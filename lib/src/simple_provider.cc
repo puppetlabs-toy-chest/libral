@@ -42,11 +42,22 @@ namespace libral {
 
       args.push_back("name='" + upd.name() + "'");
       for (auto p : upd.should.attrs()) {
-        args.push_back(p.first + "='" + p.second.to_string() + "'");
+        if (upd.changed(p.first)) {
+          args.push_back(p.first + "='" + p.second.to_string() + "'");
+        }
       }
-      auto r = run_action(ctx, "update", cb, args);
-      if (!r)
-        return r.err();
+      if (args.size() > 1) {
+        // Only run the provider if there are actually changes to make
+        auto r = run_action(ctx, "update", cb, args);
+        if (!r)
+          return r.err();
+        for (auto attr : upd.should.attrs()) {
+          auto& is = upd.is[attr.first];
+          if (attr.second != is && ! chgs.exists(attr.first)) {
+            chgs.add(attr.first, attr.second, is);
+          }
+        }
+      }
     }
     return result<void>();
   }

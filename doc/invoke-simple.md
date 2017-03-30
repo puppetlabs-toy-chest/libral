@@ -50,7 +50,10 @@ supported.
 * `describe` - describe the provider by outputting YAML metadata
 * `list` - list all instances
 * `find name=NAME` - find the instance named `NAME`
-* `update name=NAME A1=V1 ... AN=VN` - update (or create or delete) resource
+* `update name=NAME A1=V1 ... AN=VN` - update (or create or delete)
+  resource. This action is only called if at least one attribute needs to
+  be changed from the value reported by `find name=NAME`, and only
+  attributes that have to be changed will be passed to `update`.
 
 You can run a provider from the command line with the following
 invocations:
@@ -180,9 +183,17 @@ exist (and could not possibly be created with something like
     attrN: new_valueN
     ral_was: old_valueN
 
-The output should only contain attributes that actually had to be
-changed. For each such attribute the new value, and the old value prefixed
-by `ral_was`, need to be output.
+The output should only contain attributes that actually had to be changed,
+and only needs to include attributes for which the value was changed to
+something other than the value passed on the command line. For each such
+attribute the new value, and the old value prefixed by `ral_was`, need to
+be output. For any attribute that had to be changed bceause it was passed
+on the command line, and for which nothing is output, `libral` assumes it
+was changed exactly from the last value reported by `find` to the exact
+value passed on the command line. That means that in the simplest case, the
+output from `update` can just be
+
+    # simple
 
 If the variable `ral_noop` was passed to the provider, no changes should be
 made to the system, but the output should contain all changes that _would_
