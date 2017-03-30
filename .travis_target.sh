@@ -28,10 +28,7 @@ cmake $TARGET_OPTS -DCMAKE_INSTALL_PREFIX=$USERDIR .
 if [ ${TRAVIS_TARGET} == CPPLINT ]; then
   make cpplint
 elif [ ${TRAVIS_TARGET} == DOXYGEN ]; then
-  # Build docs
-  pushd lib
-  doxygen 2>&1 | ( ! grep . )
-  popd
+  make doc
 elif [ ${TRAVIS_TARGET} == CPPCHECK ]; then
   make cppcheck
 else
@@ -47,4 +44,3 @@ else
     coveralls --gcov gcov-4.8 --gcov-options '\-lp' >/dev/null || true
   fi
 fi
-
