@@ -10,6 +10,14 @@ must be of type `string`. This attribute can not be changed through
 `update`. It serves as a primary key for the resource among all the
 resources managed by a specific provider.
 
+If the provider can create and/or delete resources, the attribute
+controlling that must be called `ensure` and must accept, at a minumum, the
+values `present` (create if not existent) and `absent` (delete if it
+already exists)
+
+The attribute names `ral` and any names starting with `ral_` and `__` (two
+underscores) are reserved, and must not be used as attribute names.
+
 ## Specifying provider attributes
 
 Provider attributes are specified in the YAML metadata that the `describe`

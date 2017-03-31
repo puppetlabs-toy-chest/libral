@@ -66,6 +66,10 @@ you can try things out by running `ralsh`:
     ralsh service crond ensure=stopped
 ```
 
+The default output from `ralsh` is meant for human consumption and looks a
+lot like Puppet. It is also possible to have `ralsh` produce
+[JSON output](doc/ralsh-json-output.md) by passing the `--json` flag.
+
 Many of the providers that `libral` knows about are separate
 scripts. `ralsh` searches them in the following order. In each case, the
 providers must be executable scripts in a subdirectory `providers` in the
