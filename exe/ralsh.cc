@@ -180,6 +180,10 @@ int main(int argc, char **argv) {
 
     bool explain = vm.count("explain");
 
+    if (explain && vm.count("json")) {
+      boost::nowide::cerr << "error: " << "you can not specify --json and --explain at the same time" << endl;
+      boost::nowide::cerr << "error: " << "running 'ralsh --json' will contain explanations for all providers" << endl;
+    }
     // Figure out our include path
     std::vector<std::string> data_dirs;
     std::string env_data_dir;
