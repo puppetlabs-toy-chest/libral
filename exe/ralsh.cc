@@ -72,10 +72,10 @@ static void print_attr_explanation(const std::string& name,
        << name << color::reset
        << " : " << attr.desc() << endl;
   cout << "  " << left << setw(maxlen) << " "
-       << " . kind = " << color::blue << attr.get_kind()
+       << " . kind = " << color::blue << attr.kind()
                        << color::reset << endl;
   cout << "  " << left << setw(maxlen) << " "
-       << " . type = " << color::blue << attr.get_data_type()
+       << " . type = " << color::blue << attr.data_type()
                        << color::reset << endl;
 }
 

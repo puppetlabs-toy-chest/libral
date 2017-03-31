@@ -8,8 +8,8 @@ namespace libral { namespace attr {
       REQUIRE(spec);
       REQUIRE(spec->name() == "test");
       REQUIRE(spec->desc() == "Test desc");
-      REQUIRE(spec->get_data_type().type() == typeid(string_type));
-      REQUIRE(spec->get_kind().get_tag() == kind::tag::r);
+      REQUIRE(spec->data_type().type() == typeid(string_type));
+      REQUIRE(spec->kind().get_tag() == kind::tag::r);
     }
 
     SECTION("creates boolean type") {
@@ -17,8 +17,8 @@ namespace libral { namespace attr {
       REQUIRE(spec);
       REQUIRE(spec->name() == "test");
       REQUIRE(spec->desc() == "Test desc");
-      REQUIRE(spec->get_data_type().type() == typeid(boolean_type));
-      REQUIRE(spec->get_kind().get_tag() == kind::tag::w);
+      REQUIRE(spec->data_type().type() == typeid(boolean_type));
+      REQUIRE(spec->kind().get_tag() == kind::tag::w);
     }
 
     SECTION("creates a array[string] type") {
@@ -31,8 +31,8 @@ namespace libral { namespace attr {
           REQUIRE(spec);
           REQUIRE(spec->name() == "test");
           REQUIRE(spec->desc() == "Test desc");
-          REQUIRE(spec->get_data_type().type() == typeid(array_type));
-          REQUIRE(spec->get_kind().get_tag() == kind::tag::rw);
+          REQUIRE(spec->data_type().type() == typeid(array_type));
+          REQUIRE(spec->kind().get_tag() == kind::tag::rw);
         }
       }
     }
@@ -65,12 +65,12 @@ namespace libral { namespace attr {
           REQUIRE(spec);
           REQUIRE(spec->name() == "test");
           REQUIRE(spec->desc() == "Test desc");
-          auto& data_type = spec->get_data_type();
+          auto& data_type = spec->data_type();
           REQUIRE(data_type.type() == typeid(enum_type));
           auto& enum_t = boost::get<enum_type>(data_type);
           std::vector<std::string> opts = { "yes", "no" };
           REQUIRE(enum_t.options() == opts);
-          REQUIRE(spec->get_kind().get_tag() == kind::tag::r);
+          REQUIRE(spec->kind().get_tag() == kind::tag::r);
         }
       }
     }

@@ -93,10 +93,10 @@ namespace libral {
           attr.set<std::string>("desc", a.desc());
 
           std::ostringstream os;
-          os << a.get_data_type();
+          os << a.data_type();
           attr.set<std::string>("type", os.str());
           os.str("");
-          os << a.get_kind();
+          os << a.kind();
           attr.set<std::string>("kind", os.str());
           attributes.push_back(attr);
         }

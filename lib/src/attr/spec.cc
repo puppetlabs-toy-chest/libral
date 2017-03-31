@@ -130,7 +130,7 @@ namespace libral { namespace attr {
     std::string ts = type_str;
     boost::trim(ts);
 
-    data_type dt;
+    attr::data_type dt;
     if (ts == "boolean") {
       dt = boolean_type();
     } else if (ts == "string") {

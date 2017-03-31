@@ -82,8 +82,8 @@ namespace libral { namespace attr {
 
     const std::string& name() const { return _name; }
     const std::string& desc() const { return _desc; }
-    const data_type& get_data_type() const { return _data_type; }
-    const kind& get_kind() const { return _kind; }
+    const attr::data_type& data_type() const { return _data_type; }
+    const attr::kind& kind() const { return _kind; }
 
     /**
      * Create a spec from a textual description
@@ -106,14 +106,14 @@ namespace libral { namespace attr {
      */
     spec(const std::string& name,
          const std::string& desc,
-         data_type& data_type,
-         kind& kind)
+         attr::data_type& data_type,
+         attr::kind& kind)
       : _name(name), _desc(desc), _data_type(data_type), _kind(kind) { };
 
-    std::string _name;
-    std::string _desc;
-    data_type   _data_type;
-    kind        _kind;
+    std::string     _name;
+    std::string     _desc;
+    attr::data_type _data_type;
+    attr::kind      _kind;
   };
 
 } }  // namespace libral::attr
