@@ -70,6 +70,12 @@ namespace libral {
     }
   }
 
+  void puppet_emitter::print_types(const std::vector<std::unique_ptr<type>>& types) {
+    for (const auto& t : types) {
+      std::cout << t->qname() << std::endl;
+    }
+  }
+
   void puppet_emitter::print_resource(const type &type, const resource &res) {
     std::cout << color::blue << type.qname() << color::reset << " { '"
          << color::blue << res.name() << color::reset << "':" << std::endl;

@@ -14,5 +14,7 @@ namespace libral {
 
     virtual void print_list(const type &type,
                  const result<std::vector<resource>>& resources) = 0;
+
+    virtual void print_types(const std::vector<std::unique_ptr<type>>& types) = 0;
   };
 }

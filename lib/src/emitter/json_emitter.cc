@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 using namespace leatherman::logging;
 using namespace leatherman::locale;
@@ -67,6 +68,44 @@ namespace libral {
       }
       js.set<std::vector<json>>("resources", list);
     }
+    std::cout << js.toString() << std::endl;
+  }
+
+  void json_emitter::print_types(const std::vector<std::unique_ptr<type>>& types) {
+    json js;
+    std::vector<json> list;
+    for (const auto& t : types) {
+      json entry;
+      entry.set<std::string>("name", t->qname());
+      entry.set<std::string>("type", t->type_name());
+      entry.set<std::string>("source", t->prov().source());
+
+      const auto& spec = t->prov().spec();
+      if (spec) {
+        entry.set<std::string>("desc", spec->desc());
+        entry.set<bool>("suitable", spec->suitable());
+        std::vector<json> attributes;
+        for (auto it = spec->attr_begin(); it != spec->attr_end(); it++) {
+          const auto &a = it->second;
+          json attr;
+
+          attr.set<std::string>("name", a.name());
+          attr.set<std::string>("desc", a.desc());
+
+          std::ostringstream os;
+          os << a.get_data_type();
+          attr.set<std::string>("type", os.str());
+          os.str("");
+          os << a.get_kind();
+          attr.set<std::string>("kind", os.str());
+          attributes.push_back(attr);
+        }
+        entry.set<std::vector<json>>("attributes", attributes);
+      }
+
+      list.push_back(entry);
+    }
+    js.set<std::vector<json>>("providers", list);
     std::cout << js.toString() << std::endl;
   }
 

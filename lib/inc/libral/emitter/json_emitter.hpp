@@ -18,6 +18,9 @@ namespace libral {
 
     void print_list(const type &type,
                const result<std::vector<resource>>& resources) override;
+
+    void print_types(const std::vector<std::unique_ptr<type>>& types) override;
+
   private:
     json resource_to_json(const type& type, const resource &res);
     json json_meta(const type &type);

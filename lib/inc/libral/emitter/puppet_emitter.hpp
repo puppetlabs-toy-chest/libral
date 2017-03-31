@@ -14,6 +14,9 @@ namespace libral {
 
     void print_list(const type &type,
                const result<std::vector<resource>>& resources) override;
+
+    void print_types(const std::vector<std::unique_ptr<type>>& types) override;
+
   private:
     void print_resource(const type &type, const resource &resource);
     void print_resource_attr(const std::string& name,

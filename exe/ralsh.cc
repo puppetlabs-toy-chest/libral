@@ -279,9 +279,7 @@ int main(int argc, char **argv) {
       }
       // No type given, list known types
       auto types = ral->types();
-      for (const auto& t : types) {
-        boost::nowide::cout << t->qname() << endl;
-      }
+      em.print_types(types);
     }
   } catch (domain_error& ex) {
     colorize(boost::nowide::cerr, log_level::fatal);
