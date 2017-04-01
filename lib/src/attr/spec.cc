@@ -8,6 +8,9 @@
 #include <libral/result.hpp>
 
 using namespace leatherman::locale;
+namespace json = leatherman::json_container;
+using json_container = json::JsonContainer;
+using json_keys = std::vector<json::JsonContainerKey>;
 
 namespace libral { namespace attr {
 
@@ -112,6 +115,58 @@ namespace libral { namespace attr {
   result<value> spec::read_string(const std::string& s) const {
     return boost::apply_visitor(read_string_visitor(s), _data_type);
   }
+
+
+  struct from_json_visitor : boost::static_visitor<result<value>> {
+    from_json_visitor(const json_container& json, const json_keys& key)
+      : _json(json), _key(key) { };
+
+    // FIXME: this needs to be specialized by the data_type of the
+    // attribute, i.e., we want to make sure we don't read a value into,
+    // e.g., an enum attribute, that is not part of the enum
+    template <typename T>
+    result_type operator()(const T& type) const {
+      switch (_json.type(_key)) {
+      case json::Null:
+        return value(boost::none);
+        break;
+      case json::Array:
+        return value(_json.get<std::vector<std::string>>(_key));
+        break;
+      case json::String:
+        return value(_json.get<std::string>(_key));
+        break;
+      case json::Int:
+        return value(_json.get<int>(_key));
+        break;
+      case json::Bool:
+        return value(_json.get<bool>(_key));
+        break;
+      default:
+        std::ostringstream os;
+        bool first = true;
+        for (const auto& k : _key) {
+          if (!first)
+            os << ".";
+          first = false;
+          os << k;
+        }
+        return error(_("can not convert data type for {1}", os.str()));
+      }
+    }
+
+  private:
+    const json_container& _json;
+    const json_keys& _key;
+  };
+
+  result<value>
+  spec::from_json(const json_container& json,
+                  const json_keys& key) const {
+    auto visitor = from_json_visitor(json, key);
+    return boost::apply_visitor(visitor, _data_type);
+  }
+
 
   result<spec> spec::create(const std::string& name,
                             const std::string& desc,

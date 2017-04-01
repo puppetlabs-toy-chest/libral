@@ -2,8 +2,11 @@
 
 #include <libral/result.hpp>
 #include <libral/value.hpp>
+
 #include <vector>
 #include <ostream>
+
+#include <leatherman/json_container/json_container.hpp>
 
 namespace libral { namespace attr {
 
@@ -75,10 +78,23 @@ namespace libral { namespace attr {
    */
   class spec {
   public:
+    using json_container = leatherman::json_container::JsonContainer;
+    using json_keys = std::vector<leatherman::json_container::JsonContainerKey>;
+
     /**
      * Read string s and return the corresponding value
      */
     result<value> read_string(const std::string& s) const;
+
+    /**
+     * Reads an entry from a JSON document and convert it into a value
+     */
+    // FIXME: the interface is goofy. It should really just take a
+    // json_value, rather than assume we want an entry in an object. But
+    // the json_container interfaces don't give us an easy way to get at
+    // json_values
+    result<value>
+    from_json(const json_container& json, const json_keys& key) const;
 
     const std::string& name() const { return _name; }
     const std::string& desc() const { return _desc; }
