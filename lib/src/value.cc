@@ -4,6 +4,10 @@
 
 #include <sstream>
 
+namespace json = leatherman::json_container;
+using json_container = json::JsonContainer;
+using json_keys = std::vector<json::JsonContainerKey>;
+
 namespace libral {
 
   const value value::none = value();
@@ -49,6 +53,36 @@ namespace libral {
 
   std::string value::to_string() const {
     return boost::apply_visitor(to_string_visitor(), *this);
+  }
+
+  struct to_json_visitor : boost::static_visitor<void> {
+    to_json_visitor(json_container& js, const json_keys& key)
+      : _js(js), _key(key) { }
+
+    void operator()(const boost::none_t& n) const {
+      // FIXME: how do you set something to JSON 'null' ?
+      _js.set<std::string>(_key, std::string("null"));
+    }
+
+    void operator()(const bool& b) const {
+      _js.set<bool>(_key, b);
+    }
+
+    void operator()(const std::string& s) const {
+      _js.set<std::string>(_key, s);
+    }
+
+    void operator()(const array& ary) const {
+      _js.set<array>(_key, ary);
+    }
+
+    json_container& _js;
+    const json_keys& _key;
+  };
+
+  void value::to_json(json_container& js, const json_keys& key) const {
+    auto visitor = to_json_visitor(js, key);
+    boost::apply_visitor(visitor, *this);
   }
 
   /* operator==, operator!= */

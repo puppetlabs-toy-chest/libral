@@ -5,6 +5,8 @@
 #include <boost/variant.hpp>
 #include <boost/none.hpp>
 
+#include <leatherman/json_container/json_container.hpp>
+
 #include <libral/cast.hpp>
 #include <libral/result.hpp>
 
@@ -30,6 +32,9 @@ namespace libral {
    */
   struct value : value_base
   {
+    using json_container = leatherman::json_container::JsonContainer;
+    using json_keys = std::vector<leatherman::json_container::JsonContainerKey>;
+
     /**
      * Default constructor for value.
      */
@@ -156,23 +161,14 @@ namespace libral {
     std::string to_string() const;
 
     /**
-     * Turn a string into a value
-     * @param s The string representing the value
-     * @return Returns a new value containing the string
+     * Converts this value into a JSON value and places it into the
+     * document \p js at the position specified by \p keys.
      */
-    static result<value> read_string(std::string const &s) {
-      return result<value>(value(s));
-    }
-
-#if 0
-    /**
-     * Converts the value to an array; the value is returned as an array if already an array.
-     * Note: after calling this function, using the original value results in undefined behavior as it may have moved.
-     * @param convert_hash True if hashes should be converted to an array of name-value arrays or false if not.
-     * @return Returns the converted array.
-     */
-    array to_array(bool convert_hash = true);
-#endif
+    // FIXME: rather than passing in a location where to put the value, it
+    // would be cleaner to have this return a json_value. But
+    // json_container doesn't give us a good interface to interact with
+    // that
+    void to_json(json_container& js, const json_keys& key) const;
 
     static const value none;
   };
