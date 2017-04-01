@@ -40,7 +40,7 @@ namespace libral {
         if (! first)
           buf << ", ";
         first = false;
-        buf << s;
+        buf << "'" << s << "'";
       }
       buf << "]";
       return buf.str();
@@ -83,9 +83,38 @@ namespace libral {
     return ! boost::apply_visitor(equality_visitor(), left, right);
   }
 
+  struct to_quoted_string_visitor : boost::static_visitor<std::string> {
+    result_type operator()(const boost::none_t& n) const {
+      return "(none)";
+    }
+
+    result_type operator()(const bool& b) const {
+      return b ? "true" : "false";
+    }
+
+    result_type operator()(const std::string& s) const {
+      return "'" + s + "'";
+    }
+
+    result_type operator()(const array& ary) const {
+      std::stringstream buf;
+      bool first = true;
+      buf << "[";
+      for (auto s : ary) {
+        if (! first)
+          buf << ", ";
+        first = false;
+        // s is a std::string, not a value, so we need to quote it
+        buf << "'" << s << "'";
+      }
+      buf << "]";
+      return buf.str();
+    }
+  };
+
   /* operator<< */
   std::ostream& operator<<(std::ostream& os, value const& val) {
-    os << val.to_string();
+    os << boost::apply_visitor(to_quoted_string_visitor(), val);
     return os;
   }
 }

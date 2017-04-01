@@ -100,6 +100,6 @@ namespace libral {
                                            uint maxlen) {
     std::cout << "  " << color::green << std::left << std::setw(maxlen)
               << name << color::reset
-              << " => '" << v << "'," << std::endl;
+              << " => " << v << "," << std::endl;
   }
 }
