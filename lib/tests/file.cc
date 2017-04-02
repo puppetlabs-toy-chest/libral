@@ -20,7 +20,7 @@ namespace libral {
   resource::attributes config;
 
   SCENARIO("instances() returns an empty vector") {
-    libral::context ctx;
+    libral::context ctx { type->prov_ptr() };
 
     REQUIRE(! prv.get(ctx, {}, config));
   }
@@ -32,7 +32,7 @@ namespace libral {
   }
 
   SCENARIO("find()") {
-    libral::context ctx;
+    libral::context ctx { type->prov_ptr() };
 
     SECTION("returns resource for nonexistent file") {
       auto res = prv.get(ctx, { "/tmp/not_there" }, config);
@@ -58,7 +58,7 @@ namespace libral {
   }
 
   SCENARIO("update()") {
-    libral::context ctx;
+    libral::context ctx { type->prov_ptr() };
 
     SECTION("create a new file") {
       auto tmp = unique_fixture_path();

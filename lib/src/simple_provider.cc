@@ -8,7 +8,6 @@
 #include <boost/filesystem.hpp>
 
 #include <leatherman/locale/locale.hpp>
-#include <leatherman/logging/logging.hpp>
 
 #include <libral/result.hpp>
 
@@ -45,7 +44,7 @@ namespace libral {
       for (auto p : upd.should.attrs()) {
         args.push_back(p.first + "='" + p.second.to_string() + "'");
       }
-      auto r = run_action("update", cb, args);
+      auto r = run_action(ctx, "update", cb, args);
       if (!r)
         return r.err();
     }
@@ -63,14 +62,14 @@ namespace libral {
       const std::vector<std::string>& names,
       const resource::attributes& config) {
     if (names.size() == 1) {
-      return find(names.front());
+      return find(ctx, names.front());
     } else {
-      return instances();
+      return instances(ctx);
     }
   }
 
   result<std::vector<resource>>
-  simple_provider::find(const std::string &name) {
+  simple_provider::find(context& ctx, const std::string &name) {
     std::vector<resource> res;
 
     auto cb = [this, &res, &name](std::string key, std::string value) -> result<bool> {
@@ -85,7 +84,7 @@ namespace libral {
       }
     };
 
-    auto r = run_action("find", cb, { "name='" + name + "'" });
+    auto r = run_action(ctx, "find", cb, { "name='" + name + "'" });
     if (!r) {
       return r.err();
     }
@@ -93,7 +92,7 @@ namespace libral {
     return res;
   }
 
-  result<std::vector<resource>> simple_provider::instances() {
+  result<std::vector<resource>> simple_provider::instances(context& ctx) {
     // run script with ral_action == list
     std::vector<resource> res;
 
@@ -110,7 +109,7 @@ namespace libral {
       }
       return true;
     };
-    auto r = run_action("list", cb);
+    auto r = run_action(ctx, "list", cb);
     if (!r) {
       return r.err();
     };
@@ -118,7 +117,7 @@ namespace libral {
   }
 
   result<bool>
-  simple_provider::run_action(const std::string& action,
+  simple_provider::run_action(context& ctx, const std::string& action,
          std::function<result<bool>(std::string&, std::string&)> entry_cb,
          std::vector<std::string> args) {
     int line_cnt = 0;
@@ -127,8 +126,8 @@ namespace libral {
     std::string errmsg;
 
     args.push_back("ral_action=" + action);
-    auto err_cb = [&errmsg](std::string &line) {
-      errmsg += line;
+    auto err_cb = [&ctx](std::string &line) {
+      ctx.log_line(line);
       return true;
     };
     auto out_cb = [&line_cnt,&in_error,&errmsg,&entry_cb,&rslt](std::string &line) {

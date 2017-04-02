@@ -20,8 +20,9 @@ ways:
   see below)
 * `stdout`: will be read by `libral`; all output described here should go
 there
-* `stderr`: (later) provide log messages. Prefix lines with `LEVEL:` to
-indicate log levels. Default is `warning`
+* `stderr`: any output on stderr will be logged. The log level can be
+specified by prefixing the line with `LEVEL:`. Possible levels are `debug`,
+`info`, `warn`, and `error`; the log level defaults to `warn`
 
 ### Environment
 

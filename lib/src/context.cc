@@ -1,5 +1,13 @@
 #include <libral/context.hpp>
 
+#include <libral/provider.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <leatherman/logging/logging.hpp>
+
+namespace algo = boost::algorithm;
+namespace logging = leatherman::logging;
+
 namespace libral {
 
   /*
@@ -45,7 +53,6 @@ namespace libral {
     return os;
   }
 
-
   /*
    * implementation for context
    */
@@ -60,5 +67,39 @@ namespace libral {
     }
   }
 
+  void log(logging::log_level level,
+           const std::string& qname,
+           const std::string& msg) {
+    if (logging::is_enabled(level)) {
+      logging::log(qname, level, 0, msg);
+    }
+  }
 
+  void context::log_line(const std::string& line) {
+    static const std::map<std::string, logging::log_level> levels = {
+      { "debug", logging::log_level::debug },
+      { "info", logging::log_level::info },
+      { "warn", logging::log_level::warning },
+      { "error", logging::log_level::error } };
+
+    logging::log_level level = logging::log_level::warning;
+    int start = 0;
+
+    for (const auto &pair : levels) {
+      if (algo::istarts_with(line, pair.first)) {
+        level = pair.second;
+        start = pair.first.size() + 1;
+        break;
+      }
+    }
+    if (logging::is_enabled(level)) {
+      auto rest = line.substr(start);
+      boost::trim(rest);
+      log(level, _prov->spec()->qname(), rest);
+    }
+  }
+
+  void context::log_debug(std::string const& msg) {
+    log(logging::log_level::debug, _prov->spec()->qname(), msg);
+  }
 }

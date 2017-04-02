@@ -23,11 +23,11 @@ namespace libral {
   protected:
     result<prov::spec> describe(environment &env) override;
   private:
-    result<std::vector<resource>> find(const std::string &name);
-    result<std::vector<resource>> instances();
+    result<std::vector<resource>> find(context& ctx, const std::string &name);
+    result<std::vector<resource>> instances(context& ctx);
 
     result<bool>
-    run_action(const std::string& action,
+    run_action(context& ctx, const std::string& action,
                std::function<result<bool>(std::string&, std::string&)> entry_cb,
                std::vector<std::string> args = {});
 

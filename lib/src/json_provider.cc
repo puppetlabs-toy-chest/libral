@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 
-#include <boost/algorithm/string.hpp>
 #include <leatherman/execution/execution.hpp>
 #include <boost/filesystem.hpp>
 
@@ -58,7 +57,7 @@ namespace libral {
     for (auto& k : upd.should.attrs()) {
       k.second.to_json(inp, { "resource", k.first });
     }
-    auto out=run_action("update", inp);
+    auto out=run_action(ctx, "update", inp);
     if (!out) {
       return out.err();
     }
@@ -108,7 +107,7 @@ namespace libral {
     auto inp = json_container();
     inp.set<std::string>({ "resource", "name" }, name);
 
-    auto out=run_action("find", inp);
+    auto out=run_action(ctx, "find", inp);
     if (!out) {
       return error(_("provider[{1}]: {2}", _path, out.err().detail));
     }
@@ -147,7 +146,7 @@ namespace libral {
     // run script with ral_action == list
     std::vector<resource> result;
     auto inp = json_container();
-    auto out = run_action("list", inp);
+    auto out = run_action(ctx, "list", inp);
     if (!out) {
       return error(_("provider[{1}]: {2}", _path, out.err().detail));
     }
@@ -173,34 +172,35 @@ namespace libral {
   }
 
   result<json_container>
-  json_provider::run_action(const std::string& action,
+  json_provider::run_action(context& ctx,
+                            const std::string& action,
                             const json_container& json) {
     auto inp = json.toString();
+    ctx.log_debug("passing {1} on stdin", inp);
     auto res = exe::execute(_path, { "ral_action=" + action },
                             inp,
                             0, { exe::execution_options::trim_output,
                                 exe::execution_options::merge_environment });
+    if (!res.error.empty()) {
+      // FIXME: this should really happen in a callback while the command
+      // is running rather than after the command finished. For that, we'd
+      // have to switch to exe::each_line and accumulate res.output
+      std::istringstream is(res.error);
+      std::string line;
+      while (std::getline(is, line, '\n')) {
+        ctx.log_line(line);
+      }
+    }
     if (!res.success) {
       if (res.output.empty()) {
-        if (res.error.empty()) {
-          return error(_("action '{1}' exited with status {2}",
-                         action, res.exit_code));
-        } else {
-          return error(_("action '{1}' exited with status {2}. stderr was '{3}'",
-                         action, res.exit_code, res.error));
-        }
+        return error(_("action '{1}' exited with status {2}",
+                       action, res.exit_code));
       } else {
         if (res.error.empty()) {
           return error(_("action '{1}' exited with status {2}. Output was '{3}'",
                          action, res.exit_code, res.output));
-        } else {
-          return error(_("action '{1}' exited with status {2}. Output was '{3}'. stderr was '{4}'",
-                         action, res.exit_code, res.output, res.error));
         }
       }
-    }
-    if (! res.error.empty()) {
-      return error(_("action '{1}' produced stderr '{2}'", action, res.error));
     }
 
     try {

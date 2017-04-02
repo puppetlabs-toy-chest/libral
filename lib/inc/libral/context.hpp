@@ -47,10 +47,28 @@ namespace libral {
     std::vector<change> _changes;
   };
 
+  // Forward declaration to avoid include loops
+  class provider;
 
   class context {
   public:
-    context() { }
+    context(const std::shared_ptr<provider>& prov) : _prov(prov) { }
+
+    /**
+     * Logs a line which may start with a log level prefix '<LEVEL>:'.
+     * Possible levels are DEBUG, INFO, WARN, or ERROR (case
+     * insensitively). If the line starts with a level, the rest of the
+     * line is logged at that level. If it does not start with a level, it
+     * is logged at level WARN.
+     */
+    void log_line(const std::string& line);
+
+    template <typename... TArgs>
+    void log_debug(std::string const& fmt, TArgs... args) {
+      log_debug(leatherman::locale::format(fmt, std::forward<TArgs>(args)...));
+    }
+
+    void log_debug(std::string const& msg);
 
     /**
      * Returns a changes object that can record changes to the resource
@@ -58,6 +76,7 @@ namespace libral {
      */
     changes& changes_for(const std::string& name);
   private:
+    const std::shared_ptr<provider> _prov;
     std::map<std::string, changes> _changes;
   };
 }

@@ -30,7 +30,8 @@ namespace libral {
     result<void> set(context &ctx, const update &upd);
 
     result<json_container>
-    run_action(const std::string& action,
+    run_action(context& ctx,
+               const std::string& action,
                const json_container& json);
 
     bool contains_error(const json_container& json,

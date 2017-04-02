@@ -16,7 +16,7 @@ namespace libral {
   type::find(const std::string &name) {
     std::vector<std::string> names = { name };
     resource::attributes config;
-    context ctx;
+    context ctx { _prov };
     auto rsrcs = _prov->get(ctx, names, config);
     err_ret(rsrcs);
 
@@ -37,7 +37,7 @@ namespace libral {
   result<std::vector<resource>> type::instances(void) {
     std::vector<std::string> names;
     resource::attributes config;
-    context ctx;
+    context ctx { _prov };
     auto result = _prov->get(ctx, names, config);
 
     return result;
@@ -54,7 +54,7 @@ namespace libral {
     resource is = (*opt_rsrc) ? std::move(**opt_rsrc)
       : _prov->create(should.name());
 
-    context ctx;
+    context ctx { _prov };
     update upd = { .is = is, .should = should };
 
     auto res = _prov->set(ctx, { upd });
