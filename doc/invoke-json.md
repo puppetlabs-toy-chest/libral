@@ -38,9 +38,8 @@ Providers can implement the following actions. Only `describe` must be
 supported.
 
 * `describe` - describe the provider by outputting YAML metadata
-* `list` - list all resources
-* `find` - find a specific resource
-* `update` - update (or create or delete) a resource
+* `get` - list one or more resources
+* `set` - update (or create or delete) one or more resources
 
 You can run a provider from the command line with the following
 invocations. The JSON files mentioned in the example must conform to the
@@ -50,14 +49,11 @@ inputs described for each action:
     > script.prov ral_action=describe
     # dumps YAML metadata
 
-    > script.prov ral_action=list < list.json
-    # lists all resources
+    > script.prov ral_action=get < get.json
+    # lists resources
 
-    > script.prov ral_action=find < find.json
-    # list the resource named FOO
-
-    > script.prov ral_action=update < update.json
-    # update the resource to the state given on stdin
+    > script.prov ral_action=set < set.json
+    # update resources to the state given on stdin
 ```
 
 ### The describe action
@@ -70,73 +66,69 @@ The output from describe must be valid YAML as described in the
 `provider.invoke` to `json`. Note that even though all other actions must
 return JSON, the describe action must return a YAML document.
 
-### The find action
+### The get action
 
-When the `find` action is invoked, `stdin` contains the following JSON:
-
-```json
-    {
-      "resource" : {
-        "name" : "the_name"
-      }
-    }
-```
-
-The `find` action must produce the following output:
+When the `get` action is invoked, `stdin` contains a JSON object giving the
+names of the resources that should be listed:
 
 ```json
     {
-      "resource" : {
-        "name"   : "the_name",
-        "attr1"  : "value1",
-        "..."
-        "attrN"  : "valueN"
-      }
+      "names": [ "name1", "name2", ..., "nameN" ]
     }
 ```
 
-### The list action
-
-When the `list` action is invoked, `stdin` contains an empty JSON object
-`{}`.
-
-The `list` action must produce the following output
+The `get` action must return at least the resources mentioned in `names`,
+but may return more (or even all) resources:
 
 ```json
     {
       "resources": [
-        { "name" : "name1", "attr1": "value1", "..." "attrN": "valueN" },
-        { "name" : "name1", "attr1": "value1", "..." "attrN": "valueN" },
+        { "name" : "name1", "attr1": "value11", "..." "attrM": "value1M" },
+        { "name" : "name2", "attr1": "value21", "..." "attrM": "value2M" },
         "..."
-        { "name" : "name1", "attr1": "value1", "..." "attrN": "valueN" },
+        { "name" : "nameN", "attr1": "valueN1", "..." "attrM": "valueNM" },
       ]
     }
 ```
 
-Note that the format for each resource in the `resources` array is the same
-as what `find` must return for its single `resource` key.
+**FIXME**: what happens when one of the names does not correspond to a
+valid resource, i.e., one that can not even be created ?
 
-### The update action
+### The set action
 
-When the `update` action is invoked, `stdin` contains the following JSON:
+When the `set` action is invoked, `stdin` contains the following JSON:
 ```json
     {
-      "resource": {
-        "name": "the_name",
-        "attr1": "value1",
-        "..."
-        "attrN": "valueN"
-      },
+      "updates": [
+        {
+          "name": "the_name",
+          "is" : {
+            "attr1": "value1",
+            "..."
+            "attrN": "valueN"
+          },
+          "should" : {
+            "attr1": "value1",
+            "..."
+            "attrN": "valueN"
+          },
+        },
+        ...,
+      ],
       "ral": {
         "noop": true|false
       }
     }
 ```
 
-The `resource` entry contains the name of the resource that should be
-updated, together with all the attributes whose state should be
-enforced. The provider must make sure that it only updates attributes
-mentioned in the `resource` object, but not ones that are not mentioned.
+The `updates` array contains the `is` and the `should` state for each
+resource that should be updated, both of which use the same format for the
+resource as the `get` action. The `should` entry only lists the attributes
+that need to actually be changed, and the provider will only be called if
+there is at least one attribute that needs to be changed. Any attribute not
+mentioned in `should` should be taken from the `is` resource if a full
+resource needs to be constructed. The `is` resource reflects the latest
+state that a previous `get` reported.
 
 If the entry `ral.noop` is set to `true`, the provider should act as if it
 were making changes without actually modifying anything. In particular, it
@@ -145,37 +137,69 @@ should produce the same output as setting `ral.noop` to `false` would.
 The update action should produce the following output:
 ```json
     {
-      "changes": {
-        "attr1" : { "is": "<is_value1>", "was": "<was_value1>" },
-        "..."
-        "attrN" : { "is": "<is_valueN>", "was": "<was_valueN>" },
-      }
+      "changes": [
+        {
+          "name": "the_name",
+          "attr1" : { "is": "<is_value1>", "was": "<was_value1>" },
+          "..."
+          "attrN" : { "is": "<is_valueN>", "was": "<was_valueN>" },
+        },
+        ...
+      ],
+      "derive": true|false
     }
 ```
 
-The `changes` hash should only mention attributes that were actually changed.
+The `changes` array list all resources that were changed, which may be more
+than the ones that were passed in to `set`. If the optional `derive` flag
+is set to `true`, changes for resources that are not mentioned in the
+`changes` array are derived from the differences in their `is` and `should`
+entries.
 
 If `ral.noop` was `true` in the input, no changes should be made to the
-system, but the output should contain all changes that _would_ have been
+system, but the output should reflect the changes that _would_ have been
 made.
 
-If the resource does not exist, and can not be created, the output should
-be
+If the resource does not exist, and can not be created, the entry in the
+changes array should be
 
 ```json
     {
-      "error" : {
-        "message" : "the resource named 'foobar' could not be found",
-        "kind": "unknown"
+      "changes" : [
+        {
+          "name": "foobar",
+          "error" : {
+            "message" : "the resource named 'foobar' could not be created",
+            "kind": "unknown"
+          }
+        }
+      ]
+    }
+```
+
+In general, `set` should try and perform as many updates as possible, and
+note any resources that can not be updated with an error as described
+above. If the overall `set` action can not be performed, for example,
+because the user does not have permission to make any changes, the response
+should simply be:
+
+```json
+    {
+      "error": {
+        "message": "user does not have permission to make changes",
+        "kind": "forbidden"
       }
     }
 ```
 
 ### Error reporting
 
-If the output contains an `error` key, the rest of the output is
-disregarded, and it is assumed that the action failed. An error response
-looks like
+Errors are indicated by having an `error` key in the response. If the
+`error` key is set at the toplevel, the rest of the output is disregarded,
+and it is assumed that the action failed. If the `resources` or `changes`
+arrays returned by `get` and `set` contain entries that have the `error`
+key set, it is assumed that there was a problem with the corresponding
+resource. In either case, the `error` entry must look like
 
 ```json
     {
@@ -183,15 +207,18 @@ looks like
         "message": "<human-readable message about what happened>",
         "kind": "<error_kind>"
       }
-      "... anything else is ignored ..."
     }
 ```
 
 The error kind must be one of the following:
-* `unknown`: the resource targetted in a `find` or `update` action does not
-  exist.
+* `unknown`: the resource targetted in a `get` or `set` action does not
+  exist and can not be created. (If it could be created, the resource
+  should carry an attribute `ensure` with value `absent`)
+* `forbidden`: the current user does not have permission to carry out the
+  action for this resource
 * `failed`: a general failure to perform the action
 
-Even if the providers encounters an error, it still needs to exit with status
-code 0. Exiting with any other status code will be taken as an indication
-that the provider encountered a fatal error.
+Even if the provider encounters an error, it still needs to exit with
+status code 0. Exiting with any other status code will be taken as an
+indication that the provider encountered a fatal error and all of its
+output will be disregarded.
