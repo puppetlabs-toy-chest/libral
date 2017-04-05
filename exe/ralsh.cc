@@ -113,10 +113,6 @@ static void print_explanation(lib::type& type) {
   }
 }
 
-static std::string absolute_path(const std::string& path) {
-  return fs::absolute(fs::path(path)).native();
-}
-
 int main(int argc, char **argv) {
   try {
     // Fix args on Windows to be UTF-8
@@ -187,30 +183,9 @@ int main(int argc, char **argv) {
     }
     // Figure out our include path
     std::vector<std::string> data_dirs;
-    std::string env_data_dir;
-    if (util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
-      data_dirs.push_back(absolute_path(env_data_dir));
-    }
-    std::string env_libexec_dir;
-    if (!util::environment::get("RALSH_LIBEXEC_DIR", env_libexec_dir)) {
-      env_libexec_dir = "/usr/libexec/libral";
-    }
-    // FIXME: lop trailing '/' off env_libexec_dir
-    std::string path;
-    if (util::environment::get("PATH", path)) {
-      util::environment::set("PATH", env_libexec_dir + "/bin:" + path);
-    } else {
-      // This is extremely strange .. no path ?
-      util::environment::set("PATH", env_libexec_dir + "/bin");
-    }
-    // FIXME: Check that mruby is there and warn otherwise
-
     if (vm.count("include")) {
-      for (const auto& dir : vm["include"].as<std::vector<std::string>>()) {
-        data_dirs.push_back(absolute_path(dir));
-      }
+      data_dirs = vm["include"].as<std::vector<std::string>>();
     }
-    data_dirs.push_back(absolute_path(LIBRAL_DATA_DIR));
 
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);

@@ -18,9 +18,13 @@ namespace libral {
     boost::optional<std::unique_ptr<type>> find_type(const std::string& name);
 
     /* Create an instance of the RAL */
-    static std::shared_ptr<ral> create(const std::vector<std::string>& data_dirs);
+    static std::shared_ptr<ral> create(std::vector<std::string> data_dirs);
 
     const std::vector<std::string>& data_dirs() const { return _data_dirs; }
+
+    boost::optional<std::string>
+    find_in_data_dirs(const std::string& file) const;
+
   protected:
     ral(const std::vector<std::string>& data_dir);
 

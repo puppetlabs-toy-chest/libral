@@ -14,16 +14,48 @@
 #include <leatherman/file_util/directory.hpp>
 #include <leatherman/execution/execution.hpp>
 #include <leatherman/logging/logging.hpp>
+#include <leatherman/util/environment.hpp>
 
-#include <boost/nowide/iostream.hpp>
+#include <boost/filesystem.hpp>
 
 #include <yaml-cpp/yaml.h>
 
 namespace exe = leatherman::execution;
 using namespace leatherman::locale;
+namespace fs = boost::filesystem;
+namespace util = leatherman::util;
 
 namespace libral {
-  std::shared_ptr<ral> ral::create(const std::vector<std::string>& data_dirs) {
+
+  std::string absolute_path(const std::string& path) {
+    return fs::absolute(fs::path(path)).native();
+  }
+
+  std::shared_ptr<ral> ral::create(std::vector<std::string> data_dirs) {
+    std::string env_data_dir;
+
+    // Prepend RALSH_DATA_DIR and append default data dir
+    // to data_dirs
+    if (util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
+      data_dirs.insert(data_dirs.begin(), absolute_path(env_data_dir));
+    }
+    data_dirs.push_back(absolute_path(LIBRAL_DATA_DIR));
+
+    // Prepend RALSH_LIBEXEC_DIR to PATH
+    std::string env_libexec_dir;
+    if (!util::environment::get("RALSH_LIBEXEC_DIR", env_libexec_dir)) {
+      env_libexec_dir = "/usr/libexec/libral";
+    }
+    // FIXME: lop trailing '/' off env_libexec_dir
+    std::string path;
+    if (util::environment::get("PATH", path)) {
+      util::environment::set("PATH", env_libexec_dir + "/bin:" + path);
+    } else {
+      // This is extremely strange .. no path ?
+      util::environment::set("PATH", env_libexec_dir + "/bin");
+    }
+    // FIXME: Check that mruby is there and warn otherwise
+
     auto handle = new ral(data_dirs);
 
     return std::shared_ptr<ral>(handle);
@@ -199,5 +231,17 @@ namespace libral {
     // We only get here if path is not executable
     return error(_("file {1} looks like a provider but is not executable",
                    path));
+  }
+
+  boost::optional<std::string>
+  ral::find_in_data_dirs(const std::string& file) const {
+    for (const auto& dir : _data_dirs) {
+      boost::system::error_code ec;
+      auto p = fs::canonical(file, dir, ec);
+      if (! ec) {
+        return p.native();
+      }
+    }
+    return boost::none;
   }
 }
