@@ -24,6 +24,33 @@ namespace libral {
     result<std::vector<resource>> instances(void);
     result<std::pair<update, changes>> set(const resource& should);
 
+    /**
+     * Sets the resources to the desired state indicated in \p should. For
+     * each resource, only attributes that might need to change have to be
+     * filled in. Before performing the change, each of the resources is
+     * looked up using \p get, and both the 'is' and the 'should' state are
+     * passed to the provider.
+     *
+     * Returns an \p error if any change fails. If all changes succeed,
+     * returns the updates, i.e. the pairs of is/should state that was
+     * passed to the provider, and the changes that were actually performed
+     * as reported by the provider.
+     */
+    result<std::vector<std::pair<update, changes>>>
+    set(const std::vector<resource>& shoulds);
+
+    /**
+     * Looks up resources. The \p names indicate which resources the
+     * provider should look up. To look up all resources, pass an empty
+     * vector.
+     *
+     * Returns an error if the lookup failed. On success, returns a list of
+     * resources that is guaranteed to at least contain the resources
+     * mentioned in \p names but may contain more than that.
+     */
+    result<std::vector<resource>>
+    get(const std::vector<std::string>& names);
+
     /* Turn a string into a value. Return an error message if that is not
        possible */
     result<value> parse(const std::string &name, const std::string &v);
