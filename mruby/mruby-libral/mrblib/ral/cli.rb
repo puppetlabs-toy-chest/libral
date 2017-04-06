@@ -1,6 +1,23 @@
 module Ral
   class ProviderError < RuntimeError; end
 
+  class Update
+    attr_reader :name, :is, :should
+    def initialize(name, is, should)
+      @name = name
+      @is = is
+      @should = should
+    end
+
+    def [](key)
+      @should[key] || @is[key]
+    end
+
+    def changed?(attr)
+      @is[attr] != @should[attr]
+    end
+  end
+
   class CLI
     def parse_stdin
       JSON.load($stdin)
@@ -22,29 +39,17 @@ module Ral
 
       if action == "describe" && prov.respond_to?(:describe)
         prov.describe(ctx)
-      elsif action == "list" && prov.respond_to?(:list)
-        dump({ resources: prov.list(ctx).flatten })
-      elsif action == "find" && prov.respond_to?(:find)
+      elsif action == "get" && prov.respond_to?(:get)
+        inp = parse_stdin
+        dump({ resources: Array(prov.get(ctx, inp["names"])).flatten })
+      elsif action == "set" && prov.respond_to?(:set)
         inp=parse_stdin
-        dump({ resource: prov.find(ctx, inp["resource"]["name"]) })
-      elsif action == "update" && prov.respond_to?(:update)
-        inp=parse_stdin
-        # This should be part of the calling convention. Instead, we look
-        # things up ourselves
-        res = inp["resource"]
-        pair = {
-          is: prov.find(ctx, res["name"]),
-          should: res.dup
-        }
+
+        upds = inp["updates"].map do |upd|
+          Update.new(upd["name"], upd["is"], upd["should"])
+        end
         begin
-          prov.update(ctx, [pair], inp["ral"]["noop"])
-          changes = {}
-          res.each do |k,v|
-            if v != pair[:is][k]
-              changes[k] = { is: v, was: pair[:is][k] }
-            end
-          end
-          result = { changes: changes }
+          result = prov.set(ctx, upds, inp["ral"]["noop"])
         rescue ProviderError => e
           result = { error: { message: e.message } }
         end

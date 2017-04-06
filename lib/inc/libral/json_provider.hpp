@@ -27,8 +27,6 @@ namespace libral {
   protected:
     result<prov::spec> describe(environment &env) override;
   private:
-    result<void> set(context &ctx, const update &upd);
-
     result<json_container>
     run_action(context& ctx,
                const std::string& action,
@@ -39,7 +37,7 @@ namespace libral {
                         std::string& kind);
 
     result<resource>
-    resource_from_json(const json_container& json);
+    resource_from_json(const context& ctx, const json_container& json);
 
     result<boost::optional<value>>
     value_from_json(const std::string &name,

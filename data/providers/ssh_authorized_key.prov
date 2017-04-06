@@ -18,7 +18,7 @@ provider:
   desc: |
     Manage ssh authorized keys in user's .ssh/authorized_keys files
   invoke: json
-  actions: [list,find,update]
+  actions: [set, get]
   suitable: true
   attributes:
     name:
@@ -51,62 +51,54 @@ provider:
 EOS
   end
 
-  # INTERFACE METHOD: return array of resource hashes
-  def list(ctx)
-    ctx.with_augeas(lens: LENS,
+  def get(ctx, names)
+    all = names.empty?
+    existing = ctx.with_augeas(lens: LENS,
                     incl: ["/home/*/#{AUTH_KEYS}", "/root/#{AUTH_KEYS}"]) do |aug|
       aug.match("(/files/home/*|/files/root)").map do |path|
         user = File::basename(path)
         aug.match("#{path}/#{AUTH_KEYS}/key").map do |key|
-          opts = aug.match("#{key}/options/*").map do |opt|
-            label = aug.label(opt)
-            if value = aug.get(opt)
-              "#{label}=#{value}"
-            else
-              label
+          tree = aug.tree(key)
+          opts = []
+          if tree["options"]
+            opts = tree["options"].children.map do |nd|
+              if nd.value
+                "#{nd.label}=#{nd.value}"
+              else
+                nd.label
+              end
             end
           end
-          { "key" => aug.get(key),
-            "type" => aug.get("#{key}/type"),
-            "ensure" => "present",
-            "user" => user,
-            "options" => opts,
-            "name" => aug.get("#{key}/comment"),
-            "target" => path.gsub("/files","")+"/#{AUTH_KEYS}"
-          }
+          name = tree["comment"].value
+          if all || names.include?(name)
+            { "key" => tree.value,
+              "type" => tree["type"].value,
+              "ensure" => "present",
+              "user" => user,
+              "options" => opts,
+              "name" => name,
+              "target" => path.gsub("/files","")+"/#{AUTH_KEYS}"
+            }
+          else
+            nil
+          end
         end
       end
-    end
+    end.flatten.compact
+    names = names - existing.map { |x| x["name"] }
+    missing = names.map { |n| { "name" => n, "ensure" => "absent" } }
+    existing + missing
   end
 
-  # INTERFACE METHOD: find one resource and return it
-  #
-  # name (string) is the name of the resource to find
-  def find(ctx, name)
-    # This should be the default implementation inside ralsh
-    list(ctx).flatten.find { |e| e["name"] == name } or
-      { "name" => name, "ensure" => "absent" }
-  end
-
-  # INTERFACE METHOD: update resources
-  #
-  # gets an array of hashes
-  #   { is: current, should: desired }
-  # where both current and desired are individual resources and express the
-  # current and desired state of the same resource
-  #
-  # noop is a boolean flag
-  #
-  # No return value, indicate errors by throwing
-  #
-  def update(ctx, rsrcs, noop)
-    rsrcs.each do |rsrc|
-      should = rsrc[:should]
+  def set(ctx, upds, noop)
+    upds.each do |upd|
       # attribute names are always strings
-      user = should["user"]
-      ens  = should["ensure"] || rsrc[:is]["ensure"]
+      user = upd["user"]
+      ens  = upd["ensure"]
       # ctx.error throws and aborts. If there are many resources, how does
       # the framework know which ones succeeded ?
+      # FIXME: these problems should be detected by libral long
+      # before this hits the provider
       ctx.error("the 'user' attribute must be set") unless user
 
       if user == "root"
@@ -117,38 +109,38 @@ EOS
 
       ctx.with_augeas(lens: LENS,
                       incl: file,
-                      save: true) do |a|
-        base = "/files#{file}/key[comment = '#{should["name"]}']"
-        # Create basic structure; if that's not in place, horrible things
-        # will happen
-        unless a.get(base)
-          a.set("/files#{file}/key[last()+1]", should["key"])
-          a.set("/files#{file}/key[last()]/type", should["type"])
-          a.set("/files#{file}/key[last()]/comment", should["name"])
+                      save: true) do |aug|
+        base = "/files#{file}/key[comment = '#{upd.name}']"
+        entries = aug.match(base)
+        if entries.size > 1
+          ctx.error("multiple entries for #{upd.name}")
         end
 
-        a.context = base
-        if ens == "absent"
-          a.rm(".")
+        if ens=="absent"
+          if entries.size == 1
+            aug.rm(entries[0])
+          end
         elsif ens == "present"
-          a.set(".", should["key"]) if should["key"]
-          a.set("type", should["type"]) if should["type"]
-          # Turn the array of "opt=val" strings into separate nodes
-          # underneath "options"
-          if should["options"]
-            a.rm("options")
-            a.insert("type", "options", true)
-            should["options"].each do |opt|
+          # Create a scratch tree and move it into place
+          t = aug.build("/scratch/key", upd["key"])
+          options = upd.should["options"]
+          if options && ! options.empty?
+            t_opt = t.child("options")
+            options.each do |opt|
               lbl, val = opt.split("=", 2)
-              a.set("options/#{lbl}[last()+1]", val);
+              t_opt.child(lbl, val);
             end
           end
+          t.child("type", upd["type"])
+          t.child("comment", upd.name)
+          t.mv(base)
         else
           # ralsh makes sure we can't get here
           ctx.error("unknown ensure value '#{ens}'")
         end
       end
     end
+    return { derive: true }
   end
 end
 

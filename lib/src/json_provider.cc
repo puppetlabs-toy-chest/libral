@@ -40,58 +40,90 @@ namespace libral {
 
   result<void>
   json_provider::set(context &ctx, const updates& upds) {
-    for (auto upd : upds) {
-      auto res = set(ctx, upd);
-      if (!res)
-        return res.err();
-    }
-    return result<void>();
-  }
-
-  result<void>
-  json_provider::set(context &ctx, const update &upd) {
     auto inp = json_container();
-    inp.set<bool>({ "ral", "noop" }, false);
-    inp.set<std::string>({ "resource", "name" }, upd.name());
 
-    for (auto& k : upd.should.attrs()) {
-      k.second.to_json(inp, { "resource", k.first });
+    // Generate the provider input
+    inp.set<bool>({ "ral", "noop" }, false);
+    std::vector<json_container> json_upds;
+    for (const auto& upd : upds) {
+      json_container json_upd;
+      json_upd.set<std::string>("name", upd.name());
+
+      for (auto& k : upd.is.attrs()) {
+        k.second.to_json(json_upd, { "is", k.first });
+      }
+      for (auto& k : upd.should.attrs()) {
+        k.second.to_json(json_upd, { "should", k.first });
+      }
+      json_upds.push_back(json_upd);
     }
-    auto out=run_action(ctx, "update", inp);
+    inp.set<std::vector<json_container>>("updates", json_upds);
+
+    // Run it
+    auto out=run_action(ctx, "set", inp);
     if (!out) {
       return out.err();
     }
 
     std::string message, kind;
     if (contains_error(*out, message, kind)) {
-      return error(_("update failed: {1}", message));
+      return ctx.error(_("update failed: {1}", message));
     }
 
-    auto& chgs = ctx.changes_for(upd.name());
+    try {
+      // convert output
+      if (out->includes("changes")) {
+        auto json_chgs = out->get<std::vector<json_container>>("changes");
 
-    // FIXME: should we consider this an error or an indication that no
-    // changes were made ?
-    if (! out->includes("changes")) {
-      return result<void>();
-    }
+        for (const auto& json_chg : json_chgs) {
+          // json_chg is an object
+          // { "name": ..., "attr1": ..., ..., "attrN": ... }
+          if (! json_chg.includes("name")) {
+            return ctx.error(
+                   _("malformed change: entry does not contain a name"));
+          }
 
-    auto json_chgs = out->get<json_container>("changes");
-    for (auto k : json_chgs.keys()) {
-      if (! json_chgs.includes({ k, "is" })) {
-        return error(_("malformed change: entry for {1} does not contain 'is'",
-                       k));
+          auto name = json_chg.get<std::string>("name");
+          auto& chgs = ctx.changes_for(name);
+
+          for (auto k : json_chg.keys()) {
+            if (k == "name") continue;
+
+            if (! json_chg.includes({ k, "is" })) {
+              return ctx.error(
+                _("malformed change: entry for {1}.{2} does not contain 'is'",
+                  name, k));
+            }
+            if (! json_chg.includes({ k, "was" })) {
+              return error(
+                _("malformed change: entry for {1}.{2} does not contain 'was'",
+                  name, k));
+            }
+            auto is = value_from_json(k, json_chg, { k, "is"});
+            if (!is) {
+              return ctx.error(is.err().detail);
+            }
+            auto was = value_from_json(k, json_chg, { k, "was"});
+            if (! was) {
+              return ctx.error(was.err().detail);
+            }
+            chgs.add(k, *is.ok(), *was.ok());
+          }
+        }
       }
-      if (! json_chgs.includes({ k, "was" })) {
-        return error(_("malformed change: entry for {1} does not contain 'was'",
-                       k));
-      }
 
-      auto is = value_from_json(k, json_chgs, { k, "is"});
-      err_ret(is);
-      auto was = value_from_json(k, json_chgs, { k, "was"});
-      err_ret(was);
-      chgs.add(k, *is.ok(), *was.ok());
+      // auto-add changes derived from the update
+      if (out->getWithDefault<bool>("derive", false)) {
+        for (const auto& upd : upds) {
+          if (! ctx.have_changes(upd.name())) {
+            ctx.changes_for(upd.name()).maybe_add(upd);
+          }
+        }
+      }
+    } catch (const json::data_error& e) {
+      return ctx.error(_("output does not conform to calling convention: {1}", out.ok().toString()));
     }
+
     return result<void>();
   }
 
@@ -101,44 +133,6 @@ namespace libral {
     return env.parse_spec(name.native(), _node);
   }
 
-#if 0
-  result<boost::optional<resource_uptr>>
-  json_provider::find(const std::string &name) {
-    auto inp = json_container();
-    inp.set<std::string>({ "resource", "name" }, name);
-
-    auto out=run_action(ctx, "find", inp);
-    if (!out) {
-      return error(_("provider[{1}]: {2}", _path, out.err().detail));
-    }
-
-    std::string message, kind;
-    if (contains_error(*out, message, kind)) {
-      if (kind == "unknown") {
-        return boost::optional<resource_uptr>(boost::none);
-      } else {
-        return
-          error(_("provider[{1}]: find for name '{2}' failed with error {3}",
-                  _path, name, message));
-      }
-    }
-    if (!out->includes("resource")) {
-      return error(_("provider[{1}]: find did not produce a 'resource' entry",
-                     _path));
-    }
-    auto json_rsrc = out->get<json_container>("resource");
-    auto rsrc = resource_from_json(json_rsrc);
-    if (!rsrc) {
-      return error(_("provider[{1}]: find of '{2}': {3}",
-                     _path, name, rsrc.err().detail));
-    }
-    if ((*rsrc)->name() != name) {
-      return error(_("provider[{1}]: find of name '{2}' returned resource named '{3}'", _path, name, (*rsrc)->name()));
-    }
-    return boost::optional<resource_uptr>(std::move(*rsrc));
-  }
-#endif
-
   result<std::vector<resource>>
   json_provider::get(context &ctx,
                      const std::vector<std::string>& names,
@@ -146,29 +140,30 @@ namespace libral {
     // run script with ral_action == list
     std::vector<resource> result;
     auto inp = json_container();
-    auto out = run_action(ctx, "list", inp);
-    if (!out) {
-      return error(_("provider[{1}]: {2}", _path, out.err().detail));
-    }
-    std::string message, kind;
-    if (contains_error(*out, message, kind)) {
-      return error(_("provider[{1}]: list failed with error {2}",
-                     _path, message));
-    }
-    if (!out->includes("resources")) {
-      return error(_("provider[{1}]: list did not produce a 'resources' entry",
-                     _path));
-    }
-    auto json_rsrcs = out->get<std::vector<json_container>>("resources");
-    for (auto json_rsrc : json_rsrcs) {
-      auto rsrc = resource_from_json(json_rsrc);
-      if (!rsrc) {
-        return error(_("provider[{1}]: list failed: {2}",
-                       _path, rsrc.err().detail));
+    inp.set<std::vector<std::string>>("names", names);
+
+    auto out = run_action(ctx, "get", inp);
+    err_ret(out);
+
+    try {
+      std::string message, kind;
+      if (contains_error(*out, message, kind)) {
+        return ctx.error(_("get failed with error {1}", message));
       }
-      result.push_back(std::move(*rsrc));
+      if (!out->includes("resources")) {
+        return ctx.error(_("get did not produce a 'resources' entry"));
+      }
+      auto json_rsrcs = out->get<std::vector<json_container>>("resources");
+      for (const auto& json_rsrc : json_rsrcs) {
+        auto rsrc = resource_from_json(ctx, json_rsrc);
+        err_ret(rsrc);
+
+        result.push_back(std::move(rsrc.ok()));
+      }
+      return std::move(result);
+    } catch (const json::data_error& e) {
+      return ctx.error(_("output does not conform to calling convention: {1}", out.ok().toString()));
     }
-    return std::move(result);
   }
 
   result<json_container>
@@ -193,12 +188,13 @@ namespace libral {
     }
     if (!res.success) {
       if (res.output.empty()) {
-        return error(_("action '{1}' exited with status {2}",
-                       action, res.exit_code));
+        return ctx.error(_("action '{1}' exited with status {2}",
+                           action, res.exit_code));
       } else {
         if (res.error.empty()) {
-          return error(_("action '{1}' exited with status {2}. Output was '{3}'",
-                         action, res.exit_code, res.output));
+          return ctx.error(
+                      _("action '{1}' exited with status {2}. Output was '{3}'",
+                        action, res.exit_code, res.output));
         }
       }
     }
@@ -206,8 +202,8 @@ namespace libral {
     try {
       return json_container(res.output);
     } catch (json::data_parse_error& e) {
-      return error(_("action '{1}' returned invalid JSON '{2}'",
-                     action, res.output));
+      return ctx.error(_("action '{1}' returned invalid JSON '{2}'",
+                         action, res.output));
     }
   }
 
@@ -223,20 +219,19 @@ namespace libral {
   }
 
   result<resource>
-  json_provider::resource_from_json(const json_container& json) {
-    if (!json.includes("name")) {
-      return error(_("resource does not have a name"));
-    }
-
+  json_provider::resource_from_json(const context& ctx,
+                                    const json_container& json) {
     auto name = json.get<std::string>("name");
     auto rsrc = create(name);
 
     for (auto k : json.keys()) {
-      if (k == "name") {
-        continue;
-      }
+      if (k == "name") continue;
+
       auto v = value_from_json(k, json, { k });
-      err_ret(v);
+      if (!v) {
+        // Make sure the message gets marked with the provider name
+        return ctx.error(v.err().detail);
+      }
       if (v.ok())
         rsrc[k] = *v.ok();
     }

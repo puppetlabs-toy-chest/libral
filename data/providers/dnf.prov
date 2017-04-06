@@ -73,94 +73,94 @@ def do_describe():
     suitable=HAS_DNF
     print(METADATA.format(suitable=str(suitable).lower()))
 
-def do_list(inp):
+def do_get(inp):
+    names=inp["names"]
     base=dnf_base()
     q=base.sack.query()
-    return {
-        "resources": [pkg_as_json(pkg) for pkg in q.installed()]
-    }
+    if len(names) > 0:
+        q = q.filter(name=names)
 
-def do_find(inp):
-    name = inp["resource"]["name"]
-    base=dnf_base()
-    pkg=find_installed(base, name)
-    if pkg:
-        return { "resource": pkg_as_json(pkg) }
-    else:
-        return { "resource":
-                 { "name": name,
-                   "ensure": "absent" } }
+    present = [pkg_as_json(pkg) for pkg in q.installed().latest()]
+    present_names = [ pkg["name"] for pkg in present ]
+    # We need to build absent packages as a dict to avoid duplicates caused
+    # by differences in arch
+    # FIXME: strictly speaking, we also need to do that for present
+    absent = {}
+    for pkg in q.available().latest():
+        if pkg.name not in present_names:
+            absent[pkg.name] = { "name": pkg.name, "ensure": "absent" }
 
-# Run the DNF operation that has already been set up in BASE, by resolving,
-# downloading and running the transaction
-#
-# NAME   - the name of tha package we are working on
-# NOOP   - whether to do this in noop mode
-# WAS    - the ensure value that we currently have (before the operation)
-#
-# Return a dict of the form { "ensure": { "is": ENSURE, "was": WAS } }
-def dnf_run(base, name, noop, was, ensure=None):
-    base.resolve()
-    if not noop:
-        base.download_packages(base.transaction.install_set)
-        base.do_transaction()
+    return { "resources": present + absent.values() }
 
-    pkgs=[p for p in base.transaction.install_set if p.name == name]
-    if len(pkgs) == 1:
-        # We installed/updated something
-        return { "ensure": {  "is": pkgs[0].evr, "was": was } }
-
-    pkgs=[p for p in base.transaction.remove_set if p.name == name]
-    if len(pkgs) == 1:
-        # We removed the package
-        return { "ensure": { "is": "absent", "was": was } }
-    return { }
-
-def do_update(inp):
+def do_set(inp):
     if not util.am_i_root():
         return {
             "error": {
                 "message": "only the root user can make package changes",
                 "kind": "failed"
             } }
-    should=inp["resource"]
-    ensure=should["ensure"]
-    name=should["name"]
-    noop=inp["ral"]["noop"]
-    base=dnf_base()
-    result = { }
-    is_pkg=find_installed(base, name)
-    if is_pkg:
-        was=is_pkg.evr
-    else:
-        was="absent"
     try:
-        if ensure == "present" or ensure == "installed":
-            if not is_pkg:
-                base.install(name)
-                result["changes"] = dnf_run(base, name, noop, was)
-        elif ensure == "absent" or ensure == "purged":
+        upds=inp["updates"]
+        noop=inp["ral"]["noop"]
+        base=dnf_base()
+        was = {}
+
+        for upd in upds:
+            name=upd["name"]
+            ensure=upd["should"]["ensure"]
+
+            is_pkg=find_installed(base, name)
             if is_pkg:
-                base.remove(name)
-                result["changes"]=dnf_run(base, name, noop, was)
-        elif ensure == "held":
-            # No idea what this is supposed to do
-            return { "error": { "message": "not implemented", "kind": "failed" }}
-        elif ensure == "latest":
-            if is_pkg:
-                base.upgrade(name)
-                result["changes"]=dnf_run(base, name, noop, was)
+                was[name]=is_pkg.evr
             else:
-                base.install(name)
-                result["changes"]=dnf_run(base, name, noop, was)
-        else:
-            target=("%s-%s" % (name, ensure))
-            if is_pkg:
-                base.upgrade(target)
-                result["changes"]=dnf_run(base, name, noop, was)
+                was[name]="absent"
+
+            if ensure == "present" or ensure == "installed":
+              if not is_pkg:
+                  base.install(name)
+            elif ensure == "absent" or ensure == "purged":
+              if is_pkg:
+                  base.remove(name)
+            elif ensure == "held":
+              # No idea what this is supposed to do
+              return { "error": { "message": "not implemented",
+                                  "kind": "failed" }}
+            elif ensure == "latest":
+              if is_pkg:
+                  base.upgrade(name)
+              else:
+                  base.install(name)
             else:
-                base.install(target)
-                result["changes"]=dnf_run(base, name, noop, was)
+              # ensure must be a version number
+              target=("%s-%s" % (name, ensure))
+              if is_pkg:
+                  base.upgrade(target)
+              else:
+                  base.install(target)
+
+        # Run the transaction
+        base.resolve()
+        if not noop:
+            base.download_packages(base.transaction.install_set)
+            base.do_transaction()
+
+        # Generate changes
+        result = { "changes": [], "derive": False }
+        names = [ upd["name"] for upd in upds ]
+        pkgs=[p for p in base.transaction.install_set if p.name in names]
+        for pkg in pkgs:
+            change={
+                "name": pkg.name,
+                "ensure": {  "is": pkgs[0].evr, "was": was[pkg.name] } }
+            result["changes"].append(change)
+
+        pkgs=[p for p in base.transaction.remove_set if p.name in names]
+        for pkg in pkgs:
+            change={
+                "name": pkg.name,
+                "ensure": { "is": "absent", "was": was[p.name] } }
+            result["changes"].append(change)
+
         return result
     except exceptions.Error as e:
         return { "error": { "message": str(e), "kind": "failed" } }
@@ -190,12 +190,10 @@ def main():
     action=sys.argv[1].split("=")[-1]
     if action == "describe":
         do_describe()
-    elif action == "list":
-        dump(do_list(parse_stdin()))
-    elif action == "find":
-        dump(do_find(parse_stdin()))
-    elif action == "update":
-        dump(do_update(parse_stdin()))
+    elif action == "get":
+        dump(do_get(parse_stdin()))
+    elif action == "set":
+        dump(do_set(parse_stdin()))
     else:
         print("unsupported action: '%s'" % action)
         sys.exit(1)

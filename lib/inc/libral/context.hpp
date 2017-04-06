@@ -89,6 +89,8 @@ namespace libral {
      */
     bool have_changes(const std::string& name);
 
+    libral::error error(const std::string& msg) const;
+
   private:
     const std::shared_ptr<provider> _prov;
     std::map<std::string, changes> _changes;

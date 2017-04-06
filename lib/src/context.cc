@@ -97,6 +97,13 @@ namespace libral {
     return (it != _changes.end());
   }
 
+  libral::error context::error(const std::string& msg) const {
+    std::ostringstream os;
+
+    os << "[" << _prov->spec()->qname() << "] " << msg;
+    return libral::error(os.str());
+  }
+
   void log(logging::log_level level,
            const std::string& qname,
            const std::string& msg) {
