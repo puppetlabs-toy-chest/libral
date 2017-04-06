@@ -51,12 +51,7 @@ namespace libral {
         auto r = run_action(ctx, "update", cb, args);
         if (!r)
           return r.err();
-        for (auto attr : upd.should.attrs()) {
-          auto& is = upd.is[attr.first];
-          if (attr.second != is && ! chgs.exists(attr.first)) {
-            chgs.add(attr.first, attr.second, is);
-          }
-        }
+        chgs.maybe_add(upd);
       }
     }
     return result<void>();

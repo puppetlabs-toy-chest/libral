@@ -38,6 +38,13 @@ namespace libral {
      */
     bool add(const std::vector<std::string> &attrs, const update &upd);
 
+    /**
+     * Adds changes for all attributes where UPD.IS differs from UPD.SHOULD
+     * and for which no changes have been recorded yet. Returns true if any
+     * changes were detected.
+     */
+    bool maybe_add(const update& upd);
+
     bool exists(const std::string &attr);
   protected:
     changes() {}
@@ -75,6 +82,13 @@ namespace libral {
      * called NAME
      */
     changes& changes_for(const std::string& name);
+
+    /**
+     * Returns true if changes_for has been called before with the same
+     * name.
+     */
+    bool have_changes(const std::string& name);
+
   private:
     const std::shared_ptr<provider> _prov;
     std::map<std::string, changes> _changes;

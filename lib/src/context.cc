@@ -10,6 +10,9 @@ namespace logging = leatherman::logging;
 
 namespace libral {
 
+  static const std::string c_ensure = "ensure";
+  static const value       c_absent = value("absent");
+
   /*
    * implementation for changes
    */
@@ -32,6 +35,28 @@ namespace libral {
     for (auto attr : attrs) {
       if (add(attr, upd))
         changed = true;
+    }
+    return changed;
+  }
+
+  bool changes::maybe_add(const update& upd) {
+    bool changed = false;
+
+    if (upd[c_ensure] == value(c_absent)) {
+      // Special treatment when ensure is absent: only diff the ensure
+      // attribute
+      if (! exists(c_ensure) && upd.changed(c_ensure)) {
+        add(c_ensure, upd.should[c_ensure], upd.is[c_ensure]);
+        changed = true;
+      }
+    } else {
+      for (const auto& attr : upd.should.attrs()) {
+        auto& is = upd.is[attr.first];
+        if (attr.second != is && ! exists(attr.first)) {
+          add(attr.first, attr.second, is);
+          changed = true;
+        }
+      }
     }
     return changed;
   }
@@ -65,6 +90,11 @@ namespace libral {
     } else {
       return it->second;
     }
+  }
+
+  bool context::have_changes(const std::string& name) {
+    auto it = _changes.find(name);
+    return (it != _changes.end());
   }
 
   void log(logging::log_level level,
