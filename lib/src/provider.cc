@@ -38,10 +38,14 @@ namespace libral {
   resource provider::create(const update &upd, const changes &chgs) const {
     resource res(upd.name());
 
-    res._attrs.insert(upd.is.attrs().begin(), upd.is.attrs().end());
-    res._attrs.insert(upd.should.attrs().begin(), upd.should.attrs().end());
-    for (const auto& ch : chgs) {
-      res[ch.attr] = ch.is;
+    if (upd["ensure"] == value("absent")) {
+      res["ensure"] = "absent";
+    } else {
+      res._attrs.insert(upd.is.attrs().begin(), upd.is.attrs().end());
+      res._attrs.insert(upd.should.attrs().begin(), upd.should.attrs().end());
+      for (const auto& ch : chgs) {
+        res[ch.attr] = ch.is;
+      }
     }
     return res;
   }
