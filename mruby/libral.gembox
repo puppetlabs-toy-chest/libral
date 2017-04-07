@@ -94,6 +94,8 @@ MRuby::GemBox.new do |conf|
     libral_configure_mruby_augeas(g)
   end
 
+  conf.gem :github => "iij/mruby-mtest"
+
   # Libral-specific special sauce
   conf.gem "#{MRUBY_ROOT}/../mruby-libral"
 
