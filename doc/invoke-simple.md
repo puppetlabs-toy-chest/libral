@@ -187,13 +187,16 @@ The output should only contain attributes that actually had to be changed,
 and only needs to include attributes for which the value was changed to
 something other than the value passed on the command line. For each such
 attribute the new value, and the old value prefixed by `ral_was`, need to
-be output. For any attribute that had to be changed bceause it was passed
-on the command line, and for which nothing is output, `libral` assumes it
-was changed exactly from the last value reported by `find` to the exact
-value passed on the command line. That means that in the simplest case, the
-output from `update` can just be
+be output. As a shortcut, the provider can add a line `ral_derive true` to
+its output. If that flag is present, `libral` will derive the changes for
+any attribute that is not explicitly mentioned in the output. Those changes
+will record the difference between the value of the attribute that was
+reported by the last `find` and the value passed into the `update` action.
+
+That means that in the simplest case, the output from `update` can just be
 
     # simple
+    ral_derive: true
 
 If the variable `ral_noop` was passed to the provider, no changes should be
 made to the system, but the output should contain all changes that _would_

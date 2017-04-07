@@ -24,10 +24,13 @@ namespace libral {
       std::vector<std::string> args;
       auto& name = upd.name();
       auto& chgs = ctx.changes_for(name);
+      bool  derive = false;
 
-      auto cb = [&name, &chgs](std::string& key, std::string& value)
+      auto cb = [&name, &chgs, &derive](std::string& key, std::string& value)
         -> result<bool> {
-        if (key == "name") {
+        if (key == "ral_derive") {
+          derive = (value == "true");
+        } else if (key == "name") {
           if (value != name) {
             return error(_("wrong name changed by update: '{1}' instead of '{2}'",
                            value, name));
@@ -51,7 +54,8 @@ namespace libral {
         auto r = run_action(ctx, "update", cb, args);
         if (!r)
           return r.err();
-        chgs.maybe_add(upd);
+        if (derive)
+          chgs.maybe_add(upd);
       }
     }
     return result<void>();
