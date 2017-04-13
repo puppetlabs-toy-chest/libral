@@ -11,10 +11,26 @@ module Ral
         result = yield(a)
         if opts[:save]
           unless a.save
-            files = a.match("/augeas//error").map do |err|
-              a.get("#{err}/path").sub("/files", "")
+            out = []
+            a.match("/augeas//error").each do |err|
+              t = a.tree(err)
+              # Get rid of /augeas/files prefix and /error suffix
+              filename = "/" + err.split("/")[3..-2].join("/")
+              line = t["line"].value
+              if line
+                out << "Error in #{filename}:#{line}.#{t["char"].value} #{t.value}"
+              elsif t["path"].value
+                out << "Error in #{filename} at node #{t["path"].value} (#{t.value})"
+                # out += a.dump(t["path"].value)
+              else
+                out << "Error in #{filename} (#{t.value})"
+              end
+
+              if msg = t["message"] && t["message"].value
+                out << msg
+              end
             end
-            result = error("failed to save: invalid file format: #{files.join(",")}")
+            result = error("failed to save: invalid file format:\n#{out.join("\n")}")
           end
         end
         result
