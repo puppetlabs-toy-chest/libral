@@ -49,10 +49,10 @@ namespace libral {
     // FIXME: lop trailing '/' off env_libexec_dir
     std::string path;
     if (util::environment::get("PATH", path)) {
-      util::environment::set("PATH", env_libexec_dir + "/bin:" + path);
+      util::environment::set("PATH", env_libexec_dir + ":" + path);
     } else {
       // This is extremely strange .. no path ?
-      util::environment::set("PATH", env_libexec_dir + "/bin");
+      util::environment::set("PATH", env_libexec_dir);
     }
     // FIXME: Check that mruby is there and warn otherwise
 

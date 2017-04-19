@@ -36,7 +36,7 @@ cat > ral/bin/ralsh <<'EOF'
 #! /bin/bash
 topdir=$(readlink --canonicalize $(dirname $0)/..)
 export RALSH_DATA_DIR=$topdir/data
-export RALSH_LIBEXEC_DIR=$topdir
+export RALSH_LIBEXEC_DIR=$topdir/bin
 exec $topdir/bin/ralsh.bin "$@"
 EOF
 chmod a+x ral/bin/ralsh
