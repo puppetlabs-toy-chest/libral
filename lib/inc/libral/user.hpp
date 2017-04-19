@@ -45,8 +45,6 @@ namespace libral {
   */
   class user_provider : public provider {
   public:
-    const std::string& description();
-
     result<std::vector<resource>>
     get(context &ctx, const std::vector<std::string>& names,
         const resource::attributes& config) override;
@@ -62,7 +60,6 @@ namespace libral {
     boost::optional<command>     _cmd_useradd;
     boost::optional<command>     _cmd_usermod;
     boost::optional<command>     _cmd_userdel;
-    std::string                  _data_dir;
   };
 
 }
