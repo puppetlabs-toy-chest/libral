@@ -139,4 +139,17 @@ namespace libral {
   void context::log_debug(std::string const& msg) {
     log(logging::log_level::debug, _prov->spec()->qname(), msg);
   }
+
+  void context::add_absent(std::vector<resource>& rsrcs,
+                           const std::vector<std::string>& names) {
+    for (auto& name : names) {
+      auto rsrc = std::find_if(rsrcs.begin(), rsrcs.end(),
+                  [&name](const resource& r) { return name == r.name(); });
+      if (rsrc == rsrcs.end()) {
+        rsrcs.push_back(_prov->create(name));
+        rsrcs.back()["ensure"] = "absent";
+      }
+    }
+  }
+
 }

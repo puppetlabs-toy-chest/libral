@@ -91,6 +91,12 @@ namespace libral {
 
     libral::error error(const std::string& msg) const;
 
+    /**
+     * For any entry in names for which we do not have a resource in rsrcs,
+     * add one with ensure set to 'absent'
+     */
+    void add_absent(std::vector<resource>& rsrcs,
+                    const std::vector<std::string>& names);
   private:
     const std::shared_ptr<provider> _prov;
     std::map<std::string, changes> _changes;
