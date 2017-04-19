@@ -144,14 +144,14 @@ To start a new provider, follow these steps:
 - [X] event reporting on update
 - [X] simple type system and checking for provider attributes
 - [X] produce help/details about providers
-- [ ] add a json calling convention and use it in a provider
+- [X] add a [json calling convention](doc/invoke-json.md) and use it in a provider
 - more core providers
   - [ ] cron
   - [X] file
   - [X] group (groupXXX)
   - [ ] host
-  - [ ] package
-  - [ ] service (besides systemd)
+  - [ ] package (besides dnf)
+  - [ ] service (besides systemd and sysv)
   - [X] user (userXXX)
 - even more core providers
   - [ ] interface
@@ -160,7 +160,7 @@ To start a new provider, follow these steps:
   - [ ] selboolean
   - [ ] selmodule
   - [ ] sshkey
-  - [ ] ssh-authorized-key
+  - [X] ssh-authorized-key
   - [ ] vlan
   - [ ] yumrepo
 - [ ] add a remote provider (using an HTTP API)
