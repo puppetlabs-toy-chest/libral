@@ -74,6 +74,7 @@ namespace libral {
     }
     endpwent();
 
+    ctx.add_absent(result, names);
     return std::move(result);
   }
 
