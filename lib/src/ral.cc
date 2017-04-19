@@ -44,7 +44,7 @@ namespace libral {
     // Prepend RALSH_LIBEXEC_DIR to PATH
     std::string env_libexec_dir;
     if (!util::environment::get("RALSH_LIBEXEC_DIR", env_libexec_dir)) {
-      env_libexec_dir = "/usr/libexec/libral";
+      env_libexec_dir = LIBRAL_LIBEXEC_DIR;
     }
     // FIXME: lop trailing '/' off env_libexec_dir
     std::string path;

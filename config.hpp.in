@@ -1,3 +1,5 @@
 #pragma once
 
 #define LIBRAL_DATA_DIR "@LIBRAL_DATA_DIR@"
+
+#define LIBRAL_LIBEXEC_DIR "@LIBRAL_LIBEXEC_DIR@"

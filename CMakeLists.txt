@@ -13,6 +13,9 @@ option(LIBRAL_STATIC "Build a static executable")
 # The default data dir. Providers should be placed into
 set(LIBRAL_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/libral/data" CACHE STRING "where to look for providers etc. by default")
 
+# The default libexec dir. mruby will be installed there
+set(LIBRAL_LIBEXEC_DIR "${CMAKE_INSTALL_PREFIX}/libexec/libral" CACHE STRING "where to install and look for mruby and other auxiliary executables")
+
 string(MAKE_C_IDENTIFIER ${PROJECT_NAME} PROJECT_C_NAME)
 string(TOUPPER ${PROJECT_C_NAME} PROJECT_NAME_UPPER)
 string(TOLOWER ${PROJECT_C_NAME} PROJECT_NAME_LOWER)

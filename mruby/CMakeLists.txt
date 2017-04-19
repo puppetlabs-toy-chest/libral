@@ -1,4 +1,5 @@
 set(MRUBY "${PROJECT_BINARY_DIR}/mruby/host/bin/mruby")
+set(MIRB "${PROJECT_BINARY_DIR}/mruby/host/bin/mirb")
 
 configure_file("${PROJECT_SOURCE_DIR}/mruby/build_setup.rb.in"
   "${PROJECT_BINARY_DIR}/mruby/build_setup.rb")
@@ -18,3 +19,5 @@ add_custom_command(OUTPUT "${MRUBY}"
 add_custom_target("mruby" DEPENDS "${MRUBY}")
 
 add_dependencies(libral mruby)
+
+install(PROGRAMS ${MRUBY} ${MIRB} DESTINATION "${LIBRAL_LIBEXEC_DIR}")
