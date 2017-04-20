@@ -12,9 +12,10 @@ RUN dnf update -y && \
 RUN git -C /usr/src clone https://github.com/puppetlabs/leatherman && \
     mkdir -p /usr/src/leatherman/build && \
     cd /usr/src/leatherman/build && \
-    git checkout 0.10.1 && \
+    git checkout -q 0.10.1 && \
     cmake .. && \
-    make all install
+    make all install && \
+    make clean
 
 WORKDIR /usr/src
 
