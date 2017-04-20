@@ -1,5 +1,7 @@
 # Libral
 
+[![Build Status](https://travis-ci.org/puppetlabs/libral.svg?branch=master)](https://travis-ci.org/puppetlabs/libral)
+
 Libral is a systems management library that makes it possible to query and
 modify system resources (files, packages, services, etc.) through a
 desired-state API. Its goals are to:
