@@ -4,10 +4,13 @@ services:
 
 before_install:
   - docker pull libral/f25-build
+  - docker pull libral/el6-build-static
   - docker run libral/f25-build
+  - docker run libral/el6-build-static
 
 script:
   - /bin/true
+  - set
 
 notifications:
   email: false
