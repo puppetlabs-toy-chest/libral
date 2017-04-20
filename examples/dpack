@@ -32,14 +32,6 @@ rm -rf ral
 mkdir -p ral/bin
 cp ./bin/ralsh ral/bin/ralsh.bin
 cp ./bin/mruby ./bin/mirb ral/bin
-cat > ral/bin/ralsh <<'EOF'
-#! /bin/bash
-topdir=$(readlink --canonicalize $(dirname $0)/..)
-export RALSH_DATA_DIR=$topdir/data
-export RALSH_LIBEXEC_DIR=$topdir/bin
-exec $topdir/bin/ralsh.bin "$@"
-EOF
-chmod a+x ral/bin/ralsh
 
 cat > ral/README <<EOF
 This is a statically linked build of https://github.com/puppetlabs/libral.
@@ -50,12 +42,32 @@ that has $(rpm -q glibc) or later.
 EOF
 
 cp -pr ${topdir}/data ral
-# Snarf up some augeas lenses that we need
-lns_src=/usr/share/augeas/lenses/dist
-cp -p $lns_src/sep.aug $lns_src/util.aug $lns_src/rx.aug $lns_src/build.aug ral/data/lenses
-cp -p $lns_src/authorized_keys.aug ral/data/lenses
 
-rm -rf ral/data/lenses/tests
+#
+# Snarf up some augeas lenses that we need
+#
+if [ ! -x augparse ]
+then
+    if [ -x /opt/puppetlabs/puppet/bin/augparse ]; then
+        export PATH=$PATH:/opt/puppetlabs/puppet/bin
+    else
+        echo "could not find augparse anywhere"
+        exit 1
+    fi
+fi
+
+# Terrible hack to help us find builtin lenses we use without any
+# modification
+cat > ral/data/lenses/dep.aug <<EOF
+module Dep =
+let l1 = Authorized_keys.lns
+EOF
+# Have augparse tell us all the lenses we need
+for lns in ral/data/lenses/*.aug
+do
+    cp -np $(augparse --notypecheck --trace $lns | cut -d ' ' -f 2 | grep ^/) ral/data/lenses
+done
+rm -rf ral/data/lenses/dep.aug ral/data/lenses/tests
 
 find ral/ -name \*~ -delete
 
@@ -67,14 +79,18 @@ then
     $UPX -qq ral/bin/*
 fi
 
+# Add a wrapper to make sure we run with the right setup
+cat > ral/bin/ralsh <<'EOF'
+#! /bin/bash
+topdir=$(readlink --canonicalize $(dirname $0)/..)
+export RALSH_DATA_DIR=$topdir/data
+export RALSH_LIBEXEC_DIR=$topdir/bin
+exec $topdir/bin/ralsh.bin "$@"
+EOF
+chmod a+x ral/bin/ralsh
+
 tarball=ralsh-$(date +%Y-%m-%dT%H.%M)-$githash.tgz
 tar czf $tarball ral
 echo
 echo Made $tarball
 echo
-
-echo
-echo To run ralsh inside a container, run
-echo
-echo   docker cp $PWD/ral '<container>:/tmp'
-echo   docker exec '<container>' /bin/sh -c /tmp/ral/bin/ralsh
