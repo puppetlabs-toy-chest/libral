@@ -1,16 +1,16 @@
 sudo: required
+language: cpp
 services:
   - docker
 
-before_install:
-  - docker pull libral/f25-build
-  - docker pull libral/el6-build-static
-  - docker run libral/f25-build
-  - docker run libral/el6-build-static
-
 script:
-  - /bin/true
-  - set
+  - docker pull $TARGET
+  - docker run -e 'MAKEFLAGS=-j2' $TARGET
+
+env:
+  matrix:
+    - TARGET=libral/f25-build
+    - TARGET=libral/el6-build-static
 
 notifications:
   email: false
