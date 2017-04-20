@@ -13,7 +13,7 @@ Linux distros if you adjust for differences in package names.
 
 ```bash
     dnf -y install gcc-c++ cmake make gettext boost-devel \
-      curl-devel yaml-cpp-devel augeas-devel
+      curl-devel yaml-cpp-devel augeas-devel ruby rake bison
 ```
 
 You will also need to have `ruby` and `rake` installed, as the embedded
@@ -77,7 +77,9 @@ Assuming you have that toolchain, you need to do the following:
 You will also need to have `ruby` and `rake` installed, as the embedded
 build of `mruby` needs these tools; the versions aren't very important,
 anything recent and supported should suffice. They are only needed at build
-time, not at runtime.
+time, not at runtime. A simple way to achieve this, is to use the Ruby that
+comes with `puppet-agent` by appending `/opt/puppetlabs/puppet/bin` to your
+`PATH`.
 
 ### Build Leatherman
 
