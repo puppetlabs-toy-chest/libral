@@ -1,31 +1,27 @@
 #! /bin/bash
 
 # Pack ralsh and supporting files so they can be copied into a Docker
-# container. This works on Fedora 25, provided you have the following
-# packages installed:
-#
-# dnf install upx glibc-static libxml2-static zlib-static xz-static libselinux-static
-#
-# Also, you need to install puppet-agent to build this (we only use that
-# for the static libs for augeas, since regrettably Fedora does not ship
-# augeas-static yet, see
-# https://bugzilla.redhat.com/show_bug.cgi?id=1405600)
-#
+# container. This only makes sense with LIBRAL_STATIC=ON, really
+
+if [ $# -lt 1 ]; then
+    echo "usage: $0 PROJECT_BINARY_DIR"
+    exit 1
+fi
+
+abs_top_builddir=$1
 
 topdir=$(readlink --canonicalize $(dirname $0)/..)
 
 # Build everything
-cd ${abs_top_builddir:-$topdir/build}
+cd $abs_top_builddir
 
 if [ ! -f CMakeCache.txt ]; then
-    echo "set abs_top_builddir to the directory where libral is built"
+    echo "pass the directory where libral is built as the first argument"
     exit 1
 fi
 
 srcdir=$(grep SOURCE_DIR CMakeCache.txt | cut -d = -f 2)
 githash=$(cd $srcdir && git describe --always)
-
-make
 
 # Assemble stuff in ral/
 rm -rf ral

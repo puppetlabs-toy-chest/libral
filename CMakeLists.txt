@@ -129,3 +129,12 @@ file(GLOB_RECURSE ALL_PROVIDERS "${CMAKE_SOURCE_DIR}/data/providers/*.prov")
 
 install(FILES ${ALL_LENSES} DESTINATION "${LIBRAL_DATA_DIR}/lenses/")
 install(PROGRAMS ${ALL_PROVIDERS} DESTINATION "${LIBRAL_DATA_DIR}/providers/")
+
+# Packing a static tarball
+add_custom_target("statpack")
+add_dependencies("statpack" ralsh mruby)
+add_custom_command(TARGET "statpack"
+  COMMENT "Build a distributable minimal tarball"
+  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+  COMMAND "${PROJECT_SOURCE_DIR}/contrib/statpack"
+          "${PROJECT_BINARY_DIR}")
