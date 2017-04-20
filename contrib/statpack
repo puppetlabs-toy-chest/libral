@@ -68,7 +68,7 @@ rm -rf ral/data/lenses/dep.aug ral/data/lenses/tests
 find ral/ -name \*~ -delete
 
 # Reduce the executable as best we can
-strip -R .note -R .comment -R .eh_frame -R .eh_frame_hdr -s ral/bin/*
+strip -R .note -R .comment -s ral/bin/*
 UPX=$(type -p upx)
 if [ -n "$UPX" ]
 then
