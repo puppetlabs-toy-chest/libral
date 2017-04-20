@@ -6,6 +6,9 @@ f25-build:
 f25:
 	docker build -f Dockerfile.f25 -t libral/f25 .
 
+el6-build-static:
+	docker build -f Dockerfile.el6-build-static -t libral/el6-build-static .
+
 clean:
 	@C="$$(docker ps -a -q -f status=exited)"; \
 	[ -n "$$C" ] && docker rm $$C || : ; \

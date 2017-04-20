@@ -1,0 +1,9 @@
+FROM centos:6
+
+COPY el6-build-static.sh /usr/src/
+RUN chmod a+x /usr/src/el6-build-static.sh && \
+    /usr/src/el6-build-static.sh
+
+WORKDIR /usr/src
+
+CMD ["/usr/src/build.sh"]
