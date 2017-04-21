@@ -64,6 +64,10 @@ include(leatherman)
 set(Boost_USE_STATIC_LIBS ${LIBRAL_STATIC})
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
+set(AUGEAS_STATIC ${LIBRAL_STATIC})
+find_package(Augeas REQUIRED)
+add_definitions(${AUGEAS_DEFINITIONS})
+
 find_package(LibXml2 REQUIRED)
 if ("${LIBXML2_INCLUDE_DIRS}" STREQUAL "")
     find_path(LIBXML2_INCLUDE_DIRS libxml/tree.h PATH_SUFFIXES libxml2)
@@ -71,10 +75,6 @@ if ("${LIBXML2_INCLUDE_DIRS}" STREQUAL "")
         message(FATAL_ERROR "LibXml2 was not found")
     endif()
 endif()
-
-set(AUGEAS_STATIC ${LIBRAL_STATIC})
-find_package(Augeas REQUIRED)
-add_definitions(${AUGEAS_DEFINITIONS})
 
 # Display a summary of the features
 include(FeatureSummary)
