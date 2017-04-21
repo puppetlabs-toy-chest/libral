@@ -1,0 +1,7 @@
+#! /bin/bash
+export PKG_CONFIG_PATH=/opt/puppetlabs/puppet/lib/pkgconfig
+/opt/pl-build-tools/bin/cmake \
+   -DCMAKE_BUILD_TYPE=Debug \
+   -DCMAKE_TOOLCHAIN_FILE=/opt/pl-build-tools/pl-build-toolchain.cmake \
+   -DCMAKE_PREFIX_PATH=/opt/pl-build-tools \
+   -DCMAKE_INSTALL_PREFIX=/opt/puppetlabs/puppet "$@"

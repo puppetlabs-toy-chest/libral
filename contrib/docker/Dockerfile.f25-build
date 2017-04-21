@@ -3,22 +3,8 @@
 #
 FROM fedora:25
 
-# Install build tools and libraries
-RUN dnf update -y && \
-    dnf install -y git gcc-c++ cmake make gettext boost-devel curl-devel yaml-cpp-devel augeas-devel ruby rake bison && \
-    dnf clean all
+COPY scripts /usr/src/scripts
 
-# Build Leatherman
-RUN git -C /usr/src clone https://github.com/puppetlabs/leatherman && \
-    mkdir -p /usr/src/leatherman/build && \
-    cd /usr/src/leatherman/build && \
-    git checkout -q 0.10.1 && \
-    cmake .. && \
-    make all install && \
-    make clean
+RUN /usr/src/scripts/image.sh f25-build
 
-WORKDIR /usr/src
-
-COPY build.sh /usr/src/build.sh
-
-CMD ["/usr/src/build.sh"]
+CMD ["/usr/src/scripts/build.sh"]
