@@ -106,7 +106,7 @@ namespace libral {
 
     bool present() const {
       // This makes 'ensure' and the value 'absent' very special
-      return is.lookup<std::string>("ensure", "absent") == "present";
+      return is.lookup<std::string>("ensure", "absent") != "absent";
     }
   };
 
