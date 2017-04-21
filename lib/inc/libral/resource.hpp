@@ -88,22 +88,51 @@ namespace libral {
     attributes _attrs;
   };
 
+  /**
+   * Represents a desired update to one resource and bundles the is and the
+   * should state of the resource, together with some convenience methods
+   * to access various aspects of the is/should pair of resources.
+   *
+   * Attributes for the should resource will only be set if a change to
+   * them has been requested (though it is entirely possible that the is
+   * and should value of the attribute are identical) If an attribute is
+   * not set in the should resource, it is certain that no change to it is
+   * being requested.
+   */
   struct update {
+    /** The current "is" state of the resource */
     resource is;
+    /** The desired "should" state of the resource */
     resource should;
 
+    /**
+     * Returns the name of the underlying resource.
+     */
     const std::string& name() const { return is.name(); }
 
+    /**
+     * Return true if this update contains a change for the attribute
+     * attr, i.e., if the should value for this attribute is set and
+     * differs from the is value.
+     */
     bool changed(const std::string& attr) const {
       return (should[attr] && is[attr] != should[attr]);
     }
 
+    /**
+     * Returns the should value for the attribute attr if it is set, and
+     * returns the is value for that attribute otherwise. If neither is
+     * set, returns a none value.
+     */
     const value& operator[](const std::string& attr) const {
       if (should[attr])
         return should[attr];
       return is[attr];
     }
 
+    /**
+     * Returns true if the is value for 'ensure' is anything but "absent"
+     */
     bool present() const {
       // This makes 'ensure' and the value 'absent' very special
       return is.lookup<std::string>("ensure", "absent") != "absent";
