@@ -34,7 +34,7 @@ namespace libral {
 
   class mount_provider : public provider {
   public:
-    mount_provider() : _aug(nullptr), _seq(1) { };
+    mount_provider() : _aug(nullptr) { };
 
     result<std::vector<resource>>
     get(context &ctx, const std::vector<std::string>& names,
@@ -60,8 +60,6 @@ namespace libral {
     std::shared_ptr<augeas::handle> _aug;
     boost::optional<command>     _cmd_mount;
     boost::optional<command>     _cmd_umount;
-    // We use this to create new paths in the augeas tree when creating entries
-    int                          _seq;
   };
 
 }

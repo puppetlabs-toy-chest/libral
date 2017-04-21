@@ -134,6 +134,15 @@ namespace libral { namespace augeas {
     return node(shared_from_this(), path);
   }
 
+  node handle::make_node_seq_next(const std::string& path) {
+    std::ostringstream os;
+    os << path;
+    if (path.back() != '/')
+      os << '/';
+    os << "0" << ++_seq;
+    return make_node(os.str());
+  }
+
   result<void> handle::check_error() const {
     if (aug_error(_augeas) != AUG_NOERROR) {
       std::ostringstream os;

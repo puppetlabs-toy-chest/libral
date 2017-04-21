@@ -33,7 +33,7 @@ namespace libral {
     if (upd.present()) {
       return _aug->make_node("/files/etc/fstab/*[file = '" + upd.name() + "']");
     } else {
-      return _aug->make_node("/files/etc/fstab/0" + ++_seq);
+      return _aug->make_node_seq_next("/files/etc/fstab");
     }
   }
 

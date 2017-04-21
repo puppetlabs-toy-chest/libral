@@ -56,10 +56,19 @@ namespace libral { namespace augeas {
     result<boost::optional<std::string>>
     get(const std::string& pathx) const;
 
-    /* Make a new node representing PATH in the tree. This by itself does
-       not cause any changes to the tree. In particular, it does not create
-       the node at PATH if it doesn't exist yet. */
+    /**
+     * Makes a new node representing PATH in the tree. This by itself does
+     * not cause any changes to the tree. In particular, it does not create
+     * the node at PATH if it doesn't exist yet. */
     node make_node(const std::string& path);
+
+    /**
+     * Makes a new node underneath PATH with a unique sequence number. This
+     * is useful for things like appending lines to /etc/hosts or
+     * /etc/fstab where each line is numbered. This by itself does
+     * not cause any changes to the tree. In particular, it does not create
+     * the node at PATH if it doesn't exist yet.*/
+    node make_node_seq_next(const std::string& path);
 
     static std::shared_ptr<handle> make(const std::string& loadpath,
                                         unsigned int flags) {
@@ -74,6 +83,9 @@ namespace libral { namespace augeas {
     result<void> check_error() const;
 
     ::augeas* _augeas;
+    /* make_node_seq_next uses this to make sure we create unique sequence
+       numbers for nodes that need it */
+    int       _seq;
   };
 
   } }
