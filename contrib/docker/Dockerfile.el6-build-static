@@ -1,3 +1,6 @@
+#
+# Tools image for libral builds. Contains everything besides libral itself
+#
 FROM centos:6
 
 COPY scripts /usr/src/scripts
