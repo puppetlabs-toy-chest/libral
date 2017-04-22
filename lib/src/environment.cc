@@ -28,8 +28,9 @@ namespace libral {
     }
 
     auto aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
-    err_ret( aug->include("Mount_Fstab.lns", "/etc/fstab") );
-    err_ret( aug->include("Mount_Fstab.lns", "/etc/mtab") );
+    for (auto& xfm : xfms) {
+      err_ret( aug->include(xfm.first, xfm.second) );
+    }
     err_ret( aug->load() );
 
     return aug;
