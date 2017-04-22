@@ -24,7 +24,7 @@ namespace libral {
     for (auto& rsrc : rsrcs.ok()) {
       if (rsrc.name() == name) {
         if (res) {
-          return error(_("#{1}: more than one resource with name {2}",
+          return error(_("[{1}] more than one resource with name {2}",
                          _prov->spec()->qname(), name));
         } else {
           res = rsrc;
