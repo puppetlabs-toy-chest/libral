@@ -37,32 +37,6 @@ namespace libral {
     }
   }
 
-  /* Set RES[ATTR] to the corresponding value in BASE[LBL]; if that does
-   * not exist, use DEFLT. If DEFLT is none, do not set RES[ATTR]
-   */
-  result<void>
-  extract(resource& res, const aug::node& base,
-          const std::string& attr, const std::string& label,
-          const boost::optional<std::string>& deflt = boost::none) {
-    auto from = base[label];
-    if (!from) return from.err();
-
-    if (from.ok()) {
-      res[attr] = *from.ok();
-    } else if (deflt) {
-      res[attr] = *deflt;
-    }
-    return result<void>();
-  }
-
-  result<void>
-  extract(resource& res, const aug::node& base,
-          const std::string& attr, const std::string& label,
-          const char * deflt) {
-    err_ret(extract(res, base, attr, label, std::string(deflt)));
-    return result<void>();
-  }
-
   /**
    * Creates a new resource. The name will be NAME. Other attributes will
    * be filled in from the node BASE which must point to an fstab entry
@@ -73,11 +47,11 @@ namespace libral {
                        const std::string& ens) {
     auto res = create(name);
 
-    err_ret(extract(res, base, "device", "spec"));
-    err_ret(extract(res, base, "fstype", "vfstype"));
-    err_ret(extract(res, base, "options", "options", "defaults"));
-    err_ret(extract(res, base, "dump", "dump", "0"));
-    err_ret(extract(res, base, "pass", "passno", "0"));
+    err_ret( base.extract(res, "device", "spec") );
+    err_ret( base.extract(res, "fstype", "vfstype") );
+    err_ret( base.extract(res, "options", "options", "defaults"));
+    err_ret( base.extract(res, "dump", "dump", "0") );
+    err_ret( base.extract(res, "pass", "passno", "0") );
     res["ensure"] = ens;
     // @todo lutter 2016-05-20: we actually need to pay attention to target
     res["target"] = "/etc/fstab";

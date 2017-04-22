@@ -8,6 +8,7 @@
 #include <boost/optional.hpp>
 
 #include <libral/value.hpp>
+#include <libral/resource.hpp>
 
 namespace libral { namespace augeas {
 
@@ -58,6 +59,37 @@ namespace libral { namespace augeas {
      * Sets the value for this node to NULL
      */
     result<void> clear();
+
+    /**
+     * Matches the given path expression realtive to this node and returns
+     * all the nodes matching it. */
+    result<std::vector<node>> match(const std::string& pathx) const;
+
+    /**
+     * Sets RES[ATTR] to the corresponding value in BASE[LBL]; if that does
+     * not exist, use DEFLT. If DEFLT is none, do not set RES[ATTR]
+     */
+    result<void>
+    extract(resource& res, const std::string& attr,
+            const std::string& label,
+            const boost::optional<std::string>& deflt = boost::none) const;
+
+    /**
+     * Sets RES[ATTR] to the corresponding value in BASE[LBL]; if that does
+     * not exist, use DEFLT.
+     */
+    result<void>
+    extract(resource& res, const std::string& attr,
+            const std::string& label, const char * deflt) const;
+
+    /**
+     * Sets RES[ATTR] to the array of values matching LABEL underneath
+     * BASE. If LABEL does not match anything, do not set RES[ATTR] at all.
+     */
+    result<void>
+    extract_array(resource& res, const std::string& attr,
+                  const std::string& label) const;
+
   private:
     std::string append(const std::string& p2) const;
 

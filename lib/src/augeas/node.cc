@@ -50,4 +50,48 @@ namespace libral { namespace augeas {
     return _aug->clear(_path);
   }
 
+  result<std::vector<node>>
+  node::match(const std::string& pathx) const {
+    return _aug->match(append(pathx));
+  }
+
+  result<void>
+  node::extract(resource& res, const std::string& attr,
+                const std::string& label,
+                const boost::optional<std::string>& deflt) const {
+    auto from = operator[](label);
+    err_ret( from );
+
+    if (from.ok()) {
+      res[attr] = *from.ok();
+    } else if (deflt) {
+      res[attr] = *deflt;
+    }
+    return result<void>();
+  }
+
+  result<void>
+  node::extract(resource& res, const std::string& attr,
+                const std::string& label, const char * deflt) const {
+    return extract(res, attr, label, std::string(deflt));
+  }
+
+  result<void>
+  node::extract_array(resource& res, const std::string& attr,
+                      const std::string& label) const {
+    array ary;
+    auto matches = match(label);
+    err_ret(matches);
+    for (auto& match : matches.ok()) {
+      auto val = match.get();
+      err_ret(val);
+      if (val.ok()) {
+        ary.push_back(*val.ok());
+      }
+    }
+    if (! ary.empty())
+      res[attr] = ary;
+    return result<void>();
+  }
+
 } }
