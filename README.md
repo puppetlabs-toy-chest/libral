@@ -151,7 +151,7 @@ To start a new provider, follow these steps:
   - [ ] cron
   - [X] file
   - [X] group (groupXXX)
-  - [ ] host
+  - [X] host
   - [ ] package (besides dnf)
   - [ ] service (besides systemd and sysv)
   - [X] user (userXXX)

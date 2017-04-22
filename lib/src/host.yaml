@@ -1,0 +1,29 @@
+R"yaml(
+---
+provider:
+  name: aug
+  type: host
+  desc: |
+    Manage mount points using the mount command on Linux.
+  attributes:
+    name:
+      desc: the host name
+    ensure:
+      type: enum[present, absent]
+      kind: rw
+    comment:
+      desc: a comment that will be attached to the line with a # character
+      kind: rw
+    host_aliases:
+      desc: any aliases the host might have. Multiple values must be specified as an array
+      type: array[string]
+      kind: rw
+    ip:
+      desc: the host's IPv4 or IPv6 address
+      type: string
+      kind: rw
+    target:
+      # This should be rw/config
+      desc: the file in which to store service information
+      kind: r
+)yaml";

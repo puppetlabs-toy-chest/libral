@@ -57,6 +57,7 @@ fi
 cat > ral/data/lenses/dep.aug <<EOF
 module Dep =
 let l1 = Authorized_keys.lns
+let l2 = Hosts.lns
 EOF
 # Have augparse tell us all the lenses we need
 for lns in ral/data/lenses/*.aug

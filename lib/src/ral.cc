@@ -5,6 +5,7 @@
 #include <libral/mount.hpp>
 #include <libral/user.hpp>
 #include <libral/group.hpp>
+#include <libral/host.hpp>
 #include <libral/file.hpp>
 #include <libral/type.hpp>
 #include <libral/provider.hpp>
@@ -95,6 +96,9 @@ namespace libral {
 
     auto group_prov = std::shared_ptr<provider>(new group_provider());
     add_type(result, env, "group", group_prov);
+
+    auto host_prov = std::shared_ptr<provider>(new host_provider());
+    add_type(result, env, "host", host_prov);
 
     auto file_prov = std::shared_ptr<provider>(new file_provider());
     add_type(result, env, "file", file_prov);
