@@ -24,6 +24,12 @@ namespace libral {
     result<std::vector<resource>> instances(void);
     result<std::pair<update, changes>> set(const resource& should);
 
+    result<std::vector<std::pair<update, changes>>>
+    set(const std::vector<resource>& shoulds);
+
+    result<std::vector<resource>>
+    get(const std::vector<std::string>& names);
+
     /* Turn a string into a value. Return an error message if that is not
        possible */
     result<value> parse(const std::string &name, const std::string &v);

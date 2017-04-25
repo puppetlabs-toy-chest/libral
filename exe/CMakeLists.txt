@@ -7,6 +7,7 @@ leatherman_logging_namespace("puppetlabs.ralsh.command")
 # Setup compiling the executable.
 include_directories(
     ../lib/inc
+    ../mruby/core/include
     ${PROJECT_BINARY_DIR}/inc
     ${Boost_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIRS}
@@ -15,6 +16,13 @@ include_directories(
 
 add_executable(ralsh ralsh.cc)
 target_link_libraries(ralsh libral)
+
+# This is pretty hinky: we manually add -ldl because libmruby needs it;
+# that should really be done with some cmake magic
+add_executable(ral-check ral-check.cc)
+target_link_libraries(ral-check
+  libral
+  ${PROJECT_BINARY_DIR}/mruby/host/lib/libmruby.a dl)
 
 link_directories(
   ${Boost_LIBRARY_DIRS}

@@ -7,14 +7,14 @@ class Augeas
 
     def initialize(path, value = nil, children = nil)
       @path = path
-      @label = path.split("/").last.split("[")[0]
+      @label = path.split("/").last.split("[")[0] if path
       @value = value
       @children = children || []
     end
 
     # Return the first child with the given label
     def [](lbl)
-      @children.find { |c| c.label == lbl }
+      @children.find { |c| c.label == lbl } || Node.new(nil)
     end
 
     # Turn the tree rooted at this Node into a string, using the same

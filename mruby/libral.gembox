@@ -86,10 +86,15 @@ MRuby::GemBox.new do |conf|
   # JSON parser and generator
   conf.gem :github => 'iij/mruby-iijson'
 
+  # ENV access
+  conf.gem :github => 'iij/mruby-env'
+
   # Bindings to augeas
   conf.gem :github => "hercules-team/mruby-augeas" do |g|
     libral_configure_mruby_augeas(g)
   end
+
+  conf.gem :github => "iij/mruby-mtest"
 
   # Libral-specific special sauce
   conf.gem "#{MRUBY_ROOT}/../mruby-libral"
