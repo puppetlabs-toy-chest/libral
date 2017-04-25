@@ -1,0 +1,8 @@
+# -*- coding: utf-8 -*-
+require "mkmf"
+
+# We don't really need to detect anything. We just have CMake feed it all in
+$CPPFLAGS << " -I@PROJECT_SOURCE_DIR@/lib/inc -I@LIBXML2_INCLUDE_DIR@ -g -O0"
+$LDFLAGS << " @PROJECT_BINARY_DIR@/lib/libral.so"
+
+create_makefile("libral/libral")

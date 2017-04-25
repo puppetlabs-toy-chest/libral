@@ -15,12 +15,16 @@ FROM fedora:25
 
 # Install build tools and libraries
 RUN dnf update -y && \
-    dnf install -y git gcc-c++ cmake make gettext boost-devel curl-devel yaml-cpp-devel augeas-devel ruby rake bison
+    dnf install -y git gcc-c++ cmake make gettext boost-devel \
+      curl-devel yaml-cpp-devel augeas-devel ruby rake bison  \
+      rubygem-bundler rubygem-yard rubygem-rake-compiler      \
+      ruby-devel redhat-rpm-config
 
 # Build Leatherman
 RUN git -C /usr/src clone https://github.com/puppetlabs/leatherman && \
     mkdir -p /usr/src/leatherman/build && \
     cd /usr/src/leatherman/build && \
+    git checkout -q 1.0.0 && \
     cmake .. && \
     make all install
 

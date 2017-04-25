@@ -35,9 +35,10 @@ cd /usr/src
 # Install tooling
 if [ $BUILD_TYPE = f25-build ]
 then
-    dnf update -y
-    dnf install -y git gcc-c++ cmake make gettext boost-devel curl-devel \
-        yaml-cpp-devel augeas-devel ruby rake bison
+    dnf install -y git gcc-c++ cmake make gettext boost-devel \
+      curl-devel yaml-cpp-devel augeas-devel ruby rake bison  \
+      rubygem-bundler rubygem-yard rubygem-rake-compiler      \
+      ruby-devel redhat-rpm-config
     dnf clean all
 elif [ $BUILD_TYPE = el6-build-static ]
 then

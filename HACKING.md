@@ -12,8 +12,10 @@ Linux distros if you adjust for differences in package names.
 ### Install needed packages
 
 ```bash
-    dnf -y install gcc-c++ cmake make gettext boost-devel \
-      curl-devel yaml-cpp-devel augeas-devel ruby rake bison
+    dnf -y install gcc-c++ cmake make gettext boost-devel    \
+      curl-devel yaml-cpp-devel augeas-devel ruby rake bison \
+      rubygem-bundler rubygem-yard rubygem-rake-compiler     \
+      ruby-devel redhat-rpm-config
 ```
 
 You will also need to have `ruby` and `rake` installed, as the embedded

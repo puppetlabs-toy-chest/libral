@@ -83,6 +83,7 @@ feature_summary(WHAT ALL)
 add_subdirectory(lib)
 add_subdirectory(exe)
 add_subdirectory(mruby)
+add_subdirectory(ruby)
 
 configure_file("${PROJECT_SOURCE_DIR}/bin/dev.in"
                "${PROJECT_BINARY_DIR}/bin/dev")

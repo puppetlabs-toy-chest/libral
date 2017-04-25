@@ -8,4 +8,4 @@ RUN /usr/src/scripts/image.sh f25-build
 
 WORKDIR /usr/src
 
-CMD ["/usr/src/scripts/build.sh"]
+CMD /bin/bash

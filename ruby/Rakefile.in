@@ -1,0 +1,35 @@
+require "bundler/gem_tasks"
+require "rake/testtask"
+require "yard"
+
+Rake::TestTask.new(:test) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = FileList['test/**/*_test.rb']
+end
+
+require "rake/extensiontask"
+
+task :build => :compile
+
+YARD::Rake::YardocTask.new do |t|
+  t.files   = ['@RUBY_SOURCE_DIR@/lib/**/*.rb', '@RUBY_SOURCE_DIR@/src/**/*.cc']
+  t.options = ['--any', '--extra', '--opts',
+               '--output-dir','@RUBY_BINARY_DIR@/doc',
+               '--use-cache', '@RUBY_BINARY_DIR@/.yardoc']
+  t.stats_options = ['--list-undoc']
+end
+
+Rake::ExtensionTask.new("libral") do |ext|
+  # Used by extconf_bounce.rb to find the real extconf file
+  ENV["EXTCONF_CMAKE"] = "@RUBY_EXTCONF@"
+  ext.lib_dir = "@RUBY_BINARY_DIR@/lib/libral"
+  ext.tmp_dir = "@RUBY_BINARY_DIR@/tmp"
+  ext.config_script = "extconf_bounce.rb"
+  ext.source_pattern = "*.{h,cc}"
+  # This setup still creates a pkg/ dir in PROJECT_SOURCE_DIR and puts the
+  # generated gem into it. There doesn't seem to be an easy way to
+  # reconfigure that.
+end
+
+task :default => [:clobber, :compile, :test]
