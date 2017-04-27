@@ -46,13 +46,25 @@ add_library(libprojectsrc OBJECT ${PROJECT_SOURCES})
 set_target_properties(libprojectsrc PROPERTIES POSITION_INDEPENDENT_CODE true)
 
 add_library(libral $<TARGET_OBJECTS:libprojectsrc>)
-set_target_properties(libral PROPERTIES VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
-target_link_libraries(libral
+
+set(LIBVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+set(LIBTARGETS
   ${LEATHERMAN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${AUGEAS_LIBRARIES}
-)
+  ${AUGEAS_LIBRARIES})
+target_link_libraries(libral ${LIBTARGETS})
+set_target_properties(libral PROPERTIES VERSION "${LIBVERSION}")
+
+if (NOT LIBRAL_STATIC)
+  # When we build against static libs, too many of them are built without
+  # -fPIC and can not be linked into libral.so
+  add_library(libral_shared SHARED $<TARGET_OBJECTS:libprojectsrc>)
+  set_target_properties(libral_shared PROPERTIES VERSION "${LIBVERSION}"
+    OUTPUT_NAME libral PREFIX "" SUFFIX ".so")
+  target_link_libraries(libral_shared ${LIBTARGETS})
+  leatherman_install(libral_shared)
+endif()
 
 symbol_exports(libral "${CMAKE_CURRENT_LIST_DIR}/inc/libral/export.h")
 
