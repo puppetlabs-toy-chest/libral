@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# Shell script wrapper to make it easier to run libral executables from a
+# build directory. Sets a bunch of environment variables and then execs
+# whatever else was passed as arguments. If no arguments are given, nothing
+# is exec'd; you can therefore also source this file into your shell
+# scripts
+
+export RALSH_DATA_DIR=@PROJECT_SOURCE_DIR@/data
+export RALSH_LIBEXEC_DIR=@PROJECT_BINARY_DIR@/mruby/host/bin
+export LD_LIBRARY_PATH=@PROJECT_BINARY_DIR@/lib
+export RUBYLIB=@PROJECT_SOURCE_DIR@/ruby/lib:@PROJECT_BINARY_DIR@/ruby/lib
+
+exec "$@"

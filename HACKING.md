@@ -46,7 +46,7 @@ time, not at runtime.
 You can now run `ralsh` with
 
 ```bash
-    export RALSH_DATA_DIR=$(realpath ../data)
+    source ./bin/dev  # Sets a number of environment variables
     ./bin/ralsh
     ./bin/ralsh user
     ./bin/ralsh user root
