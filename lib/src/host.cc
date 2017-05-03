@@ -88,7 +88,9 @@ namespace libral {
 
   result<void>
   host_provider::update_base(const update &upd) {
-    auto bs = base(upd).ok();
+    auto rbs = base(upd);
+    err_ret( rbs );
+    auto bs = rbs.ok();
 
     err_ret( bs.erase() );
     // FIXME: ip is mandatory, but we don't have a way to report that they
