@@ -130,6 +130,7 @@ int main(int argc, char **argv) {
       ("include,I", po::value<std::vector<std::string>>(), "search directory '$arg/providers' for providers.")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
       ("json,j", "produce JSON output")
+      ("absent,a", "treat absent resources as an error when looking for individual resources")
       ("version", "print the version and exit");
 
     po::options_description all_options(command_line_options);
@@ -176,6 +177,7 @@ int main(int argc, char **argv) {
     }
 
     bool explain = vm.count("explain");
+    bool err_on_absent = vm.count("absent");
 
     if (explain && vm.count("json")) {
       boost::nowide::cerr << "error: " << "you can not specify --json and --explain at the same time" << endl;
@@ -252,6 +254,10 @@ int main(int argc, char **argv) {
           auto inst = type->find(name);
           em.print_find(*type, inst);
           if (!inst) {
+            return EXIT_FAILURE;
+          }
+          if (err_on_absent
+              && (! inst.ok() || (*inst.ok())["ensure"] == lib::value("absent"))) {
             return EXIT_FAILURE;
           }
         }
