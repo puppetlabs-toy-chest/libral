@@ -51,6 +51,8 @@ namespace libral {
     }
   };
 
+  template const bool&
+  resource::lookup(const std::string&, const bool&) const;
   template const std::string&
   resource::lookup(const std::string&, const std::string&) const;
   template const std::string*
