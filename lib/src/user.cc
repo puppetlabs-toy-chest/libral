@@ -143,6 +143,15 @@ namespace libral {
         args.push_back(buf.str());
       }
 
+      if (should.lookup<bool>("managehome", false)) {
+        args.push_back("-m");
+      } else {
+        // When managehome is not set, and we are about to create the user,
+        // make sure we do not create the home dir
+        if (state == "absent")
+          args.push_back("-M");
+      }
+
       args.push_back(upd.name());
       if (! chgs.empty()) {
         result<void> run_result;

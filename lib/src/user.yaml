@@ -24,6 +24,10 @@ provider:
     home:
       desc: home directory
       kind: rw
+    managehome:
+      desc: whether to create or move the user's home directory
+      kind: w
+      type: boolean
     shell:
       desc: default shell
       kind: rw
