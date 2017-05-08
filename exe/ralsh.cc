@@ -7,6 +7,7 @@
 
 #include <libral/emitter/puppet_emitter.hpp>
 #include <libral/emitter/json_emitter.hpp>
+#include <libral/emitter/quiet_emitter.hpp>
 
 #include <iomanip>
 
@@ -130,6 +131,7 @@ int main(int argc, char **argv) {
       ("include,I", po::value<std::vector<std::string>>(), "search directory '$arg/providers' for providers.")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
       ("json,j", "produce JSON output")
+      ("quiet,q", "suppress all normal output")
       ("absent,a", "treat absent resources as an error when looking for individual resources")
       ("version", "print the version and exit");
 
@@ -192,7 +194,9 @@ int main(int argc, char **argv) {
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);
     std::unique_ptr<lib::emitter> emp;
-    if (vm.count("json")) {
+    if (vm.count("quiet")) {
+      emp = std::unique_ptr<lib::emitter>(new lib::quiet_emitter());
+    } else if (vm.count("json")) {
       emp = std::unique_ptr<lib::emitter>(new lib::json_emitter());
     } else {
       emp = std::unique_ptr<lib::emitter>(new lib::puppet_emitter());
