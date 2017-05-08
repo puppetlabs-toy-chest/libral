@@ -49,7 +49,12 @@ namespace libral { namespace attr {
   }
 
   result<value> boolean_type::read_string(const std::string& s) const {
-    return value(boost::iequals(s, "true"));
+    bool t = boost::iequals(s, "true");
+    bool f = boost::iequals(s, "false");
+    if (!t && !f) {
+      return error(_("invalid boolean: must be either 'true' or 'false'"));
+    }
+    return value(t);
   }
 
   std::ostream& operator<<(std::ostream& os, boolean_type const& bt) {
