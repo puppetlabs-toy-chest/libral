@@ -20,6 +20,11 @@
 #include <boost/program_options.hpp>
 #pragma GCC diagnostic pop
 
+
+// We distinguish between failure to find something (EXIT_FAILURE) and
+// other errors (EXIT_ERROR)
+const static int EXIT_ERROR = 2;
+
 using namespace std;
 using namespace leatherman::logging;
 namespace lib = libral;
@@ -64,7 +69,14 @@ The positional arguments make ralsh behave in the following way:
 
 Options:
 )txt";
+  const static std::string help2 =
+R"txt(Exit status:
+  0 on success
+  1 when no resource was found
+  2 when an error happened
+)txt";
   boost::nowide::cout << help1 << desc << endl;
+  boost::nowide::cout << help2 << endl;
 }
 
 static void print_attr_explanation(const std::string& name,
@@ -132,7 +144,7 @@ int main(int argc, char **argv) {
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
       ("json,j", "produce JSON output")
       ("quiet,q", "suppress all normal output")
-      ("absent,a", "treat absent resources as an error when looking for individual resources")
+      ("absent,a", "consider resources with ensure=absent as missing")
       ("version", "print the version and exit");
 
     po::options_description all_options(command_line_options);
@@ -166,7 +178,7 @@ int main(int argc, char **argv) {
       boost::nowide::cerr << "error: " << ex.what() << "\n" << endl;
       colorize(boost::nowide::cerr);
       boost::nowide::cerr << "try 'ralsh -h' for more information." << endl;
-      return EXIT_FAILURE;
+      return EXIT_ERROR;
     }
 
     // Get the logging level
@@ -213,7 +225,7 @@ int main(int argc, char **argv) {
                             << color::reset << endl;
         boost::nowide::cout << _("run 'ralsh' to see a list of all providers")
                             << color::reset << endl;
-        return EXIT_FAILURE;
+        return EXIT_ERROR;
       }
 
       auto& type = *opt_type;
@@ -243,7 +255,7 @@ int main(int argc, char **argv) {
                   _("failed to read attribute {1}: {2}", attr,
                     value.err().detail) << color::reset << endl;
                 boost::nowide::cerr << _("run 'ralsh -e {1}' to get a list of attributes and valid values", type->qname()) << endl;
-                return EXIT_FAILURE;
+                return EXIT_ERROR;
               }
             }
           }
@@ -251,17 +263,17 @@ int main(int argc, char **argv) {
           auto res = type->set(should);
           em.print_set(*type, res);
           if (!res) {
-            return EXIT_FAILURE;
+            return EXIT_ERROR;
           }
         } else {
           // No attributes, dump the resource
           auto inst = type->find(name);
           em.print_find(*type, inst);
           if (!inst) {
-            return EXIT_FAILURE;
+            return EXIT_ERROR;
           }
-          if (err_on_absent
-              && (! inst.ok() || (*inst.ok())["ensure"] == lib::value("absent"))) {
+          if (! inst.ok() ||
+              (err_on_absent && (*inst.ok())["ensure"] == lib::value("absent"))) {
             return EXIT_FAILURE;
           }
         }
@@ -270,7 +282,7 @@ int main(int argc, char **argv) {
         auto insts = type->instances();
         em.print_list(*type, insts);
         if (!insts) {
-            return EXIT_FAILURE;
+            return EXIT_ERROR;
         }
       }
     } else {
@@ -279,7 +291,7 @@ int main(int argc, char **argv) {
                             << color::reset << endl;
         boost::nowide::cout << _("run 'ralsh' to see a list of all types")
                             << color::reset << endl;
-        return EXIT_FAILURE;
+        return EXIT_ERROR;
       }
       // No type given, list known types
       auto types = ral->types();
@@ -289,8 +301,8 @@ int main(int argc, char **argv) {
     colorize(boost::nowide::cerr, log_level::fatal);
     boost::nowide::cerr << _("unhandled exception: {1}\n", ex.what()) << endl;
     colorize(boost::nowide::cerr);
-    return EXIT_FAILURE;
+    return EXIT_ERROR;
   }
 
-  return error_has_been_logged() ? EXIT_FAILURE : EXIT_SUCCESS;
+  return error_has_been_logged() ? EXIT_ERROR : EXIT_SUCCESS;
 }

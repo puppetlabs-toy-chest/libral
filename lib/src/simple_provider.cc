@@ -81,13 +81,15 @@ namespace libral {
   result<std::vector<resource>>
   simple_provider::find(context& ctx, const std::string &name) {
     std::vector<resource> res;
+    bool unknown;
 
-    auto cb = [this, &res, &name](std::string key, std::string value) -> result<bool> {
+    auto cb = [this, &res, &name, &unknown](std::string key, std::string value) -> result<bool> {
       if (key == "name") {
         res.push_back(create(value));
         return true;
       } else if (key == "ral_unknown") {
-        return error(_("unknown resource {1}", name));
+        unknown = true;
+        return true;
       } else {
         res.back()[key] = value;
         return true;
@@ -98,6 +100,9 @@ namespace libral {
     if (!r) {
       return r.err();
     }
+
+    if (unknown)
+      res.clear();
 
     return res;
   }
