@@ -29,9 +29,6 @@ desired-state API. Its goals are to:
 
 ## Building and installation
 
-Please see [this document](HACKING.md) for instructions on building `libral`
-from source.
-
 If you just want to quickly try out `libral`, you can download a
 [precompiled tarball](http://download.augeas.net/libral/ralsh-latest.tgz)
 ([GPG signature](http://download.augeas.net/libral/ralsh-latest.tgz.sig))
@@ -43,6 +40,10 @@ We have reports of the precompiled binaries working on 64-bit Fedora 21-25,
 RHEL 5-7 (and related distributions like CentOS), Debian 6-9,
 Ubuntu 10.04-16.10, and SLES 11-12. The binaries will not work on
 32-bit and pre-glibc 2.8 systems: RHEL 4, SLES 10, ...
+
+In case you do need to build from source, which is not required for
+provider development, only if you want to work on the core libral library,
+[this document](HACKING.md) contains instructions on building `libral`.
 
 ## Usage
 
