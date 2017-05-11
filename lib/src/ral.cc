@@ -35,6 +35,11 @@ namespace libral {
   std::shared_ptr<ral> ral::create(std::vector<std::string> data_dirs) {
     std::string env_data_dir;
 
+    // Convert each entry in data_dirs into an absolute path
+    for (auto& dir : data_dirs) {
+      dir = absolute_path(dir);
+    }
+
     // Prepend RALSH_DATA_DIR and append default data dir
     // to data_dirs
     if (util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
