@@ -40,11 +40,19 @@ namespace libral {
       dir = absolute_path(dir);
     }
 
-    // Prepend RALSH_DATA_DIR and append default data dir
-    // to data_dirs
+    // Split RALSH_DATA_DIR on ':' and append absolute path for each
+    // component
     if (util::environment::get("RALSH_DATA_DIR", env_data_dir)) {
-      data_dirs.insert(data_dirs.begin(), absolute_path(env_data_dir));
+      std::string::size_type start=0;
+      while (1) {
+        auto end = env_data_dir.find(':', start);
+        auto dir = absolute_path(env_data_dir.substr(start, end - start));
+        data_dirs.push_back(dir);
+        if (end == std::string::npos) break;
+        start = end+1;
+      }
     }
+    // Append default data dir
     data_dirs.push_back(absolute_path(LIBRAL_DATA_DIR));
 
     // Prepend RALSH_LIBEXEC_DIR to PATH
