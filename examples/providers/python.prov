@@ -1,0 +1,103 @@
+#! /usr/bin/python
+
+import json
+import sys
+import os
+
+# Example of a JSON provider written in Python. To turn this into a real
+# provider you will need to:
+# - change the METADATA
+# - change the do_get implementation
+# - change the do_set implementation
+
+METADATA="""
+---
+provider:
+  type: example
+  invoke: json
+  actions: [get,set]
+  suitable: {suitable}
+  attributes:
+    name:
+      desc: the resource name
+    ensure:
+      desc: what state the resource should be in
+      type: enum[absent, present]
+"""
+
+#
+# Provider actions
+#
+def do_describe():
+    # Determine if the provider can work on this system and set
+    # suitable accordingly
+    suitable=True
+    print(METADATA.format(suitable=str(suitable).lower()))
+
+def do_get(inp):
+    res = []
+    names=inp["names"]
+
+    for name in names:
+        ens = "present"
+        if name.startswith("a"):
+            ens = "absent"
+        res.append({ "name": name, "ensure": ens })
+
+    # Add some fake resources that are always there. It's totally fine to
+    # report back more than was asked for via names
+    fake_names=[ "python1", "python2" ]
+    for name in fake_names:
+        if name not in names:
+            res.append({ "name": name, "ensure": "present" })
+
+    return { "resources": res }
+
+def do_set(inp):
+    upds=inp["updates"]
+    noop=inp["ral"]["noop"]
+
+    result = { "changes": [] }
+    for upd in upds:
+        name = upd["name"]
+        ensure = upd["should"]["ensure"]
+        is_ensure = upd["is"]["ensure"]
+        if ensure != is_ensure:
+            # This is the point where we would make changes to the system
+            # to reflect the change in ensure value.
+            change = { "name": name,
+                       "ensure": { "was": is_ensure, "is": ensure } }
+            result["changes"].append(change)
+    return result
+
+# This is all boilerplate that should not require any changes
+def parse_stdin():
+    inp=json.load(sys.stdin)
+    # Checking isn't strictly necessary as libral will make sure that all
+    # these things are set up right, but it helps when monkeying around
+    # from the command line
+    if not isinstance(inp, dict):
+        die("input must be a dict")
+    return inp
+
+def dump(obj):
+    print(json.dumps(obj))
+
+def main():
+    if len(sys.argv) < 2:
+        progname = os.path.basename(sys.argv[0])
+        print("usage: %s ral_action=<action>" % progname)
+        sys.exit(1)
+    action=sys.argv[1].split("=")[-1]
+    if action == "describe":
+        do_describe()
+    elif action == "get":
+        dump(do_get(parse_stdin()))
+    elif action == "set":
+        dump(do_set(parse_stdin()))
+    else:
+        print("unsupported action: '%s'" % action)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
