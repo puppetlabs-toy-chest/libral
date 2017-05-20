@@ -91,6 +91,7 @@ EOS
   end
 
   def set(ctx, upds, noop)
+    ctx.derive_changes!
     upds.each do |upd|
       # attribute names are always strings
       user = upd["user"]
@@ -140,7 +141,6 @@ EOS
         end
       end
     end
-    return { derive: true }
   end
 end
 

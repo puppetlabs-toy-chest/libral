@@ -1,23 +1,6 @@
 module Ral
   class ProviderError < RuntimeError; end
 
-  class Update
-    attr_reader :name, :is, :should
-    def initialize(name, is, should)
-      @name = name
-      @is = is
-      @should = should
-    end
-
-    def [](key)
-      @should[key] || @is[key]
-    end
-
-    def changed?(attr)
-      @is[attr] != @should[attr]
-    end
-  end
-
   class CLI
     def parse_stdin
       JSON.load($stdin)
@@ -49,7 +32,8 @@ module Ral
           Update.new(upd["name"], upd["is"], upd["should"])
         end
         begin
-          result = prov.set(ctx, upds, inp["ral"]["noop"])
+          prov.set(ctx, upds, inp["ral"]["noop"])
+          result = ctx.result
         rescue ProviderError => e
           result = { error: { message: e.message } }
         end
