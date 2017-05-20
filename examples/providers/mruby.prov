@@ -1,0 +1,133 @@
+#! /usr/bin/env mruby
+# -*- ruby -*-
+
+# This is the skeleton of an mruby provider. The magic of invoking it
+# happens at the very end of the file.
+
+# To try out this provider, run +ralsh -I examples example::mruby+ to list
+# all resources the provider knows about, or run +ralsh -I examples
+# example::mruby four enure=present color=blue+ to create a new resource.
+# Resources are kept in a file, and any provider action simply manipulates
+# that file.
+
+# There is a bit of bookkeeping in the provider because of our file
+# management. The only methods that are mandated by our calling convention
+# are +describe+, +get+, and +set+.
+class Example
+  # Where we store the file with all resources
+  STORE = "/var/tmp/echo-data.txt"
+
+  # A default set of resources that we use when +STORE+ does not exist
+  DATA = [{"name"=>"one", "ensure"=>"present", "color"=>"red" },
+          {"name"=>"two", "ensure"=>"present", "color"=>"green" },
+          {"name"=>"three", "ensure"=>"present", "color"=>"blue" }]
+
+  # Upon instantiation, load our data
+  def initialize
+    load_data
+  end
+
+  # Return provider metadata as a YAML string.
+  # See https://github.com/puppetlabs/libral/blob/master/doc/metadata.md
+  # for details on the metadata format.
+  def describe(ctx)
+    puts <<EOS
+---
+provider:
+  type: example
+  desc: |
+    A dummy provider that echos stuff. Useful for testing.
+  invoke: json
+  actions: [get,set]
+  suitable: true
+  attributes:
+    name:
+      desc: The resource name.
+    ensure:
+      type: enum[absent, present]
+    color:
+      type: enum[red, green, blue]
+EOS
+  end
+
+  # Return an array of resources. The provider needs to list at least the
+  # resources whose names are in +names+, but may return more or even all
+  # of them. Generally, it's fine to list all of them.
+  #
+  # @param ctx [Ral::Context] an object with helper methods
+  # @param names [Array<String>] the names of the resources that need to be
+  # in the return value of this method
+  # @return [Array<Hash>] an array of the requested resources. Each
+  # resource is a hash in the returned array.
+  def get(ctx, names)
+    if names.empty?
+      # Log something at level 'info', mostly to show how that works
+      ctx.log "info: listing everything"
+      @data
+    else
+      names.map do |name|
+        @data.find { |x| x["name"] == name } ||
+          { "name" => name, "ensure" => "absent" }
+      end
+    end
+  end
+
+  # Enforce the updates contained in +upds+. If +noop+ is +true+, do not
+  # actually make changes to the system.
+  #
+  # The return value of this method is ignored
+  #
+  # @param ctx [Ral::Context] an object with helper methods
+  # @param upds [Array<Ral::Update>] an array of the desired changes
+  # @param noop [Boolean] only change the system when +noop+ is +false+
+  def set(ctx, upds, noop)
+    upds.each do |upd|
+      name = upd.name
+      ens  = upd["ensure"]
+      if ens == "absent"
+        # Remove the resource +name+
+        @data.reject! { |x| x["name"] == name }
+      elsif ens == "present"
+        res = @data.find { |x| x["name"] == name }
+        if res
+          # If resource exists already, check if its color needs to change
+          if upd.changed?("color")
+            # Change the color
+            res["color"] = upd["color"]
+            # Tell the context that we changed the color to make sure we
+            # correctly report changes back
+            ctx.change(upd, "color")
+          end
+        else
+          # Resource does not exist yet: create it on the system
+          ctx.log "info: creating #{name}"
+          @data << { "name" => name, "ensure" => ens, "color" => upd["color"] }
+          # and tell the context to record any changes between +upd.is+ and
+          # +upd.should+
+          ctx.change(upd)
+        end
+      end
+    end
+    # Actually change the system, but only if +noop+ is not set
+    save_data unless noop
+  end
+
+  # Load the data from our +STORE+ into +@data+
+  def load_data
+    if ! File.exist?(STORE)
+      @data = DATA
+    else
+      @data = File::open(STORE, "r") { |fp| JSON.load(fp) }
+    end
+  end
+
+  # Save +@data+ back into the +STORE+
+  def save_data
+    File::open(STORE, "w") { |fp| fp.puts(JSON.dump(@data)) }
+  end
+end
+
+# This is a script that gets run. This call kicks off processing of ARGV
+# and dispatching to the appropriate methods according to libral's JSON
+# calling convention
+Ral::CLI::run(Example)
