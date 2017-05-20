@@ -21,10 +21,17 @@ describe() {
     cat <<EOF
 ---
 provider:
-  type: SOME_TYPE
+  type: example
   invoke: simple
   actions: [list,find,update]
   suitable: ${suitable}
+  attributes:
+    name:
+      type: string
+    attr1:
+      type: enum[val1, val2, val3]
+    attr2:
+      type: string
 EOF
 }
 
