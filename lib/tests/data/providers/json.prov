@@ -1,0 +1,79 @@
+#! /usr/bin/env mruby
+# -*- ruby -*-
+
+# This test provider does not use our Ruby provider framework because it
+# needs to generate errors that the framework would shield us from
+
+def describe
+  puts <<EOS
+---
+provider:
+  type: json
+  desc: |
+    Test provider for the JSON provider harness
+  invoke: json
+  actions: [set, get]
+  suitable: true
+  attributes:
+    name:
+    ensure:
+      type: enum[absent, present]
+    message:
+EOS
+end
+
+ALL = [ "error_no_message",
+        "error_no_kind", "error_message_is_array" ].map do |name|
+  r = { name: name, ensure: "present" }
+  if name != "error_no_message"
+    r["message"] = name
+  end
+  r
+end
+
+ERRORS = {
+  "error_no_message" => { error: { kind: "failed" } },
+  "error_no_kind"    => { error: { message: "error_no_kind" } },
+  "error_message_is_array" => { error:
+    { message: [ "error_message_is_array", "more stuff" ],
+      kind: "failed" } }
+}
+
+def get(names)
+  if names.size > 0
+    name = names[0]
+    if err = ERRORS[name]
+      return err
+    else
+      return { resources: [ { name: name, ensure: "present" } ] }
+    end
+  else
+    { resources: ALL }
+  end
+end
+
+def set(upds)
+  upd=upds[0]
+  name = upd.name.sub("set_", "")
+  if err = ERRORS[name]
+    return err
+  end
+end
+
+# main
+action=ARGV[0].split("=").last
+
+if action == "describe"
+  describe
+elsif action == "get"
+  inp = JSON.load($stdin)
+  puts JSON.dump(get(inp["names"]))
+elsif action == "set"
+  inp = JSON.load($stdin)
+  upds = inp["updates"].map do |upd|
+    Ral::Update.new(upd["name"], upd["is"], upd["should"])
+  end
+  puts JSON.dump(set(upds))
+else
+  puts JSON.dump({ error: { message: "Unknown action #{action}" } })
+end
