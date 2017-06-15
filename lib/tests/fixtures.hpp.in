@@ -3,6 +3,9 @@
 #include <string>
 #include <boost/filesystem/path.hpp>
 
+#define TEST_DATA_DIR "@CMAKE_CURRENT_SOURCE_DIR@/data"
+#define TEST_BIN_DIR "@PROJECT_BINARY_DIR@/bin"
+
 /**
  * Class to create a temporary directory with a unique name
  * and destroy it once it is no longer needed.

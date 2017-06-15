@@ -2,7 +2,10 @@
 # the parent directory.
 include_directories(${LEATHERMAN_CATCH_INCLUDE})
 
-set(TEST_CASES file.cc ${PROJECT_NAME}.cc)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/fixtures.hpp.in"
+               "${PROJECT_BINARY_DIR}/inc/fixtures.hpp")
+
+set(TEST_CASES file.cc ${PROJECT_NAME}.cc json_provider.cc)
 
 add_executable(libral_test $<TARGET_OBJECTS:libprojectsrc> ${TEST_CASES} fixtures.cc attr/spec.cc main.cc)
 target_link_libraries(libral_test
