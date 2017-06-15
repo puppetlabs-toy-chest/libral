@@ -65,12 +65,12 @@ namespace libral {
       return out.err();
     }
 
-    std::string message, kind;
-    if (contains_error(*out, message, kind)) {
-      return ctx.error(_("update failed: {1}", message));
-    }
-
     try {
+      std::string message, kind;
+      if (contains_error(*out, message, kind)) {
+        return ctx.error(_("update failed: {1}", message));
+      }
+
       // convert output
       if (out->includes("changes")) {
         auto json_chgs = out->get<std::vector<json_container>>("changes");
