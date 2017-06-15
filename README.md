@@ -153,7 +153,7 @@ To start a new provider, follow these steps:
   - [X] file
   - [X] group (groupXXX)
   - [X] host
-  - [ ] package (besides dnf)
+  - [ ] package (besides dnf and yum)
   - [ ] service (besides systemd and sysv)
   - [X] user (userXXX)
 - even more core providers

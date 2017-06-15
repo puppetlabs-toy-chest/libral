@@ -1,0 +1,262 @@
+#! /usr/bin/python
+
+import json
+import sys
+import pkgutil
+import os
+import subprocess
+import traceback
+
+try:
+    import yum
+    HAS_YUM = True
+except ImportError:
+    HAS_YUM = False
+
+METADATA="""
+---
+provider:
+  type: package
+  invoke: json
+  actions: [set, get]
+  suitable: {suitable}
+  attributes:
+    name:
+      desc: the name of the package
+    ensure:
+      desc: what state the package should be in
+      # Our type system is not strong enough to be more precise. ensure is
+      # either one of enum[present,installed,absent,purged,held,latest] or
+      # a version number (so string might be as tightly as this can be
+      # typed anyway
+      type: string
+    platform:
+      desc: the platform (architecture) for which the package was built
+      kind: r
+"""
+
+#
+# Utility methods
+#
+
+def yum_base():
+    """Return a fully configured YumBase object."""
+    base = yum.YumBase()
+    base.preconf.debuglevel=0
+    base.preconf.errorlevel=0
+    base.preconf.plugins=True
+    base.setCacheDir()
+
+    return base
+
+def run_command(args):
+    """Run the command CMD with arguments ARGS and return (rc, stdout).
+    The stderr of the process is domped on our stderr"""
+    old_lang=os.environ.get("LANG", None)
+    os.environ["LANG"]="C"
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=2, close_fds=True)
+    stdout, _ = p.communicate()
+    rc = p.returncode
+    if old_lang is None:
+        del os.environ["LANG"]
+    else:
+        os.environ["LANG"]=old_lang
+    return (rc, stdout)
+
+def run_yum(args):
+    """Run 'yum -y' + ARGS and return a dict keyed on package name and values
+    identical to pkg_as_json"""
+    cmd = ["yum", "-y"] + args
+    rc, stdout = run_command(cmd)
+    if rc > 0:
+        raise RuntimeError("Command '%s' failed with exit code %d"
+                           % (" ".join(cmd), rc))
+    # Extract package information from yum output. The output contains one
+    # of the ACTIONS, followed by lines with package NEVRA, followed by a
+    # blank line
+    ACTIONS=("Removed:","Installed:","Updated:")
+    in_pkgs=False
+    pkgs={}
+    for line in stdout.split("\n"):
+        if not in_pkgs:
+            if line in ACTIONS:
+                in_pkgs=True
+        elif line.strip() == "":
+            # Blank line after listing the packages that were acted on
+            in_pkgs=False
+        else:
+            na, evr = line.strip().split()
+            name, arch = na.rsplit(".", 1)
+            pkgs[name]= { 'name': name, 'ensure': evr, 'arch': arch }
+    return pkgs
+
+def pkg_as_json(pkg):
+    """Return a dictionary of information for the package."""
+    result = {
+        'name': pkg.name,
+        'ensure': pkg.evr,
+        'platform': pkg.arch}
+    return result
+
+def find_installed(base, name):
+    pkgs=base.rpmdb.matchPackageNames([name])[0]
+    if len(pkgs) == 0:
+        return None
+    else:
+        return max(pkgs)
+
+#
+# Provider actions
+#
+def do_describe():
+    has_dnf=pkgutil.find_loader("dnf")
+    suitable=HAS_YUM and not has_dnf
+    print(METADATA.format(suitable=str(suitable).lower()))
+
+def do_get(inp):
+    names=inp["names"]
+    base=yum_base()
+    rpmdb=base.rpmdb
+
+    if len(names) == 0:
+        pkgs=rpmdb.returnPackages()
+    else:
+        pkgs=rpmdb.matchPackageNames(names)[0]
+
+    # We need to deduplicate the package listing
+    present = {}
+    for pkg in pkgs:
+        if present.has_key(pkg.name):
+            if pkg > present[pkg.name]:
+                present[pkg.name] = pkg
+        else:
+            present[pkg.name] = pkg
+    present_names = present.keys()
+    present_json = [ pkg_as_json(p) for p in present.values() ]
+
+    absent = []
+    for name in set(names) - set(present_names):
+        # FIXME: we need to check whether the missing name actually
+        # corresponds to a valid package
+        absent.append( { "name": name, "ensure": "absent" } )
+
+    return { "resources": present_json + absent }
+
+def add_change(result, name, evr_was, evr_is):
+    change = { 'name': name,
+               'ensure': { 'is': evr_is, 'was': evr_was } }
+    result['changes'].append(change)
+
+def do_set(inp):
+    if os.geteuid() != 0:
+        return {
+            "error": {
+                "message": "only the root user can make package changes",
+                "kind": "failed"
+            } }
+
+    try:
+        upds=inp["updates"]
+        base=yum_base()
+        was={}
+
+        to_install=[]
+        to_erase=[]
+        to_update=[]
+
+        for upd in upds:
+            name=upd["name"]
+            ensure=upd["should"]["ensure"]
+
+            is_pkg=find_installed(base, name)
+            if is_pkg:
+                was[name]=is_pkg.evr
+            else:
+                was[name]="absent"
+
+            if ensure == "present" or ensure == "installed":
+              if not is_pkg:
+                  to_install.append(name)
+            elif ensure == "absent" or ensure == "purged":
+              if is_pkg:
+                  to_erase.append(name)
+            elif ensure == "held":
+              # No idea what this is supposed to do
+              return { "error": { "message": "not implemented",
+                                  "kind": "failed" }}
+            elif ensure == "latest":
+              if is_pkg:
+                  to_update.append(name)
+              else:
+                  to_install.append(name)
+            else:
+              # ensure must be a version number
+              target=("%s-%s" % (name, ensure))
+              if is_pkg:
+                  to_update.append(target)
+              else:
+                  to_install.append(target)
+
+        # Do the actual work and report on it
+        result = { "changes": [], "derive": False }
+        if len(to_install) > 0:
+            installed = run_yum(["install"] + to_install)
+            for p in to_install:
+                add_change(result, p, was[p], installed[p]["ensure"])
+        if len(to_update) > 0:
+            pkg_updates = base.doPackageLists(pkgnarrow='updates').updates
+            pkgs = []
+            for name in to_update:
+                for pkg in pkg_updates:
+                    if name == pkg.name:
+                        pkgs.append(name)
+            if len(pkgs) > 0:
+                updated = run_yum(["update"] + to_update)
+                updated_names = [ u for u in updated.keys() ]
+                for p in to_update:
+                    if p in updated_names:
+                        add_change(result, p, was[p], updated[p]['ensure'])
+        if len(to_erase) > 0:
+            out = run_yum(["erase"] + to_erase)
+            for p in to_erase:
+                add_change(result, p, was[p], "absent")
+        return result
+    except Exception as e:
+        print >> sys.stderr, traceback.format_exc()
+        return { "error": { "message": str(e), "kind": "failed" } }
+    finally:
+        base.close()
+
+def die(msg):
+    print(msg)
+    sys.exit(1)
+
+def parse_stdin():
+    inp=json.load(sys.stdin)
+    # Checking isn't strictly necessary as libral will make sure that all
+    # these things are set up right, but it helps when monkeying around
+    # from the command line
+    if not isinstance(inp, dict):
+        die("input must be a dict")
+    return inp
+
+def dump(obj):
+    print(json.dumps(obj))
+
+def main():
+    if len(sys.argv) < 2:
+        print("usage: yum.prov ral_action=<action>")
+        sys.exit(1)
+    action=sys.argv[1].split("=")[-1]
+    if action == "describe":
+        do_describe()
+    elif action == "get":
+        dump(do_get(parse_stdin()))
+    elif action == "set":
+        dump(do_set(parse_stdin()))
+    else:
+        print("unsupported action: '%s'" % action)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
