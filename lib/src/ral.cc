@@ -101,20 +101,17 @@ namespace libral {
     std::vector<std::unique_ptr<type>> result;
     environment env = make_env();
 
-    auto mount_prov = std::shared_ptr<provider>(new mount_provider());
-    add_type(result, env, "mount", mount_prov);
+    std::vector<std::pair<std::string, provider *>> builtin = {
+      { "mount", new mount_provider() },
+      { "user",  new user_provider()  },
+      { "group", new group_provider() },
+      { "host",  new host_provider()  },
+      { "file",  new file_provider()  }
+    };
 
-    auto user_prov = std::shared_ptr<provider>(new user_provider());
-    add_type(result, env, "user", user_prov);
-
-    auto group_prov = std::shared_ptr<provider>(new group_provider());
-    add_type(result, env, "group", group_prov);
-
-    auto host_prov = std::shared_ptr<provider>(new host_provider());
-    add_type(result, env, "host", host_prov);
-
-    auto file_prov = std::shared_ptr<provider>(new file_provider());
-    add_type(result, env, "file", file_prov);
+    for (auto& p : builtin) {
+      add_type(result, env, p.first, std::shared_ptr<provider>(p.second));
+    }
 
     // Find external providers
     auto cb = [&result,&env,this](std::string const &path) {
