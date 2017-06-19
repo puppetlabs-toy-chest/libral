@@ -21,7 +21,6 @@ namespace libral {
       { return _prov->spec()->type_name(); }
 
     result<boost::optional<resource>> find(const std::string &name);
-    result<std::vector<resource>> instances(void);
     result<std::pair<update, changes>> set(const resource& should);
 
     /**
@@ -49,7 +48,7 @@ namespace libral {
      * mentioned in \p names but may contain more than that.
      */
     result<std::vector<resource>>
-    get(const std::vector<std::string>& names);
+    get(const std::vector<std::string>& names = { });
 
     /* Turn a string into a value. Return an error message if that is not
        possible */

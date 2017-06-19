@@ -14,7 +14,7 @@ namespace libral {
     auto json_type = *aral->find_type("json");
 
     SECTION("behaves with invalid error messages") {
-      auto all = json_type->instances();
+      auto all = json_type->get();
       REQUIRE(all.is_ok());
 
       for(const auto &r0 : all.ok()) {

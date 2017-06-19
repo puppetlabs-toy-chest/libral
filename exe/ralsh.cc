@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
         }
       } else {
         // No resource name, dump all resources of the type
-        auto insts = type->instances();
+        auto insts = type->get();
         em.print_list(*type, insts);
         if (!insts) {
             return EXIT_ERROR;

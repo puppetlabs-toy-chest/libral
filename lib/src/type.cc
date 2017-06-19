@@ -39,10 +39,6 @@ namespace libral {
     return res;
   }
 
-  result<std::vector<resource>> type::instances(void) {
-    return get({ });
-  }
-
   result<std::pair<update, changes>>
   type::set(const resource& should) {
     auto opt_rsrc = find(should.name());
