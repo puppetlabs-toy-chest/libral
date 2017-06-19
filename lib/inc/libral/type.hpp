@@ -61,7 +61,6 @@ namespace libral {
     // Only needed in tests
     const std::shared_ptr<provider> prov_ptr() const { return _prov; }
   private:
-    std::string _name;
     std::shared_ptr<provider> _prov;
   };
 }
