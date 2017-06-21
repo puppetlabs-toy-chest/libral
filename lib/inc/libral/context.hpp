@@ -50,7 +50,6 @@ namespace libral {
     changes() {}
   private:
     friend class context;
-    friend class provider;
     std::vector<change> _changes;
   };
 
