@@ -15,6 +15,9 @@ VALUE rb_eError, rb_eProviderError;
 
 namespace lib = libral;
 
+using shared_prov = std::shared_ptr<lib::provider>;
+
+
 // Descriptor of storing a pointer to the ral instance
 // in a RUby object
 static void free_ral(void *vral) {
@@ -29,13 +32,13 @@ static const rb_data_type_t ral_data_type = {
 };
 
 
-static void free_type(void *type) {
-  delete (lib::type*) type;
+static void free_provider(void *prov) {
+  delete (shared_prov*) prov;
 }
 
 static const rb_data_type_t provider_data_type = {
     "libral::ral",
-    {nullptr, free_type, nullptr},
+    {nullptr, free_provider, nullptr},
     nullptr, nullptr,
     RUBY_TYPED_FREE_IMMEDIATELY,
 };
@@ -116,11 +119,11 @@ resource_to_ruby(const lib::resource& res) {
 /*
  * Retrieves the pointer to lib::type* stored in Provider objects
  */
-static lib::type*
-get_type(VALUE rb_prov) {
-  lib::type *type;
-  TypedData_Get_Struct(rb_prov, lib::type, &provider_data_type, type);
-  return type;
+static shared_prov&
+get_provider(VALUE rb_prov) {
+  shared_prov *sp;
+  TypedData_Get_Struct(rb_prov, shared_prov, &provider_data_type, sp);
+  return *sp;
 }
 
 /*
@@ -149,9 +152,9 @@ libral_prov_get(int argc, VALUE *argv, VALUE rb_prov) {
     }
   }
 
-  lib::type *type = get_type(rb_prov);
+  shared_prov& prov = get_provider(rb_prov);
 
-  auto r = type->get(names);
+  auto r = prov->get(names);
   if (!r) {
     rb_raise(rb_eProviderError, "get failed: %s", r.err().detail.c_str());
   }
@@ -169,7 +172,7 @@ libral_prov_get(int argc, VALUE *argv, VALUE rb_prov) {
  */
 VALUE
 libral_prov_set(VALUE rb_prov, VALUE rb_resource_ary) {
-  lib::type *type = get_type(rb_prov);
+  shared_prov& prov = get_provider(rb_prov);
 
   if (TYPE(rb_resource_ary) != T_ARRAY) {
     rb_raise(rb_eTypeError,
@@ -182,7 +185,7 @@ libral_prov_set(VALUE rb_prov, VALUE rb_resource_ary) {
     VALUE name = rb_iv_get(rb_res, "@name");
     VALUE should = rb_iv_get(rb_res, "@attrs");
 
-    auto res = type->prov().create(StringValueCStr(name));
+    auto res = prov->create(StringValueCStr(name));
     /* should.keys.each { |key| res[key] = should[key] } */
     // mRuby has rb_hash_keys, but CRuby does not so we simulate it. Could
     // also do this with rb_hash_foreach; this is the lazy variant
@@ -195,7 +198,7 @@ libral_prov_set(VALUE rb_prov, VALUE rb_resource_ary) {
     rsrcs.push_back(res);
   }
 
-  auto r = type->set(rsrcs);
+  auto r = prov->set(rsrcs);
   if (!r) {
     rb_raise(rb_eProviderError, "%s", r.err().detail.c_str());
   }
@@ -226,9 +229,9 @@ libral_prov_set(VALUE rb_prov, VALUE rb_resource_ary) {
 }
 
 VALUE libral_prov_name(VALUE rb_prov) {
-  lib::type *type = get_type(rb_prov);
+  shared_prov& prov = get_provider(rb_prov);
 
-  auto qname = type->qname();
+  auto qname = prov->qname();
   return rb_str_new(qname.c_str(), qname.length());
 }
 
@@ -238,13 +241,13 @@ VALUE libral_ral_provider(VALUE rb_ral, VALUE rb_name) {
   TypedData_Get_Struct(rb_ral, std::shared_ptr<lib::ral>, &ral_data_type, ral);
 
   const char *name = StringValueCStr(rb_name);
-  auto type = (*ral)->find_type(name);
-  if (! type) {
+  auto prov = (*ral)->find_provider(name);
+  if (! prov) {
     rb_raise(rb_eProviderError, "Failed to find provider '%s'", name);
   }
 
-  return TypedData_Wrap_Struct(rb_cProvider, &provider_data_type,
-                               type->release());
+  shared_prov* sp = new shared_prov(*prov);
+  return TypedData_Wrap_Struct(rb_cProvider, &provider_data_type, sp);
 }
 
 /**

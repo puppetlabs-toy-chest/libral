@@ -12,22 +12,15 @@
 namespace fs = boost::filesystem;
 
 namespace libral {
-  std::unique_ptr<type> file_type;
-
   SCENARIO("file::posix provider") {
     auto aral = ral::create({ });
-
-    // Cache the file_type so we do not have to go find it on every test
-    // run
-    if (!file_type) {
-      file_type = *aral->find_type("file::posix");
-    }
-    provider& prv = file_type->prov();
+    auto prv_ptr = *aral->find_provider("file::posix");
+    provider& prv = *prv_ptr;
 
     resource::attributes config;
 
     SECTION("instances() returns an empty vector") {
-      libral::context ctx { file_type->prov_ptr() };
+      libral::context ctx { prv_ptr };
 
       REQUIRE(! prv.get(ctx, {}, config));
     }
@@ -39,7 +32,7 @@ namespace libral {
     }
 
     SECTION("find()") {
-      libral::context ctx { file_type->prov_ptr() };
+      libral::context ctx { prv_ptr };
 
       SECTION("returns resource for nonexistent file") {
         auto res = prv.get(ctx, { "/tmp/not_there" }, config);
@@ -65,7 +58,7 @@ namespace libral {
     }
 
     SECTION("update()") {
-      libral::context ctx { file_type->prov_ptr() };
+      libral::context ctx { prv_ptr };
 
       SECTION("create a new file") {
         auto tmp = unique_fixture_path();

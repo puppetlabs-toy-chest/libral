@@ -15,7 +15,6 @@ class Libral::Update
   attr_reader :is, :should, :changes, :name
 
   def initialize(is, should, changes)
-    puts "update for #{is.name}"
     @is = is
     @should = should
     @name = @is.name
@@ -29,6 +28,6 @@ class Libral::Update
   def resource
     attrs = @is.attrs.merge(@should.attrs)
     @changes.each { |c| attrs[c.attr] = c.is }
-    Resource.new(@is.name, attrs)
+    Libral::Resource.new(@is.name, attrs)
   end
 end

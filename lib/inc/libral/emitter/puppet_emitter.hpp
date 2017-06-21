@@ -8,19 +8,20 @@ namespace libral {
   class puppet_emitter : public emitter {
   public:
     puppet_emitter();
-    void print_set(const type &type,
+    void print_set(const provider &prov,
                const result<std::pair<update, changes>>& rslt) override;
 
-    void print_find(const type &type,
+    void print_find(const provider &prov,
                const result<boost::optional<resource>> &resource) override;
 
-    void print_list(const type &type,
+    void print_list(const provider &prov,
                const result<std::vector<resource>>& resources) override;
 
-    void print_types(const std::vector<std::unique_ptr<type>>& types) override;
+    void
+    print_providers(const std::vector<std::shared_ptr<provider>>& provs) override;
 
   private:
-    void print_resource(const type &type, const resource &resource);
+    void print_resource(const provider &prov, const resource &resource);
     void print_resource_attr(const std::string& name,
                              const value& v,
                              uint16_t maxlen);

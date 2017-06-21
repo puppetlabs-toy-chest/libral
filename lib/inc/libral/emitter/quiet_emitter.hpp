@@ -7,15 +7,15 @@
 namespace libral {
   class quiet_emitter : public emitter {
   public:
-    void print_set(const type &type,
+    void print_set(const provider &prov,
                const result<std::pair<update, changes>>& rslt) override { }
 
-    void print_find(const type &type,
+    void print_find(const provider &prov,
                const result<boost::optional<resource>> &resource) override { }
 
-    void print_list(const type &type,
+    void print_list(const provider &prov,
                const result<std::vector<resource>>& resources) override { }
 
-    void print_types(const std::vector<std::unique_ptr<type>>& types) override { }
+    void print_providers(const std::vector<std::shared_ptr<provider>>& providers) override { }
   };
 }

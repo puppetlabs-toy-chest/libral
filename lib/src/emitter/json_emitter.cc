@@ -14,7 +14,7 @@ namespace libral {
 
   using json = leatherman::json_container::JsonContainer;
 
-  std::string json_emitter::parse_set(const type &type,
+  std::string json_emitter::parse_set(const provider &prov,
                        const result<std::pair<update, changes>>& rslt) {
     json js;
 
@@ -23,8 +23,8 @@ namespace libral {
       err.set<std::string>("message", _("failed: {1}", rslt.err().detail));
       js.set<json>("error", err);
     } else {
-      const auto rsrc = type.prov().create(rslt->first, rslt->second);
-      js.set<json>("resource", resource_to_json(type, rsrc));
+      const auto rsrc = prov.create(rslt->first, rslt->second);
+      js.set<json>("resource", resource_to_json(prov, rsrc));
       const auto &changes = rslt->second;
       std::vector<json> json_changes;
       for (auto ch : changes) {
@@ -39,7 +39,7 @@ namespace libral {
     return js.toString();
   }
 
-  std::string json_emitter::parse_find(const type &type,
+  std::string json_emitter::parse_find(const provider &prov,
                        const result<boost::optional<resource>> &inst) {
     json js;
 
@@ -48,12 +48,12 @@ namespace libral {
       err.set<std::string>("message", _("failed: {1}", inst.err().detail));
       js.set<json>("error", err);
     } else if (inst.ok()) {
-      js.set<json>("resource", resource_to_json(type, *inst.ok()));
+      js.set<json>("resource", resource_to_json(prov, *inst.ok()));
     }
     return js.toString();
   }
 
-  std::string json_emitter::parse_list(const type &type,
+  std::string json_emitter::parse_list(const provider &prov,
                        const result<std::vector<resource>>& rslt) {
     json js;
 
@@ -64,23 +64,23 @@ namespace libral {
     } else {
       std::vector<json> list;
       for (const auto& inst : rslt.ok()) {
-        list.push_back(resource_to_json(type, inst));
+        list.push_back(resource_to_json(prov, inst));
       }
       js.set<std::vector<json>>("resources", list);
     }
     return js.toString();
   }
 
-  std::string json_emitter::parse_types(const std::vector<std::unique_ptr<type>>& types) {
+  std::string json_emitter::parse_providers(const std::vector<std::shared_ptr<provider>>& provs) {
     json js;
     std::vector<json> list;
-    for (const auto& t : types) {
+    for (const auto& p : provs) {
       json entry;
-      entry.set<std::string>("name", t->qname());
-      entry.set<std::string>("type", t->type_name());
-      entry.set<std::string>("source", t->prov().source());
+      entry.set<std::string>("name", p->qname());
+      entry.set<std::string>("type", p->type_name());
+      entry.set<std::string>("source", p->source());
 
-      const auto& spec = t->prov().spec();
+      const auto& spec = p->spec();
       if (spec) {
         entry.set<std::string>("desc", spec->desc());
         entry.set<bool>("suitable", spec->suitable());
@@ -109,44 +109,44 @@ namespace libral {
     return js.toString();
   }
 
-  void json_emitter::print_set(const type &type,
+  void json_emitter::print_set(const provider &prov,
                const result<std::pair<update, changes>>& rslt) {
-    auto js_s = parse_set(type, rslt);
+    auto js_s = parse_set(prov, rslt);
     std::cout << js_s << std::endl;
   }
 
-  void json_emitter::print_find(const type &type,
+  void json_emitter::print_find(const provider &prov,
                const result<boost::optional<resource>> &resource) {
-    auto js_s = parse_find(type, resource);
+    auto js_s = parse_find(prov, resource);
     std::cout << js_s << std::endl;
   }
 
-  void json_emitter::print_list(const type &type,
+  void json_emitter::print_list(const provider &prov,
                const result<std::vector<resource>>& resources) {
-    auto js_s = parse_list(type, resources);
+    auto js_s = parse_list(prov, resources);
     std::cout << js_s << std::endl;
   }
 
-  void json_emitter::print_types(const std::vector<std::unique_ptr<type>>& types) {
-    auto js_s = parse_types(types);
+  void json_emitter::print_providers(const std::vector<std::shared_ptr<provider>>& provs) {
+    auto js_s = parse_providers(provs);
     std::cout << js_s << std::endl;
   }
 
-  json json_emitter::resource_to_json(const type &type, const resource &res) {
+  json json_emitter::resource_to_json(const provider &prov, const resource &res) {
     json js;
 
     js.set<std::string>("name", res.name());
     for (const auto& a : res.attrs()) {
       json_set_value(js, a.first, a.second);
     }
-    js.set<json>("ral", json_meta(type));
+    js.set<json>("ral", json_meta(prov));
     return js;
   }
 
-  json json_emitter::json_meta(const type &type) {
+  json json_emitter::json_meta(const provider &prov) {
       json meta;
-      meta.set<std::string>("type", type.type_name());
-      meta.set<std::string>("provider", type.qname());
+      meta.set<std::string>("type", prov.type_name());
+      meta.set<std::string>("provider", prov.qname());
       return meta;
   }
 

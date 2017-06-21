@@ -12,31 +12,33 @@ namespace libral {
 
     using json = leatherman::json_container::JsonContainer;
 
-    std::string parse_set(const type &type,
+    std::string parse_set(const provider &prov,
                const result<std::pair<update, changes>>& rslt);
 
-    std::string parse_find(const type &type,
+    std::string parse_find(const provider &prov,
                const result<boost::optional<resource>> &resource);
 
-    std::string parse_list(const type &type,
+    std::string parse_list(const provider &prov,
                const result<std::vector<resource>>& resources);
 
-    std::string parse_types(const std::vector<std::unique_ptr<type>>& types);
+    std::string
+    parse_providers(const std::vector<std::shared_ptr<provider>>& provs);
 
-    void print_set(const type &type,
+    void print_set(const provider &prov,
                const result<std::pair<update, changes>>& rslt) override;
 
-    void print_find(const type &type,
+    void print_find(const provider &prov,
                const result<boost::optional<resource>> &resource) override;
 
-    void print_list(const type &type,
+    void print_list(const provider &prov,
                const result<std::vector<resource>>& resources) override;
 
-    void print_types(const std::vector<std::unique_ptr<type>>& types) override;
+    void
+    print_providers(const std::vector<std::shared_ptr<provider>>& provs) override;
 
   private:
-    json resource_to_json(const type& type, const resource &res);
-    json json_meta(const type &type);
+    json resource_to_json(const provider &prov, const resource &res);
+    json json_meta(const provider &prov);
     /* Set KEY in JS by appropriately converting V */
     void json_set_value(json &js, const std::string& key, const value &v);
   };

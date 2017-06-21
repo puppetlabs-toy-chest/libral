@@ -98,11 +98,10 @@ static void print_attr_explanation(const std::string& name,
                        << color::reset << endl;
 }
 
-static void print_explanation(lib::type& type) {
-  auto& prov = type.prov();
+static void print_explanation(lib::provider& prov) {
   auto& spec = prov.spec();
   if (!spec) {
-    cerr << _("internal error: failed to get metadata for {1}", type.qname())
+    cerr << _("internal error: failed to get metadata for {1}", prov.qname())
          << endl;
     return;
   }
@@ -223,8 +222,8 @@ int main(int argc, char **argv) {
     if (vm.count("type")) {
       // We have a type name
       auto type_name = vm["type"].as<std::string>();
-      auto opt_type = ral->find_type(type_name);
-      if (opt_type == boost::none) {
+      auto opt_prov = ral->find_provider(type_name);
+      if (opt_prov == boost::none) {
         boost::nowide::cout << color::red
                             << _("unknown provider: '{1}'", type_name)
                             << color::reset << endl;
@@ -233,10 +232,10 @@ int main(int argc, char **argv) {
         return EXIT_ERROR;
       }
 
-      auto& type = *opt_type;
+      auto& prov = **opt_prov;
 
       if (explain) {
-        print_explanation(*type);
+        print_explanation(prov);
         return EXIT_SUCCESS;
       }
 
@@ -246,34 +245,34 @@ int main(int argc, char **argv) {
         if (vm.count("attr-value")) {
           // We have attributes, modify resource
           auto av = vm["attr-value"].as<std::vector<std::string>>();
-          lib::resource should = type->prov().create(name);
+          lib::resource should = prov.create(name);
 
           for (const auto& arg : av) {
             auto found = arg.find("=");
             if (found != string::npos) {
               auto attr = arg.substr(0, found);
-              auto value = type->parse(attr, arg.substr(found+1));
+              auto value = prov.parse(attr, arg.substr(found+1));
               if (value) {
                 should[attr] = value.ok();
               } else {
                 boost::nowide::cerr << color::red <<
                   _("failed to read attribute {1}: {2}", attr,
                     value.err().detail) << color::reset << endl;
-                boost::nowide::cerr << _("run 'ralsh -e {1}' to get a list of attributes and valid values", type->qname()) << endl;
+                boost::nowide::cerr << _("run 'ralsh -e {1}' to get a list of attributes and valid values", prov.qname()) << endl;
                 return EXIT_ERROR;
               }
             }
           }
 
-          auto res = type->set(should);
-          em.print_set(*type, res);
+          auto res = prov.set(should);
+          em.print_set(prov, res);
           if (!res) {
             return EXIT_ERROR;
           }
         } else {
           // No attributes, dump the resource
-          auto inst = type->find(name);
-          em.print_find(*type, inst);
+          auto inst = prov.find(name);
+          em.print_find(prov, inst);
           if (!inst) {
             return EXIT_ERROR;
           }
@@ -283,9 +282,9 @@ int main(int argc, char **argv) {
           }
         }
       } else {
-        // No resource name, dump all resources of the type
-        auto insts = type->get();
-        em.print_list(*type, insts);
+        // No resource name, dump all resources of the provider
+        auto insts = prov.get();
+        em.print_list(prov, insts);
         if (!insts) {
             return EXIT_ERROR;
         }
@@ -298,9 +297,9 @@ int main(int argc, char **argv) {
                             << color::reset << endl;
         return EXIT_ERROR;
       }
-      // No type given, list known types
-      auto types = ral->types();
-      em.print_types(types);
+      // No type given, list known providers
+      auto provs = ral->providers();
+      em.print_providers(provs);
     }
   } catch (domain_error& ex) {
     colorize(boost::nowide::cerr, log_level::fatal);

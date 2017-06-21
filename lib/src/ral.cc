@@ -7,7 +7,6 @@
 #include <libral/group.hpp>
 #include <libral/host.hpp>
 #include <libral/file.hpp>
-#include <libral/type.hpp>
 #include <libral/provider.hpp>
 
 #include <libral/simple_provider.hpp>
@@ -77,14 +76,12 @@ namespace libral {
 
   ral::ral(const std::vector<std::string>& data_dirs) : _data_dirs(data_dirs) { }
 
-  bool ral::add_type(std::vector<std::unique_ptr<type>>& types,
-                     environment &env,
-                     const std::string& name, std::shared_ptr<provider> prov) {
+  bool ral::init_provider(environment &env,
+                          const std::string& name,
+                          std::shared_ptr<provider>& prov) {
     auto res = prov->prepare(env);
     if (res.is_ok()) {
       if (prov->spec()->suitable()) {
-        auto t = new type(prov);
-        types.push_back(std::unique_ptr<type>(t));
         return true;
       } else {
         LOG_INFO("provider[{1}] for {2} is not suitable", prov->source(), name);
@@ -95,10 +92,8 @@ namespace libral {
     return false;
   }
 
-  std::vector<std::unique_ptr<type>> ral::types(void) {
-    // @todo lutter 2016-05-10:
-    //   Need more magic here: need to find and register all types
-    std::vector<std::unique_ptr<type>> result;
+  std::vector<std::shared_ptr<provider>> ral::providers(void) {
+    std::vector<std::shared_ptr<provider>> result;
     environment env = make_env();
 
     std::vector<std::pair<std::string, provider *>> builtin = {
@@ -110,7 +105,10 @@ namespace libral {
     };
 
     for (auto& p : builtin) {
-      add_type(result, env, p.first, std::shared_ptr<provider>(p.second));
+      std::shared_ptr<provider> prov(p.second);
+      if (init_provider(env, p.first, prov)) {
+        result.push_back(std::move(prov));
+      }
     }
 
     // Find external providers
@@ -145,9 +143,10 @@ namespace libral {
           raw_prov = new json_provider(path, node);
         }
         auto prov = std::shared_ptr<provider>(raw_prov);
-        if (add_type(result, env, type_name, prov)) {
+        if (init_provider(env, type_name, prov)) {
           LOG_INFO(_("provider[{1}] ({2}) for {3} loaded",
                      path, invoke, type_name));
+          result.push_back(std::move(prov));
         }
       } else if (invoke == "(none)") {
         LOG_ERROR("provider[{1}]: no calling convention given under 'provider.invoke'",
@@ -164,41 +163,39 @@ namespace libral {
     }
 
     std::sort(result.begin(), result.end(),
-              [](const std::unique_ptr<type>& a,
-                 const std::unique_ptr<type>& b)
-              { return a->prov().spec()->qname() < b->prov().spec()->qname(); });
+              [](const std::shared_ptr<provider>& a,
+                 const std::shared_ptr<provider>& b)
+              { return a->qname() < b->qname(); });
 
     return result;
   }
 
-  boost::optional<std::unique_ptr<type>>
-  ral::find_type(const std::string& name) {
-    // FIXME: Using unique_ptr here is pretty dumb, as it only works
-    // because we populate types() every time it is used
-    auto types_vec = types();
+  boost::optional<std::shared_ptr<provider>>
+  ral::find_provider(const std::string& name) {
+    auto provs = providers();
 
 
-    for (auto& t : types_vec) {
+    for (auto& p : provs) {
       // FIXME: We assume that qname is unique amongst all providers, but
       // do not enforce that
-      if (t->qname() == name) {
-        return std::move(t);
+      if (p->qname() == name) {
+        return p;
       }
     }
 
-    std::unique_ptr<type> typ;
-    for (auto& t : types_vec) {
-      if (t->type_name() == name) {
-        if (!typ) {
-          typ = std::move(t);
+    std::shared_ptr<provider> prov;
+    for (auto& p : provs) {
+      if (p->type_name() == name) {
+        if (!prov) {
+          prov = p;
         } else {
           // At least two providers with the same name
           return boost::none;
         }
       }
     }
-    if (typ)
-      return std::move(typ);
+    if (prov)
+      return prov;
     else
       return boost::none;
   }

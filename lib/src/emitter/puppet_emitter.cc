@@ -35,19 +35,19 @@ namespace libral {
     color::init();
   }
 
-  void puppet_emitter::print_set(const type &type,
+  void puppet_emitter::print_set(const provider &prov,
                        const result<std::pair<update, changes>>& rslt) {
     if (rslt) {
       const auto& upd = rslt->first;
       const auto &chgs = rslt->second;
-      print_resource(type, type.prov().create(upd, chgs));
+      print_resource(prov, prov.create(upd, chgs));
       std::cout << chgs << std::endl;
     } else {
       std::cout << color::red << _("failed: {1}", rslt.err().detail) << color::reset << std::endl;
     }
   }
 
-  void puppet_emitter::print_find(const type &type,
+  void puppet_emitter::print_find(const provider &prov,
                        const result<boost::optional<resource>> &inst) {
     if (!inst) {
       std::cerr << color::red <<
@@ -55,29 +55,30 @@ namespace libral {
       return;
     }
     if (inst.ok()) {
-      print_resource(type, *inst.ok());
+      print_resource(prov, *inst.ok());
     }
   }
 
-  void puppet_emitter::print_list(const type &type,
+  void puppet_emitter::print_list(const provider &prov,
                        const result<std::vector<resource>>& rslt) {
     if (!rslt) {
       std::cout << color::red << _("failed: {1}", rslt.err().detail) << color::reset << std::endl;
       return;
     }
     for (const auto& inst : rslt.ok()) {
-      print_resource(type, inst);
+      print_resource(prov, inst);
     }
   }
 
-  void puppet_emitter::print_types(const std::vector<std::unique_ptr<type>>& types) {
-    for (const auto& t : types) {
-      std::cout << t->qname() << std::endl;
+  void
+  puppet_emitter::print_providers(const std::vector<std::shared_ptr<provider>>& provs) {
+    for (const auto& p : provs) {
+      std::cout << p->qname() << std::endl;
     }
   }
 
-  void puppet_emitter::print_resource(const type &type, const resource &res) {
-    std::cout << color::blue << type.qname() << color::reset << " { '"
+  void puppet_emitter::print_resource(const provider &prov, const resource &res) {
+    std::cout << color::blue << prov.qname() << color::reset << " { '"
          << color::blue << res.name() << color::reset << "':" << std::endl;
     uint16_t maxlen = 0;
     for (const auto& a : res.attrs()) {

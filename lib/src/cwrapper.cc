@@ -38,60 +38,60 @@ static void str_to_cstr(const std::string &s, char **cs) {
 uint8_t get_providers(char **result) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
-    auto raw_types = ral->types();
+    auto raw_provs = ral->providers();
     lib::json_emitter em {};
-    auto types = em.parse_types(raw_types);
-    str_to_cstr(types, result);
+    auto provs = em.parse_providers(raw_provs);
+    str_to_cstr(provs, result);
 
     return EXIT_SUCCESS;
 }
 
-uint8_t get_resources(char **result, char *type_name) {
+uint8_t get_resources(char **result, char *prov_name) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
-    auto opt_type = ral->find_type(std::string(type_name));
+    auto opt_prov = ral->find_provider(std::string(prov_name));
 
-    if (!opt_type) {
-        std::string error_msg = _("Provider {1} not found", std::string(type_name));
+    if (!opt_prov) {
+        std::string error_msg = _("Provider {1} not found", std::string(prov_name));
         str_to_cstr(error_msg, result);
         return EXIT_FAILURE;
     }
 
-    auto resource_instances = (*opt_type)->instances();
+    auto resource_instances = (*opt_prov)->get();
     lib::json_emitter em {};
-    auto resources = em.parse_list(**opt_type, resource_instances);
+    auto resources = em.parse_list(**opt_prov, resource_instances);
     str_to_cstr(resources, result);
 
     return EXIT_SUCCESS;
 }
 
-uint8_t get_resource(char **result, char *type_name, char *resource_name) {
+uint8_t get_resource(char **result, char *prov_name, char *resource_name) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
-    auto opt_type = ral->find_type(std::string(type_name));
+    auto opt_prov = ral->find_provider(std::string(prov_name));
 
-    if (!opt_type) {
-        std::string error_msg = _("Provider {1} not found", std::string(type_name));
+    if (!opt_prov) {
+        std::string error_msg = _("Provider {1} not found", std::string(prov_name));
         str_to_cstr(error_msg, result);
         return EXIT_FAILURE;
     }
 
-    auto inst = (*opt_type)->find(std::string(resource_name));
+    auto inst = (*opt_prov)->find(std::string(resource_name));
     lib::json_emitter em {};
 
-    auto resource = em.parse_find(**opt_type, inst);
+    auto resource = em.parse_find(**opt_prov, inst);
     str_to_cstr(resource, result);
 
     return EXIT_SUCCESS;
 }
 
-uint8_t set_resource(char **result, char *type_name, char *resource_name, int desired_attributes_c, char **desired_attributes) {
+uint8_t set_resource(char **result, char *prov_name, char *resource_name, int desired_attributes_c, char **desired_attributes) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
-    auto opt_type = ral->find_type(std::string(type_name));
+    auto opt_prov = ral->find_provider(std::string(prov_name));
 
-    if (!opt_type) {
-        std::string error_msg = _("Provider {1} not found", std::string(type_name));
+    if (!opt_prov) {
+        std::string error_msg = _("Provider {1} not found", std::string(prov_name));
         str_to_cstr(error_msg, result);
         return EXIT_FAILURE;
     }
@@ -100,21 +100,21 @@ uint8_t set_resource(char **result, char *type_name, char *resource_name, int de
         str_to_cstr("Number of desired attributes must be > 0", result);
         return EXIT_FAILURE;
     }
-    
+
     std::vector<std::string> av(desired_attributes, desired_attributes + desired_attributes_c);
 
-    auto& type = *opt_type;
-    lib::resource should = type->prov().create(std::string(resource_name));
+    auto& prov = *opt_prov;
+    lib::resource should = prov->create(std::string(resource_name));
 
     for (const auto& arg : av) {
         auto found = arg.find("=");
         if (found != std::string::npos) {
             auto attr = arg.substr(0, found);
-            auto value = type->parse(attr, arg.substr(found+1));
+            auto value = prov->parse(attr, arg.substr(found+1));
             if (value) {
                 should[attr] = value.ok();
             } else {
-                std::string error_msg = _("Failed to read attribute {1}, resource_name: {2}, error: {3}", attr, std::string(type_name), value.err().detail);
+                std::string error_msg = _("Failed to read attribute {1}, resource_name: {2}, error: {3}", attr, std::string(prov_name), value.err().detail);
                 str_to_cstr(error_msg, result);
                 return EXIT_FAILURE;
             }
@@ -123,9 +123,9 @@ uint8_t set_resource(char **result, char *type_name, char *resource_name, int de
 
     lib::json_emitter em {};
 
-    auto res = type->set(should);
-    auto setres = em.parse_set(**opt_type, res);
-    
+    auto res = prov->set(should);
+    auto setres = em.parse_set(**opt_prov, res);
+
     str_to_cstr(setres, result);
     return EXIT_SUCCESS;
 }
