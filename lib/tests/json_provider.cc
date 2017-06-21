@@ -38,7 +38,7 @@ namespace libral {
         // called
         auto should = json_prov->create("set_" + r0.name());
         should["ensure"] = "absent";
-        auto res = json_prov->set(should);
+        auto res = json_prov->set({ should });
         REQUIRE(res.is_err());
         REQUIRE_THAT(res.err().detail, Catch::Contains("[json::json]"));
         auto msg = r0.lookup<std::string>("message");

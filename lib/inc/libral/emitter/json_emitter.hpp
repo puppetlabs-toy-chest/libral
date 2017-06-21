@@ -12,8 +12,7 @@ namespace libral {
 
     using json = leatherman::json_container::JsonContainer;
 
-    std::string parse_set(const provider &prov,
-               const result<std::pair<update, changes>>& rslt);
+    std::string parse_set(const provider &prov, const set_result& rslt);
 
     std::string parse_find(const provider &prov,
                const result<boost::optional<resource>> &resource);
@@ -24,8 +23,7 @@ namespace libral {
     std::string
     parse_providers(const std::vector<std::shared_ptr<provider>>& provs);
 
-    void print_set(const provider &prov,
-               const result<std::pair<update, changes>>& rslt) override;
+    void print_set(const provider &prov, const set_result& rslt) override;
 
     void print_find(const provider &prov,
                const result<boost::optional<resource>> &resource) override;

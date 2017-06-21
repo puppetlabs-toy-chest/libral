@@ -7,8 +7,7 @@
 namespace libral {
   class quiet_emitter : public emitter {
   public:
-    void print_set(const provider &prov,
-               const result<std::pair<update, changes>>& rslt) override { }
+    void print_set(const provider &prov, const set_result& rslt) override { }
 
     void print_find(const provider &prov,
                const result<boost::optional<resource>> &resource) override { }

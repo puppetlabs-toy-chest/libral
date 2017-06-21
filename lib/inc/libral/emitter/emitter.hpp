@@ -5,8 +5,9 @@
 namespace libral {
   class emitter {
   public:
-    virtual void print_set(const provider &prov,
-                 const result<std::pair<update, changes>>& rslt) = 0;
+    using set_result = result<std::vector<std::pair<update, changes>>>;
+
+    virtual void print_set(const provider &prov, const set_result& rslt) = 0;
 
     virtual void print_find(const provider &prov,
                  const result<boost::optional<resource>> &resource) = 0;

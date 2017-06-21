@@ -73,14 +73,6 @@ namespace libral {
     return res;
   }
 
-  result<std::pair<update, changes>>
-  provider::set(const resource& should) {
-    std::vector<resource> shoulds({ should });
-    auto res = set(std::vector<resource>({should}));
-    err_ret( res );
-    return res.ok().at(0);
-  }
-
   result<value> provider::parse(const std::string& name, const std::string& v) {
     if (!_spec) {
       return error(_("internal error: spec was not initialized"));

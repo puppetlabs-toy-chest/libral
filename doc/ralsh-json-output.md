@@ -100,8 +100,8 @@ just return a `resources` array with a single resource in it.
 
 When you run `ralsh --json <PROVIDER> <NAME> A1=V1 A2=V2`, ralsh prints the
 result of ensuring that the resource `NAME` managed by `PROVIDER` is in the
-desired state expressed by the `An=Vn` attribute changes. The output object
-contains two keys:
+desired state expressed by the `An=Vn` attribute changes. The output
+object's `result` key contains an array of objects, which each have two keys:
 
 * `resource` showing the state after the changes have been made, in the
   same format as is used when finding a resource
@@ -115,28 +115,32 @@ contains two keys:
   * `was`: the previous state of the attribute, i.e., the state it was in
     before the change
 
+For most providers, the `result` array will only contain one entry, as the
+provider will have only changed one resource. With some providers though, a
+single update operation might lead to changing multiple resources.
+
 An example of this output looks like
 ```json
 {
-  "changes": [
+  "result": [
     {
-      "was": "stopped",
-      "is": "running",
-      "attr": "ensure"
+      "changes": [
+        {
+          "was": "stopped",
+          "is": "running",
+          "attr": "ensure"
+        }
+      ],
+      "resource": {
+        "ral": {
+          "provider": "service::sysv",
+          "type": "service"
+        },
+        "ensure": "running",
+        "enable": "true",
+        "name": "tuned"
+      }
     }
-  ],
-  "resource": {
-    "ral": {
-      "provider": "service::sysv",
-      "type": "service"
-    },
-    "ensure": "running",
-    "enable": "false",
-    "name": "smartd"
-  }
+  ]
 }
 ```
-**NOTE**: it is likely that this format will be changed to an array of
-   `changes`/`resource` pairs to accomodate providers where enforcing the
-   state of one resource actually touches many resources (like recursive
-   file operations)

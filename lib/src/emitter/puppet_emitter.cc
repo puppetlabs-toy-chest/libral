@@ -36,12 +36,14 @@ namespace libral {
   }
 
   void puppet_emitter::print_set(const provider &prov,
-                       const result<std::pair<update, changes>>& rslt) {
+                 const result<std::vector<std::pair<update, changes>>>& rslt) {
     if (rslt) {
-      const auto& upd = rslt->first;
-      const auto &chgs = rslt->second;
-      print_resource(prov, prov.create(upd, chgs));
-      std::cout << chgs << std::endl;
+      for (const auto& pair : rslt.ok()) {
+        const auto& upd = pair.first;
+        const auto &chgs = pair.second;
+        print_resource(prov, prov.create(upd, chgs));
+        std::cout << chgs << std::endl;
+      }
     } else {
       std::cout << color::red << _("failed: {1}", rslt.err().detail) << color::reset << std::endl;
     }

@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
             }
           }
 
-          auto res = prov.set(should);
+          auto res = prov.set({ should });
           em.print_set(prov, res);
           if (!res) {
             return EXIT_ERROR;

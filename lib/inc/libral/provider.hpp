@@ -89,10 +89,6 @@ namespace libral {
     set(const std::vector<resource>& shoulds);
 
 
-    result<std::pair<update, changes>>
-    set(const resource& should);
-
-
     /**
      * Reads the string representation v for attribute name and returns the
      * corresponding value. If v is not a valid string for name's type,

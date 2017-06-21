@@ -15,7 +15,7 @@ namespace libral {
   using json = leatherman::json_container::JsonContainer;
 
   std::string json_emitter::parse_set(const provider &prov,
-                       const result<std::pair<update, changes>>& rslt) {
+                       const set_result& rslt) {
     json js;
 
     if (!rslt) {
@@ -23,18 +23,23 @@ namespace libral {
       err.set<std::string>("message", _("failed: {1}", rslt.err().detail));
       js.set<json>("error", err);
     } else {
-      const auto rsrc = prov.create(rslt->first, rslt->second);
-      js.set<json>("resource", resource_to_json(prov, rsrc));
-      const auto &changes = rslt->second;
-      std::vector<json> json_changes;
-      for (auto ch : changes) {
-        json json_ch;
-        json_ch.set<std::string>("attr", ch.attr);
-        json_set_value(json_ch, "is", ch.is);
-        json_set_value(json_ch, "was", ch.was);
-        json_changes.push_back(json_ch);
+      std::vector<json> js_rslt;
+      for(const auto& pair : rslt.ok()) {
+        json js_pair;
+        const auto rsrc = prov.create(pair.first, pair.second);
+        js_pair.set<json>("resource", resource_to_json(prov, rsrc));
+        std::vector<json> json_changes;
+        for (const auto& ch : pair.second) {
+          json json_ch;
+          json_ch.set<std::string>("attr", ch.attr);
+          json_set_value(json_ch, "is", ch.is);
+          json_set_value(json_ch, "was", ch.was);
+          json_changes.push_back(json_ch);
+        }
+        js_pair.set<std::vector<json>>("changes", json_changes);
+        js_rslt.push_back(js_pair);
       }
-      js.set<std::vector<json>>("changes", json_changes);
+      js.set<std::vector<json>>("result", js_rslt);
     }
     return js.toString();
   }
@@ -110,7 +115,7 @@ namespace libral {
   }
 
   void json_emitter::print_set(const provider &prov,
-               const result<std::pair<update, changes>>& rslt) {
+               const set_result& rslt) {
     auto js_s = parse_set(prov, rslt);
     std::cout << js_s << std::endl;
   }

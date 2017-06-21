@@ -123,7 +123,7 @@ uint8_t set_resource(char **result, char *prov_name, char *resource_name, int de
 
     lib::json_emitter em {};
 
-    auto res = prov->set(should);
+    auto res = prov->set({ should });
     auto setres = em.parse_set(**opt_prov, res);
 
     str_to_cstr(setres, result);
