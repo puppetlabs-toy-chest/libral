@@ -45,6 +45,27 @@ In case you do need to build from source, which is not required for
 provider development, only if you want to work on the core libral library,
 [this document](HACKING.md) contains instructions on building `libral`.
 
+
+### Docker
+
+You can also try out `libral` in the context of a Docker container. The
+Dockerfile in the repository allows for building an image quickly based
+on the above mentioned precompiled tarball.
+
+```
+docker build -t puppet/libral .
+```
+
+Running this can then be done with Docker, for instance the following
+invocation will launch `ralsh` in the context of the container.
+
+```
+docker run --rm -t puppet/libral
+```
+
+This is intended for exploring the CLI and experimenting with providers.
+
+
 ## Usage
 
 After you build `libral`, or after you download and unpack the
