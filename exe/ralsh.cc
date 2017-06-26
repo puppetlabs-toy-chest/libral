@@ -9,6 +9,8 @@
 #include <libral/emitter/json_emitter.hpp>
 #include <libral/emitter/quiet_emitter.hpp>
 
+#include <stdint.h>
+
 #include <iomanip>
 
 #include <config.hpp>
@@ -17,6 +19,7 @@
 // cause problems before including the headers, then re-enable the warnings.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wsuggest-override"
 #include <boost/program_options.hpp>
 #pragma GCC diagnostic pop
 
@@ -81,7 +84,7 @@ R"txt(Exit status:
 
 static void print_attr_explanation(const std::string& name,
                                    const lib::attr::spec& attr,
-                                   uint maxlen) {
+                                   uint16_t maxlen) {
   cout << "  " << color::green << left << setw(maxlen)
        << name << color::reset
        << " : " << attr.desc() << endl;
@@ -102,7 +105,7 @@ static void print_explanation(lib::type& type) {
     return;
   }
 
-  uint maxlen = 0;
+  uint16_t maxlen = 0;
   for (auto a = spec->attr_begin(); a != spec->attr_end(); ++a) {
     if (a->first.length() > maxlen) maxlen = a->first.length();
   }

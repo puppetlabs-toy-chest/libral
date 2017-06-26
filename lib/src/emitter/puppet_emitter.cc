@@ -79,7 +79,7 @@ namespace libral {
   void puppet_emitter::print_resource(const type &type, const resource &res) {
     std::cout << color::blue << type.qname() << color::reset << " { '"
          << color::blue << res.name() << color::reset << "':" << std::endl;
-    uint maxlen = 0;
+    uint16_t maxlen = 0;
     for (const auto& a : res.attrs()) {
       if (a.first.length() > maxlen) maxlen = a.first.length();
     }
@@ -97,7 +97,7 @@ namespace libral {
 
   void puppet_emitter::print_resource_attr(const std::string& name,
                                            const value& v,
-                                           uint maxlen) {
+                                           uint16_t maxlen) {
     std::cout << "  " << color::green << std::left << std::setw(maxlen)
               << name << color::reset
               << " => " << v << "," << std::endl;

@@ -2,6 +2,8 @@
 
 #include <libral/emitter/emitter.hpp>
 
+#include <stdint.h>
+
 namespace libral {
   class puppet_emitter : public emitter {
   public:
@@ -21,6 +23,6 @@ namespace libral {
     void print_resource(const type &type, const resource &resource);
     void print_resource_attr(const std::string& name,
                              const value& v,
-                             uint maxlen);
+                             uint16_t maxlen);
   };
 }
