@@ -42,7 +42,8 @@ cp -pr ${topdir}/data ral
 #
 # Snarf up some augeas lenses that we need
 #
-if [ ! -x augparse ]
+augp=$(command -v augparse)
+if [ -z "$augp" ]
 then
     if [ -x /opt/puppetlabs/puppet/bin/augparse ]; then
         export PATH=$PATH:/opt/puppetlabs/puppet/bin
