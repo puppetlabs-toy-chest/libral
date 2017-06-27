@@ -19,7 +19,9 @@
 // cause problems before including the headers, then re-enable the warnings.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
-#pragma GCC diagnostic ignored "-Wsuggest-override"
+#ifdef HAS_SUGGEST_OVERRIDE
+#  pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif
 #include <boost/program_options.hpp>
 #pragma GCC diagnostic pop
 
