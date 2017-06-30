@@ -1,4 +1,3 @@
-
 #include <libral/export.h>
 #include <libral/libral.hpp>
 #include <libral/ral.hpp>
