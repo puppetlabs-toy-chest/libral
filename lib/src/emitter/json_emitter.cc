@@ -14,7 +14,7 @@ namespace libral {
 
   using json = leatherman::json_container::JsonContainer;
 
-  void json_emitter::print_set(const type &type,
+  std::string json_emitter::parse_set(const type &type,
                        const result<std::pair<update, changes>>& rslt) {
     json js;
 
@@ -36,10 +36,10 @@ namespace libral {
       }
       js.set<std::vector<json>>("changes", json_changes);
     }
-    std::cout << js.toString() << std::endl;
+    return js.toString();
   }
 
-  void json_emitter::print_find(const type &type,
+  std::string json_emitter::parse_find(const type &type,
                        const result<boost::optional<resource>> &inst) {
     json js;
 
@@ -50,10 +50,10 @@ namespace libral {
     } else if (inst.ok()) {
       js.set<json>("resource", resource_to_json(type, *inst.ok()));
     }
-    std::cout << js.toString() << std::endl;
+    return js.toString();
   }
 
-  void json_emitter::print_list(const type &type,
+  std::string json_emitter::parse_list(const type &type,
                        const result<std::vector<resource>>& rslt) {
     json js;
 
@@ -68,10 +68,10 @@ namespace libral {
       }
       js.set<std::vector<json>>("resources", list);
     }
-    std::cout << js.toString() << std::endl;
+    return js.toString();
   }
 
-  void json_emitter::print_types(const std::vector<std::unique_ptr<type>>& types) {
+  std::string json_emitter::parse_types(const std::vector<std::unique_ptr<type>>& types) {
     json js;
     std::vector<json> list;
     for (const auto& t : types) {
@@ -106,7 +106,30 @@ namespace libral {
       list.push_back(entry);
     }
     js.set<std::vector<json>>("providers", list);
-    std::cout << js.toString() << std::endl;
+    return js.toString();
+  }
+
+  void json_emitter::print_set(const type &type,
+               const result<std::pair<update, changes>>& rslt) {
+    auto js_s = parse_set(type, rslt);
+    std::cout << js_s << std::endl;
+  }
+
+  void json_emitter::print_find(const type &type,
+               const result<boost::optional<resource>> &resource) {
+    auto js_s = parse_find(type, resource);
+    std::cout << js_s << std::endl;
+  }
+
+  void json_emitter::print_list(const type &type,
+               const result<std::vector<resource>>& resources) {
+    auto js_s = parse_list(type, resources);
+    std::cout << js_s << std::endl;
+  }
+
+  void json_emitter::print_types(const std::vector<std::unique_ptr<type>>& types) {
+    auto js_s = parse_types(types);
+    std::cout << js_s << std::endl;
   }
 
   json json_emitter::resource_to_json(const type &type, const resource &res) {
