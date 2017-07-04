@@ -106,3 +106,18 @@ char* get_all(char* type_name_c)
 
     return c_js_str;
 }
+
+
+uint8_t get_all_with_err(char *resource,
+                         char *type_name) {
+    char *tmp = get_all(type_name);
+    if (resource == nullptr)
+        return 1;
+
+    resource = tmp;
+    return 0;
+}
+
+uint8_t get_types(char *types) {
+    return 0;
+}
