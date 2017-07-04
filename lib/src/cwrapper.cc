@@ -99,7 +99,7 @@ char* get_all(char* type_name_c)
 
     std::string js_str = js.toString();
 
-    std::cout << "Generated: " << js_str << std::endl;
+    // std::cout << "Generated: " << js_str << std::endl;
 
     char * c_js_str = new char [js_str.length()+1];
     std::strcpy (c_js_str, js_str.c_str());
@@ -108,14 +108,21 @@ char* get_all(char* type_name_c)
 }
 
 
-uint8_t get_all_with_err(char *resource,
+uint8_t get_all_with_err(char **resource,
                          char *type_name) {
     char *tmp = get_all(type_name);
     if (resource == nullptr)
         return 1;
 
-    resource = tmp;
+    resource = &tmp;
     return 0;
+}
+
+struct outcome get_all_outcome(char* type_name_c) {
+    char *tmp = get_all(type_name_c);
+    uint8_t e_c = (tmp != NULL) ? 0 : 1;
+    struct outcome out = {tmp, e_c};
+    return out;
 }
 
 uint8_t get_types(char *types) {
