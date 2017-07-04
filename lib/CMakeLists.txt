@@ -30,6 +30,7 @@ link_directories(
 
 set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/ral.cc"
+  "src/cwrapper.cc"
   "src/type.cc" "src/mount.cc" "src/provider.cc"
   "src/simple_provider.cc" "src/json_provider.cc"
   "src/user.cc" "src/group.cc" "src/value.cc" "src/file.cc" "src/host.cc"
