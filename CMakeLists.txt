@@ -82,7 +82,6 @@ feature_summary(WHAT ALL)
 
 add_subdirectory(lib)
 add_subdirectory(exe)
-add_subdirectory(go_wrapper)
 add_subdirectory(mruby)
 
 configure_file("${PROJECT_SOURCE_DIR}/config.hpp.in"
