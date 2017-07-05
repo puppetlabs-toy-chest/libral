@@ -8,13 +8,13 @@ import (
 func main() {
 	fmt.Println("### We're here!")
 	queryType := "host"
-	hosts, err := libral.GetAllOutcome(queryType)
+	hosts, err := libral.GetResources(queryType)
 	if err != nil {
-		fmt.Printf("Error throw calling libral.GetAllOutcome(%s): %v", queryType, err)
+		fmt.Printf("Error throw calling libral.GetResources(%s): %v", queryType, err)
 		return
 	}
-	fmt.Printf("Successfully called libral.GetAllOutcome(%s)\n", queryType)
-	fmt.Printf("### Hosts %s\n", hosts)
+	fmt.Printf("Successfully called libral.GetResources(%s)\n", queryType)
+	fmt.Printf("### Hosts: %s\n", hosts)
 
 	// fmt.Println("\n### Let's get more!!!")
 	// r, e := libral.GetAllWithErr("")

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <stdlib.h>
 
 #include <libral/cwrapper.hpp>
 #include <libral/ral.hpp>
@@ -21,10 +22,11 @@ namespace lib = libral;
 // Helpers
 //
 
-static char* str_to_cstr(const std::string& s) {
-    char * cs = new char [s.length()+1];
-    std::strcpy (cs, s.c_str());
-    return cs;
+static void str_to_cstr(const std::string &s, char **cs) {
+    *cs = new char [s.length()+1];
+    std::strcpy (*cs, s.c_str());
+
+    return;
 }
 
 //
@@ -37,12 +39,12 @@ uint8_t get_providers(char **result) {
     auto raw_types = ral->types();
     lib::json_emitter em {};
     auto types = em.parse_types(raw_types);
+    str_to_cstr(types, result);
 
-    *result = str_to_cstr(types);
-    return 0;
+    return EXIT_SUCCESS;
 }
 
-uint8_t get_resources(char **result, char* type_name) {
+uint8_t get_resources(char **result, char *type_name) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
     auto opt_type = ral->find_type(std::string(type_name));
@@ -53,12 +55,13 @@ uint8_t get_resources(char **result, char* type_name) {
     auto resource_instances = (*opt_type)->instances();
     lib::json_emitter em {};
     auto resources = em.parse_list(**opt_type, resource_instances);
-    *result = str_to_cstr(resources);
-    return 0;
+    str_to_cstr(resources, result);
+
+    return EXIT_SUCCESS;
 }
 
 
-uint8_t get_resource(char **result, char* type_name, char* resource_name) {
+uint8_t get_resource(char **result, char *type_name, char *resource_name) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
     auto opt_type = ral->find_type(std::string(type_name));
@@ -70,6 +73,7 @@ uint8_t get_resource(char **result, char* type_name, char* resource_name) {
     lib::json_emitter em {};
 
     auto resource = em.parse_find(**opt_type, inst);
-    *result = str_to_cstr(resource);
-    return 0;
+    str_to_cstr(resource, result);
+
+    return EXIT_SUCCESS;
 }
