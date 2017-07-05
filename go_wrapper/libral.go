@@ -10,11 +10,96 @@ package libral
 import "C"
 
 import (
+	"encoding/json"
 	"fmt"
+	"libral/types"
 	"unsafe"
 )
 
-// GetProviders returns a JSON string containing a list of providers known to libral.
+// GetProviders returns the resource providers available to libral.
+func GetProviders() ([]types.Provider, error) {
+	rawProviders, err := getProvidersRaw()
+	if err != nil {
+		return nil, err
+	}
+
+	var providersResult types.ProvidersResult
+
+	if err := json.Unmarshal([]byte(rawProviders), &providersResult); err != nil {
+		return nil, fmt.Errorf("Error unmarshalling provider JSON: %v", err)
+	}
+
+	return providersResult.Providers, nil
+}
+
+// GetResources returns all resources of the specified provider type.
+func GetResources(typeName string) ([]types.Resource, error) {
+	var result []types.Resource
+	rawResources, err := getResourcesRaw(typeName)
+	if err != nil {
+		return nil, err
+	}
+
+	var resourcesResult types.ResourcesResult
+
+	if err := json.Unmarshal([]byte(rawResources), &resourcesResult); err != nil {
+		return nil, fmt.Errorf("Error unmarshalling resources JSON: %v", err)
+	}
+
+	for _, rawResource := range resourcesResult.Resources {
+		var resource types.Resource
+		if err := json.Unmarshal([]byte(rawResource), &resource); err != nil {
+			return nil, fmt.Errorf("Error unmarshalling resource JSON: %v", err)
+		}
+		resource.Raw = rawResource
+		var attributes map[string]interface{}
+		if err := json.Unmarshal([]byte(rawResource), &attributes); err != nil {
+			return nil, fmt.Errorf("Error unmarshalling resource attributes JSON: %v", err)
+		}
+		_, ok := attributes["ral"]
+		if ok {
+			delete(attributes, "ral")
+		}
+		resource.Attributes = attributes
+		result = append(result, resource)
+	}
+
+	return result, nil
+}
+
+// GetResource returns a Resource of the specified provider type with matching resource name,
+// or an empty resource if no match is found, if more than one resource exists with the same
+// name an error is thrown.
+func GetResource(typeName, resourceName string) (types.Resource, error) {
+	var result types.Resource
+	rawResource, err := getResourceRaw(typeName, resourceName)
+	if err != nil {
+		return types.Resource{}, err
+	}
+
+	var resourceResult types.ResourceResult
+	if err := json.Unmarshal([]byte(rawResource), &resourceResult); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling resource JSON: %v", err)
+	}
+
+	if err := json.Unmarshal([]byte(resourceResult.Resource), &result); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling resource details JSON: %v", err)
+	}
+	result.Raw = resourceResult.Resource
+	var attributes map[string]interface{}
+	if err := json.Unmarshal([]byte(resourceResult.Resource), &attributes); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling resource attributes JSON: %v", err)
+	}
+	_, ok := attributes["ral"]
+	if ok {
+		delete(attributes, "ral")
+	}
+	result.Attributes = attributes
+
+	return result, nil
+}
+
+// getProvidersRaw returns a JSON string containing a list of providers known to libral.
 //
 // For example:
 //
@@ -43,7 +128,7 @@ import (
 //           }
 //       ]
 //   }
-func GetProviders() (string, error) {
+func getProvidersRaw() (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
 
@@ -55,7 +140,7 @@ func GetProviders() (string, error) {
 	return result, nil
 }
 
-// GetResources returns a JSON string containing a list all resources of the specified type
+// getResourcesRaw returns a JSON string containing a list all resources of the specified type
 // found by libral.
 //
 // For example, querying the `host` type:
@@ -84,7 +169,7 @@ func GetProviders() (string, error) {
 //           }
 //       ]
 //   }
-func GetResources(typeName string) (string, error) {
+func getResourcesRaw(typeName string) (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
 	typeNameC := C.CString(typeName)
@@ -98,7 +183,7 @@ func GetResources(typeName string) (string, error) {
 	return result, nil
 }
 
-// GetResource returns a JSON string containing the matching resources of the specified type
+// getResourceRaw returns a JSON string containing the matching resources of the specified type
 // found by libral. It will throw an error if multiple resources are found with the same name.
 //
 // For example, querying the `host` type `broadcasthost`:
@@ -117,7 +202,7 @@ func GetResources(typeName string) (string, error) {
 //           }
 //       ]
 //   }
-func GetResource(typeName, resourceName string) (string, error) {
+func getResourceRaw(typeName, resourceName string) (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
 	typeNameC := C.CString(typeName)
