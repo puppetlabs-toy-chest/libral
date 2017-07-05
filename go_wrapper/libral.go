@@ -14,7 +14,35 @@ import (
 	"unsafe"
 )
 
-// GetTypes TODO
+// GetProviders returns a JSON string containing a list of providers known to libral.
+//
+// For example:
+//
+//   {
+//       "providers": [
+//           {
+//               "name": "file::posix",
+//               "type": "file",
+//               "source": "builtin",
+//               "desc": "A provider to manage POSIX files.\n",
+//               "suitable": true,
+//               "attributes": [
+//                   {
+//                       "name": "checksum",
+//                       "desc": "(missing description)",
+//                       "type": "enum[md5, md5lite, sha256, sha256lite, mtime, ctime, none]",
+//                       "kind": "r"
+//                   },
+//                   ...
+//               ]
+//           },
+//           {
+//               "name": "host::aug",
+//               "type": "host",
+//               ...
+//           }
+//       ]
+//   }
 func GetProviders() (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
@@ -27,7 +55,35 @@ func GetProviders() (string, error) {
 	return result, nil
 }
 
-// GetResources TODO
+// GetResources returns a JSON string containing a list all resources of the specified type
+// found by libral.
+//
+// For example, querying the `host` type:
+//
+//   {
+//       "resources": [
+//           {
+//               "name": "localhost",
+//               "ensure": "present",
+//               "ip": "127.0.0.1",
+//               "target": "/etc/hosts",
+//               "ral": {
+//                   "type": "host",
+//                   "provider": "host::aug"
+//               }
+//           },
+//           {
+//               "name": "broadcasthost",
+//               "ensure": "present",
+//               "ip": "255.255.255.255",
+//               "target": "/etc/hosts",
+//               "ral": {
+//                   "type": "host",
+//                   "provider": "host::aug"
+//               }
+//           }
+//       ]
+//   }
 func GetResources(typeName string) (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
@@ -42,7 +98,25 @@ func GetResources(typeName string) (string, error) {
 	return result, nil
 }
 
-// GetResource TODO
+// GetResource returns a JSON string containing the matching resources of the specified type
+// found by libral. It will throw an error if multiple resources are found with the same name.
+//
+// For example, querying the `host` type `broadcasthost`:
+//
+//   {
+//       "resources": [
+//           {
+//               "name": "broadcasthost",
+//               "ensure": "present",
+//               "ip": "255.255.255.255",
+//               "target": "/etc/hosts",
+//               "ral": {
+//                   "type": "host",
+//                   "provider": "host::aug"
+//               }
+//           }
+//       ]
+//   }
 func GetResource(typeName, resourceName string) (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
