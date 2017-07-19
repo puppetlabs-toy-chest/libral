@@ -18,7 +18,7 @@ if(LIBRAL_STATIC OR LIBRAL_LIBRAY_STATIC)
     set(USE_STATIC_LIBS ON)
 endif()
 
-# NB: this does not work on Mac due to FindAugeas.cmake logic being for linux
+# NB: should be off on OSX due to FindAugeas.cmake logic being for linux
 option(AUGEAS_STATIC "Use static libaugeas" OFF)
 
 # The default data dir. Providers should be placed into
