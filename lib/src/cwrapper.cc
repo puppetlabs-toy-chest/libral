@@ -50,7 +50,7 @@ uint8_t get_resources(char **result, char *type_name) {
     auto opt_type = ral->find_type(std::string(type_name));
 
     if (!opt_type)
-        return 1;
+        return EXIT_FAILURE;
 
     auto resource_instances = (*opt_type)->instances();
     lib::json_emitter em {};
@@ -60,14 +60,13 @@ uint8_t get_resources(char **result, char *type_name) {
     return EXIT_SUCCESS;
 }
 
-
 uint8_t get_resource(char **result, char *type_name, char *resource_name) {
     std::vector<std::string> data_dirs;
     auto ral = lib::ral::create(data_dirs);
     auto opt_type = ral->find_type(std::string(type_name));
 
     if (!opt_type)
-        return 1;
+        return EXIT_FAILURE;
 
     auto inst = (*opt_type)->find(std::string(resource_name));
     lib::json_emitter em {};
