@@ -10,6 +10,14 @@ project(libral VERSION 0.0.1)
 # now since Fedora is missing augeas-static, icu-static, and yaml-cpp-static
 option(LIBRAL_STATIC "Build a static executable")
 
+# Build a static libral library
+option(LIBRAL_LIBRAY_STATIC "Build a static library" OFF)
+
+set(USE_STATIC_LIBS OFF)
+if(LIBRAL_STATIC OR LIBRAL_LIBRAY_STATIC)
+    set(USE_STATIC_LIBS ON)
+endif()
+
 # NB: this does not work on Mac due to FindAugeas.cmake logic being for linux
 option(AUGEAS_STATIC "Use static libaugeas" OFF)
 
@@ -33,12 +41,12 @@ enable_testing()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${LIBRAL_STATIC})
+option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${USE_STATIC_LIBS})
 find_package(YAMLCPP REQUIRED)
 
 # Leatherman setup
 SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution json_container)
-SET(BOOST_STATIC ${LIBRAL_STATIC})
+SET(BOOST_STATIC ${USE_STATIC_LIBS})
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 
 # Now that we have leatherman, we can pull in its options file, which
@@ -64,7 +72,7 @@ add_definitions(${LEATHERMAN_DEFINITIONS})
 include(leatherman)
 
 # Add other dependencies
-set(Boost_USE_STATIC_LIBS ${LIBRAL_STATIC})
+set(Boost_USE_STATIC_LIBS ${USE_STATIC_LIBS})
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
 find_package(Augeas REQUIRED)

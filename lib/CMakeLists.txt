@@ -45,8 +45,13 @@ set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
 add_library(libprojectsrc OBJECT ${PROJECT_SOURCES})
 set_target_properties(libprojectsrc PROPERTIES POSITION_INDEPENDENT_CODE true)
 
-add_library(libral $<TARGET_OBJECTS:libprojectsrc>)
-set_target_properties(libral PROPERTIES VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+if(LIBRAL_LIBRARY_STATIC)
+    add_library(libral STATIC $<TARGET_OBJECTS:libprojectsrc>)
+else()
+    add_library(libral $<TARGET_OBJECTS:libprojectsrc>)
+    set_target_properties(libral PROPERTIES VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+endif()
+
 target_link_libraries(libral
   ${LEATHERMAN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
