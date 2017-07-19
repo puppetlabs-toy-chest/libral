@@ -10,6 +10,9 @@ project(libral VERSION 0.0.1)
 # now since Fedora is missing augeas-static, icu-static, and yaml-cpp-static
 option(LIBRAL_STATIC "Build a static executable")
 
+# NB: this does not work on Mac due to FindAugeas.cmake logic being for linux
+option(AUGEAS_STATIC "Use static libaugeas" OFF)
+
 # The default data dir. Providers should be placed into
 set(LIBRAL_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/libral/data" CACHE STRING "where to look for providers etc. by default")
 
@@ -64,7 +67,6 @@ include(leatherman)
 set(Boost_USE_STATIC_LIBS ${LIBRAL_STATIC})
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
-set(AUGEAS_STATIC ${LIBRAL_STATIC})
 find_package(Augeas REQUIRED)
 add_definitions(${AUGEAS_DEFINITIONS})
 
