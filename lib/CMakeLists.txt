@@ -39,6 +39,10 @@ set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/emitter/puppet_emitter.cc"
   "src/emitter/json_emitter.cc")
 
+if (BUILD_GO)
+  list(APPEND PROJECT_SOURCES "src/cwrapper.cc")
+endif (BUILD_GO)
+
 ## An object target is generated that can be used by both the library and test executable targets.
 ## Without the intermediate target, unexported symbols can't be tested.
 add_library(libprojectsrc OBJECT ${PROJECT_SOURCES})

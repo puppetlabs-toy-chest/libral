@@ -123,6 +123,11 @@ else (DOXYGEN_FOUND)
   message("Doxygen needs to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
+# Build the Go Wrapper for libral. This provides 
+# bindings for libral written in go.  It is only required
+# if working on a go project
+option(BUILD_GO "Build Go wrapper for libral" OFF)
+
 # This will be used to install all data:
 file(GLOB_RECURSE ALL_LENSES "${CMAKE_SOURCE_DIR}/data/lenses/*.aug")
 file(GLOB_RECURSE ALL_PROVIDERS "${CMAKE_SOURCE_DIR}/data/providers/*.prov")
