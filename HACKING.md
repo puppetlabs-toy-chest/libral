@@ -171,3 +171,22 @@ Again, following the same instructions as Linux.
     cmake ..
     make
 ```
+
+## Building Go Wrapper
+
+The Go Wrapper exposes libral functions using a 'C' interface.  Currently
+ these methods are being used by golang code to link to libral.
+By default the cwrapper is not included in the libral library.  If you 
+want to enable it use the BUILD_GO option.  N.B this option can also be
+combined with other build options such as LIBRAL_STATIC to produce a static
+library.
+
+### Build Libral
+
+```bash
+    git clone https://github.com/puppetlabs/libral
+    cd libral
+    mkdir build && cd build
+    cmake -DBUILD_GO ..
+    make
+```

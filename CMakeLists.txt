@@ -10,17 +10,6 @@ project(libral VERSION 0.0.1)
 # now since Fedora is missing augeas-static, icu-static, and yaml-cpp-static
 option(LIBRAL_STATIC "Build a static executable")
 
-# Build a static libral library
-option(LIBRAL_LIBRAY_STATIC "Build a static library" OFF)
-
-set(USE_STATIC_LIBS OFF)
-if(LIBRAL_STATIC OR LIBRAL_LIBRAY_STATIC)
-    set(USE_STATIC_LIBS ON)
-endif()
-
-# NB: should be off on OSX due to FindAugeas.cmake logic being for linux
-option(AUGEAS_STATIC "Use static libaugeas" OFF)
-
 # The default data dir. Providers should be placed into
 set(LIBRAL_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/libral/data" CACHE STRING "where to look for providers etc. by default")
 
@@ -41,12 +30,12 @@ enable_testing()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${USE_STATIC_LIBS})
+option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${LIBRAL_STATIC})
 find_package(YAMLCPP REQUIRED)
 
 # Leatherman setup
 SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution json_container)
-SET(BOOST_STATIC ${USE_STATIC_LIBS})
+SET(BOOST_STATIC ${LIBRAL_STATIC})
 find_package(Leatherman REQUIRED COMPONENTS ${LEATHERMAN_COMPONENTS})
 
 # Now that we have leatherman, we can pull in its options file, which
@@ -72,9 +61,10 @@ add_definitions(${LEATHERMAN_DEFINITIONS})
 include(leatherman)
 
 # Add other dependencies
-set(Boost_USE_STATIC_LIBS ${USE_STATIC_LIBS})
+set(Boost_USE_STATIC_LIBS ${LIBRAL_STATIC})
 find_package(Boost 1.54 REQUIRED COMPONENTS program_options)
 
+set(AUGEAS_STATIC ${LIBRAL_STATIC})
 find_package(Augeas REQUIRED)
 add_definitions(${AUGEAS_DEFINITIONS})
 
@@ -132,6 +122,11 @@ if (DOXYGEN_FOUND)
 else (DOXYGEN_FOUND)
   message("Doxygen needs to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+# Build the Go Wrapper for libral. This provides 
+# bindings for libral written in go.  It is only required
+# if working on a go project
+option(BUILD_GO "Build Go wrapper for libral" OFF)
 
 # This will be used to install all data:
 file(GLOB_RECURSE ALL_LENSES "${CMAKE_SOURCE_DIR}/data/lenses/*.aug")
