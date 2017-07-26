@@ -16,7 +16,14 @@ do
     [ -f $p ] && source $p
 done
 
-git clone https://github.com/puppetlabs/libral
+if [ ! -d libral ]; then
+    echo "Cloning libral"
+    git clone https://github.com/puppetlabs/libral
+else
+    echo "Building from existing libral directory"
+fi
+
+rm -rf libral/build
 mkdir libral/build
 cd libral/build
 
