@@ -172,21 +172,31 @@ Again, following the same instructions as Linux.
     make
 ```
 
-## Building Go Wrapper
+## Go Package
 
-The Go Wrapper exposes libral functions using a 'C' interface.  Currently
- these methods are being used by golang code to link to libral.
-By default the cwrapper is not included in the libral library.  If you 
-want to enable it use the BUILD_GO option.  N.B this option can also be
-combined with other build options such as LIBRAL_STATIC to produce a static
-library.
+The `github.com/puppetlabs/libral/libralgo` package provides a initial Go binding
+to the native libral C++ library, it binds to methods exposed by the `cwrapper.cc`
+'C' interface.
 
-### Build Libral
+Currently the Go package has a build constraint applied to restrict its use to
+Linux.
+
+### Building example Go client
+
+An sample Go client which uses the `github.com/puppetlabs/libral/libralgo` package
+is provided along with a container-based build environment which builds upon the
+existing `libral-build` image.
+
+You can build the example client (`examples/go/listproviders.go`) as follows:
 
 ```bash
     git clone https://github.com/puppetlabs/libral
-    cd libral
-    mkdir build && cd build
-    cmake -DBUILD_GO ..
-    make
+    cd libral/contrib/docker
+    docker build -t libral-build -f Dockerfile.el6-build-static .
+    docker build -t libral-build-go -f Dockerfile.el6-build-static-go .
+    cd ../../
+    docker run --rm -it -v ${PWD}:/usr/src/libral libral-build-go
 ```
+
+This will place the built binary and a packaged archive (based on `statpack`) in the
+`build/go-example` directory of your local libral workspace.
