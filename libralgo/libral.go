@@ -3,7 +3,7 @@
 package libralgo
 
 /*
-#cgo LDFLAGS: -fPIC -L/opt/puppetlabs/puppet/lib/ -lral -l:leatherman_json_container.a -l:leatherman_execution.a -l:leatherman_logging.a -l:leatherman_locale.a -l:leatherman_util.a -l:leatherman_file_util.a -laugeas -L /opt/pl-build-tools/lib/ -l:libboost_locale.a -l:libboost_system.a -l:libboost_log.a -l:libboost_log_setup.a -l:libboost_thread.a -l:libboost_date_time.a -l:libboost_filesystem.a -l:libboost_chrono.a -l:libboost_regex.a  -l:libboost_program_options.a -lyaml-cpp -lrt -lxml2 -lz -lfa -lselinux -lstdc++ -lm
+#cgo LDFLAGS: -fPIC -Wl,-Bstatic -L/opt/puppetlabs/puppet/lib/ -lral -l:leatherman_json_container.a -l:leatherman_execution.a -l:leatherman_logging.a -l:leatherman_locale.a -l:leatherman_util.a -l:leatherman_file_util.a -laugeas -lfa -L /opt/pl-build-tools/lib/ -l:libboost_locale.a -l:libboost_system.a -l:libboost_log.a -l:libboost_log_setup.a -l:libboost_thread.a -l:libboost_date_time.a -l:libboost_filesystem.a -l:libboost_chrono.a -l:libboost_regex.a -l:libboost_program_options.a -lyaml-cpp -lxml2 -Wl,-Bdynamic -lrt  -lz -lselinux -lstdc++ -lm
 #cgo CFLAGS: -I${SRCDIR}/../lib/inc
 
 #include "libral/cwrapper.hpp"
