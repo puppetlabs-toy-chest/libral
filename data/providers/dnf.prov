@@ -1,5 +1,17 @@
-#! /usr/bin/python
+#! /bin/sh
 
+PYTHON_BIN=/usr/bin/python
+
+for p in /usr/bin/python /usr/bin/python3
+do
+    if [ -x "$p" ]
+    then
+        PYTHON_BIN=$p
+        break
+    fi
+done
+
+$PYTHON_BIN - ${1} <<-EOF
 import json
 import sys
 
@@ -200,3 +212,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+EOF
