@@ -69,7 +69,7 @@ EOF
 git clone https://github.com/puppetlabs/leatherman
 mkdir -p leatherman/build
 cd leatherman/build
-git checkout -q 0.10.1
+git checkout -q 1.0.0
 $CMAKE -DBOOST_STATIC=$STATIC ..
 make all install
 make clean
