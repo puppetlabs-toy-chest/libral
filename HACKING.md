@@ -26,7 +26,7 @@ time, not at runtime.
 ```bash
     git clone https://github.com/puppetlabs/leatherman.git
     cd leatherman
-    git checkout 0.10.1
+    git checkout 1.0.0
     mkdir build && cd build
     cmake ..
     make
@@ -92,7 +92,7 @@ comes with `puppet-agent` by appending `/opt/puppetlabs/puppet/bin` to your
            -DCMAKE_INSTALL_PREFIX=/opt/puppetlabs/puppet'
     git clone https://github.com/puppetlabs/leatherman.git
     cd leatherman
-    git checkout 0.10.1
+    git checkout 1.0.0
     mkdir build && cd build
     pl-cmake -DBOOST_STATIC=ON ..
     make
@@ -153,7 +153,7 @@ Follow the same instructions as building on Linux.
 ```bash
     git clone https://github.com/puppetlabs/leatherman.git
     cd leatherman
-    git checkout 0.10.1
+    git checkout 1.0.0
     mkdir build && cd build
     cmake ..
     make
