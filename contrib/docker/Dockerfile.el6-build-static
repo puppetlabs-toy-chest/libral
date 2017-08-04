@@ -3,6 +3,10 @@
 #
 FROM centos:6
 
+ENV PL_BUILD_TOOLS_VER=22.0.3-1
+ENV RPMFORGE_RELEASE_VER=0.5.3-1
+ENV LEATHERMAN_VER=0.10.1
+
 COPY scripts /usr/src/scripts
 RUN /usr/src/scripts/image.sh el6-build-static
 

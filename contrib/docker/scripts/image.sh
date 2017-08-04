@@ -2,6 +2,14 @@
 
 # This script is used to set up the Docker image and is run from the Dockerfile
 # It expects to be passed the type of build we are making.
+# It also exects the following envvars to be set with versions of the
+# dependencies to download/install.
+#
+# PL_BUILD_TOOLS_VER
+# RPMFORGE_RELEASE_VER
+# LEATHERMAN_VER
+#
+# The script will exit with an error if any of the above envvars are not set.
 
 set -ex
 
@@ -45,8 +53,8 @@ then
     rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
     rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-pc1-el-6.noarch.rpm
     # This requires that we are on the internal VPN
-    rpm -ivh http://pl-build-tools.delivery.puppetlabs.net/yum/el/6/x86_64/pl-build-tools-release-22.0.3-1.el6.noarch.rpm
-    rpm -ivh http://ftp.tu-chemnitz.de/pub/linux/dag/redhat/el6/en/x86_64/rpmforge/RPMS/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm
+    rpm -ivh http://pl-build-tools.delivery.puppetlabs.net/yum/el/6/x86_64/pl-build-tools-release-${PL_BUILD_TOOLS_VER:?"Need to set PL_BUILD_TOOLS_VER"}.el6.noarch.rpm
+    rpm -ivh http://ftp.tu-chemnitz.de/pub/linux/dag/redhat/el6/en/x86_64/rpmforge/RPMS/rpmforge-release-${RPMFORGE_RELEASE_VER:?"Need to set RPMFORGE_RELEASE_VER"}.el6.rf.x86_64.rpm
     yum -y install git puppet-agent pl-boost pl-cmake pl-yaml-cpp pl-gcc \
         zlib-static libselinux-static readline-static ncurses-static \
         upx bison
@@ -69,7 +77,7 @@ EOF
 git clone https://github.com/puppetlabs/leatherman
 mkdir -p leatherman/build
 cd leatherman/build
-git checkout -q 0.10.1
+git checkout -q ${LEATHERMAN_VER:?"Need to set LEATHERMAN_VER"}
 $CMAKE -DBOOST_STATIC=$STATIC ..
 make all install
 make clean
