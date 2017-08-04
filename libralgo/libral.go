@@ -180,7 +180,7 @@ func getResourcesRaw(typeName string) (string, error) {
 
 	ok := C.get_resources(&resultC, typeNameC)
 	if ok != 0 {
-		return "", fmt.Errorf("Error thrown calling get_all_resources: %d", ok)
+		return "", fmt.Errorf("Error thrown calling get_resources: %d", ok)
 	}
 	result := C.GoString(resultC)
 	return result, nil
@@ -215,7 +215,7 @@ func getResourceRaw(typeName, resourceName string) (string, error) {
 
 	ok := C.get_resource(&resultC, typeNameC, resourceNameC)
 	if ok != 0 {
-		return "", fmt.Errorf("Error thrown calling get_all_resources: %d", ok)
+		return "", fmt.Errorf("Error thrown calling get_resource: %d", ok)
 	}
 	result := C.GoString(resultC)
 	return result, nil
