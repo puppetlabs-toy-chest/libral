@@ -192,8 +192,7 @@ You can build the example client (`examples/go/listproviders.go`) as follows:
 ```bash
     git clone https://github.com/puppetlabs/libral
     cd libral/contrib/docker
-    docker build -t libral-build -f Dockerfile.el6-build-static .
-    docker build -t libral-build-go -f Dockerfile.el6-build-static-go .
+    make el6-build-static-go
     cd ../../
     docker run --rm -it -v ${PWD}:/usr/src/libral libral-build-go
 ```
