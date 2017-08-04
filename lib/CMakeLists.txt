@@ -30,6 +30,7 @@ link_directories(
 
 set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/ral.cc"
+  "src/cwrapper.cc"
   "src/type.cc" "src/mount.cc" "src/provider.cc"
   "src/simple_provider.cc" "src/json_provider.cc"
   "src/user.cc" "src/group.cc" "src/value.cc" "src/file.cc" "src/host.cc"
@@ -38,10 +39,6 @@ set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/environment.cc"
   "src/emitter/puppet_emitter.cc"
   "src/emitter/json_emitter.cc")
-
-if (BUILD_GO)
-  list(APPEND PROJECT_SOURCES "src/cwrapper.cc")
-endif (BUILD_GO)
 
 ## An object target is generated that can be used by both the library and test executable targets.
 ## Without the intermediate target, unexported symbols can't be tested.

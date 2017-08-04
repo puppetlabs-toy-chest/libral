@@ -1,4 +1,4 @@
-package libral
+package libralgo
 
 import "testing"
 

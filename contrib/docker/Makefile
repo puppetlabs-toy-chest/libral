@@ -9,6 +9,9 @@ f25:
 el6-build-static:
 	docker build -f Dockerfile.el6-build-static -t libral/el6-build-static .
 
+el6-build-static-go: el6-build-static
+	docker build -f Dockerfile.el6-build-static-go -t libral/el6-build-static-go .
+
 clean:
 	@C="$$(docker ps -a -q -f status=exited)"; \
 	[ -n "$$C" ] && docker rm $$C || : ; \

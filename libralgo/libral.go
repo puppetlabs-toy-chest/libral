@@ -1,7 +1,9 @@
-package libral
+// +build linux,cgo
+
+package libralgo
 
 /*
-#cgo LDFLAGS: -fPIC -L/opt/puppetlabs/puppet/lib/ -lral -l:leatherman_json_container.a -l:leatherman_execution.a -l:leatherman_logging.a -l:leatherman_locale.a -l:leatherman_util.a -l:leatherman_file_util.a -laugeas -L /opt/pl-build-tools/lib/ -l:libboost_locale.a -l:libboost_system.a -l:libboost_log.a -l:libboost_log_setup.a -l:libboost_thread.a -l:libboost_date_time.a -l:libboost_filesystem.a -l:libboost_chrono.a -l:libboost_regex.a  -l:libboost_program_options.a -lyaml-cpp -lrt -lxml2 -lz -lfa -lselinux -lstdc++ -lm
+#cgo LDFLAGS: -fPIC -Wl,-Bstatic -L/opt/puppetlabs/puppet/lib/ -lral -l:leatherman_json_container.a -l:leatherman_execution.a -l:leatherman_logging.a -l:leatherman_locale.a -l:leatherman_util.a -l:leatherman_file_util.a -laugeas -lfa -L /opt/pl-build-tools/lib/ -l:libboost_locale.a -l:libboost_system.a -l:libboost_log.a -l:libboost_log_setup.a -l:libboost_thread.a -l:libboost_date_time.a -l:libboost_filesystem.a -l:libboost_chrono.a -l:libboost_regex.a -l:libboost_program_options.a -lyaml-cpp -lxml2 -lz -lselinux -lstdc++ -Wl,-Bdynamic -lrt -lm
 #cgo CFLAGS: -I${SRCDIR}/../lib/inc
 
 #include "libral/cwrapper.hpp"
@@ -12,8 +14,9 @@ import "C"
 import (
 	"encoding/json"
 	"fmt"
-	"libral/types"
 	"unsafe"
+
+	"github.com/puppetlabs/libral/libralgo/types"
 )
 
 // GetProviders returns the resource providers available to libral.
@@ -177,7 +180,7 @@ func getResourcesRaw(typeName string) (string, error) {
 
 	ok := C.get_resources(&resultC, typeNameC)
 	if ok != 0 {
-		return "", fmt.Errorf("Error thrown calling get_all_resources: %d", ok)
+		return "", fmt.Errorf("Error thrown calling get_resources: %d", ok)
 	}
 	result := C.GoString(resultC)
 	return result, nil
@@ -212,7 +215,7 @@ func getResourceRaw(typeName, resourceName string) (string, error) {
 
 	ok := C.get_resource(&resultC, typeNameC, resourceNameC)
 	if ok != 0 {
-		return "", fmt.Errorf("Error thrown calling get_all_resources: %d", ok)
+		return "", fmt.Errorf("Error thrown calling get_resource: %d", ok)
 	}
 	result := C.GoString(resultC)
 	return result, nil
