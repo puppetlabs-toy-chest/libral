@@ -174,6 +174,8 @@ Again, following the same instructions as Linux.
 
 ## Go Package
 
+[![Go Docs Reference](https://godoc.org/github.com/puppetlabs/libral/libralgo?status.svg)](http://godoc.org/github.com/puppetlabs/libral/libralgo) [![Go Report Card](https://goreportcard.com/badge/github.com/puppetlabs/libral)](https://goreportcard.com/report/github.com/puppetlabs/libral)
+
 The `github.com/puppetlabs/libral/libralgo` package provides a initial Go binding
 to the native libral C++ library, it binds to methods exposed by the `cwrapper.cc`
 'C' interface.
