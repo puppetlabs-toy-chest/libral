@@ -80,15 +80,20 @@ def do_get(inp):
 
     present = [pkg_as_json(pkg) for pkg in q.installed().latest()]
     present_names = [ pkg["name"] for pkg in present ]
-    # We need to build absent packages as a dict to avoid duplicates caused
-    # by differences in arch
-    # FIXME: strictly speaking, we also need to do that for present
-    absent = {}
-    for pkg in q.available().latest():
-        if pkg.name not in present_names:
-            absent[pkg.name] = { "name": pkg.name, "ensure": "absent" }
 
-    return { "resources": present + absent.values() }
+    result = { "resources": present }
+
+    if len(names) > 0:
+        # We need to build absent packages as a dict to avoid duplicates caused
+        # by differences in arch
+        # FIXME: strictly speaking, we also need to do that for present
+        absent = {}
+        for pkg in q.available().latest():
+            if pkg.name not in present_names:
+                absent[pkg.name] = { "name": pkg.name, "ensure": "absent" }
+        result["resources"] += list(absent.values())
+
+    return result
 
 def do_set(inp):
     if not util.am_i_root():
