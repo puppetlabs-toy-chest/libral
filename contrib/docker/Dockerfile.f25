@@ -15,7 +15,7 @@ FROM fedora:25
 
 # Install build tools and libraries
 RUN dnf update -y && \
-    dnf install -y git gcc-c++ cmake make gettext boost-devel curl-devel yaml-cpp-devel augeas-devel
+    dnf install -y git gcc-c++ cmake make gettext boost-devel curl-devel yaml-cpp-devel augeas-devel ruby rake bison
 
 # Build Leatherman
 RUN git -C /usr/src clone https://github.com/puppetlabs/leatherman && \
