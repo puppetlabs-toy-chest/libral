@@ -12,5 +12,6 @@ RUN apt-get update && \
 ENV PATH=/usr/src/ral/bin:$PATH
 
 COPY apt_libral /etc/puppetlabs/code/modules/apt_libral
+COPY puppet.prov /usr/src/ral/data/providers
 
 CMD ["resource", "apt_libral"] 
