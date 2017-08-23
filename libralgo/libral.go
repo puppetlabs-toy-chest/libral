@@ -54,7 +54,6 @@ func GetResources(typeName string) ([]types.Resource, error) {
 		if err := json.Unmarshal([]byte(rawResource), &resource); err != nil {
 			return nil, fmt.Errorf("Error unmarshalling resource JSON: %v", err)
 		}
-		resource.Raw = rawResource
 		var attributes map[string]interface{}
 		if err := json.Unmarshal([]byte(rawResource), &attributes); err != nil {
 			return nil, fmt.Errorf("Error unmarshalling resource attributes JSON: %v", err)
@@ -88,7 +87,6 @@ func GetResource(typeName, resourceName string) (types.Resource, error) {
 	if err := json.Unmarshal([]byte(resourceResult.Resource), &result); err != nil {
 		return types.Resource{}, fmt.Errorf("Error unmarshalling resource details JSON: %v", err)
 	}
-	result.Raw = resourceResult.Resource
 	var attributes map[string]interface{}
 	if err := json.Unmarshal([]byte(resourceResult.Resource), &attributes); err != nil {
 		return types.Resource{}, fmt.Errorf("Error unmarshalling resource attributes JSON: %v", err)
@@ -100,6 +98,51 @@ func GetResource(typeName, resourceName string) (types.Resource, error) {
 	result.Attributes = attributes
 
 	return result, nil
+}
+
+// SetResource alters the state of the resource (creating it if appropriate) specified by the
+// typeName and resourceName, setting attributes to those supplied in the desiredAttributes
+// map (where the key is the attribute name, and value the desired value of that attribute).
+//
+// Multiple attributes can be set in a single SetResource call adding additional entries to
+// the desiredAttributes map.
+//
+// On successful setting of the desired attributes the current state of the resource is returned
+// along with a slice of Change types (one for each attribute being set - showing the attribute
+// name, previous value and updated value).
+func SetResource(typeName, resourceName string, desiredAttributes map[string]string) (types.Resource, error) {
+	rawResource, err := setResourceRaw(typeName, resourceName, desiredAttributes)
+	if err != nil {
+		return types.Resource{}, err
+	}
+
+	var resourceResult types.ResourceResult
+	if err := json.Unmarshal([]byte(rawResource), &resourceResult); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling set resource JSON: %v", err)
+	}
+
+	var resource types.Resource
+	if err := json.Unmarshal([]byte(resourceResult.Resource), &resource); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling set resource details JSON: %v", err)
+	}
+
+	var attributes map[string]interface{}
+	if err := json.Unmarshal([]byte(resourceResult.Resource), &attributes); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling set resource attributes JSON: %v", err)
+	}
+	_, ok := attributes["ral"]
+	if ok {
+		delete(attributes, "ral")
+	}
+	resource.Attributes = attributes
+
+	var changes []types.Change
+	if err := json.Unmarshal([]byte(resourceResult.Changes), &changes); err != nil {
+		return types.Resource{}, fmt.Errorf("Error unmarshalling set change JSON: %v", err)
+	}
+	resource.Changes = changes
+
+	return resource, nil
 }
 
 // getProvidersRaw returns a JSON string containing a list of providers known to libral.
@@ -216,6 +259,57 @@ func getResourceRaw(typeName, resourceName string) (string, error) {
 	ok := C.get_resource(&resultC, typeNameC, resourceNameC)
 	if ok != 0 {
 		return "", fmt.Errorf("Error thrown calling get_resource: %d", ok)
+	}
+	result := C.GoString(resultC)
+	return result, nil
+}
+
+// setResourceRaw returns a JSON string containing the current state of the resource which
+// has had its attributes set, along with a a list of changes describing the before (was)
+// and after (is) state of each changed attribute.
+//
+// For example, setting ensure=present on the httpd package resource:
+//
+// 	 {
+// 	     "resource": {
+// 	         "name": "httpd",
+// 	         "ensure": "0:2.2.15-60.el6.centos.5",
+// 	         "ral": {
+// 	             "type": "package",
+// 	             "provider": "package::yum"
+// 	         }
+// 	     },
+// 	     "changes": [
+// 	         {
+// 	             "attr": "ensure",
+// 	             "is": "0:2.2.15-60.el6.centos.5",
+// 	             "was": "absent"
+// 	         }
+// 	     ]
+// 	 }
+func setResourceRaw(typeName, resourceName string, desiredAttributes map[string]string) (string, error) {
+	var resultC *C.char
+	defer C.free(unsafe.Pointer(resultC))
+	typeNameC := C.CString(typeName)
+	defer C.free(unsafe.Pointer(typeNameC))
+	resourceNameC := C.CString(resourceName)
+	defer C.free(unsafe.Pointer(resourceNameC))
+	cArray := C.malloc(C.size_t(len(desiredAttributes)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(unsafe.Pointer(cArray))
+
+	a := (*[1<<30 - 1]*C.char)(cArray)
+	idx := 0
+	for k, v := range desiredAttributes {
+		attrStrC := C.CString(fmt.Sprintf("%s=%s", k, v))
+		defer C.free(unsafe.Pointer(attrStrC))
+		a[idx] = attrStrC
+		idx++
+	}
+	desiredAttributesC := (**C.char)(cArray)
+
+	ok := C.set_resource(&resultC, typeNameC, resourceNameC, C.int(len(desiredAttributes)), desiredAttributesC)
+	if ok != 0 {
+		return "", fmt.Errorf("Error thrown calling set_resource: %d, %s", ok, C.GoString(resultC))
 	}
 	result := C.GoString(resultC)
 	return result, nil
