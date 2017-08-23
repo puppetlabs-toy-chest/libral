@@ -6,8 +6,10 @@
 #include <libral/cwrapper.hpp>
 #include <libral/ral.hpp>
 #include <libral/emitter/json_emitter.hpp>
+#include <leatherman/locale/locale.hpp>
 
 namespace lib = libral;
+using namespace leatherman::locale;
 
 /* TODO in GOLand:
  *
@@ -49,8 +51,11 @@ uint8_t get_resources(char **result, char *type_name) {
     auto ral = lib::ral::create(data_dirs);
     auto opt_type = ral->find_type(std::string(type_name));
 
-    if (!opt_type)
+    if (!opt_type) {
+        std::string error_msg = _("Provider {1} not found", std::string(type_name));
+        str_to_cstr(error_msg, result);
         return EXIT_FAILURE;
+    }
 
     auto resource_instances = (*opt_type)->instances();
     lib::json_emitter em {};
@@ -65,8 +70,11 @@ uint8_t get_resource(char **result, char *type_name, char *resource_name) {
     auto ral = lib::ral::create(data_dirs);
     auto opt_type = ral->find_type(std::string(type_name));
 
-    if (!opt_type)
+    if (!opt_type) {
+        std::string error_msg = _("Provider {1} not found", std::string(type_name));
+        str_to_cstr(error_msg, result);
         return EXIT_FAILURE;
+    }
 
     auto inst = (*opt_type)->find(std::string(resource_name));
     lib::json_emitter em {};
@@ -74,5 +82,50 @@ uint8_t get_resource(char **result, char *type_name, char *resource_name) {
     auto resource = em.parse_find(**opt_type, inst);
     str_to_cstr(resource, result);
 
+    return EXIT_SUCCESS;
+}
+
+uint8_t set_resource(char **result, char *type_name, char *resource_name, int desired_attributes_c, char **desired_attributes) {
+    std::vector<std::string> data_dirs;
+    auto ral = lib::ral::create(data_dirs);
+    auto opt_type = ral->find_type(std::string(type_name));
+
+    if (!opt_type) {
+        std::string error_msg = _("Provider {1} not found", std::string(type_name));
+        str_to_cstr(error_msg, result);
+        return EXIT_FAILURE;
+    }
+
+    if (desired_attributes_c < 1) {
+        str_to_cstr("Number of desired attributes must be > 0", result);
+        return EXIT_FAILURE;
+    }
+    
+    std::vector<std::string> av(desired_attributes, desired_attributes + desired_attributes_c);
+
+    auto& type = *opt_type;
+    lib::resource should = type->prov().create(std::string(resource_name));
+
+    for (const auto& arg : av) {
+        auto found = arg.find("=");
+        if (found != std::string::npos) {
+            auto attr = arg.substr(0, found);
+            auto value = type->parse(attr, arg.substr(found+1));
+            if (value) {
+                should[attr] = value.ok();
+            } else {
+                std::string error_msg = _("Failed to read attribute {1}, resource_name: {2}, error: {3}", attr, std::string(type_name), value.err().detail);
+                str_to_cstr(error_msg, result);
+                return EXIT_FAILURE;
+            }
+        }
+    }
+
+    lib::json_emitter em {};
+
+    auto res = type->set(should);
+    auto setres = em.parse_set(**opt_type, res);
+    
+    str_to_cstr(setres, result);
     return EXIT_SUCCESS;
 }

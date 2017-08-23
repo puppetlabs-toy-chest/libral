@@ -32,12 +32,21 @@ type Provider struct {
 //
 //  - RAL provider which exposed the resource
 //  - Attributes map of attributes exposed by the provider
-//  - Raw JSON representation of the resource as a []byte
+//  - Changes list of changes in response to a set, omitted if empty
 type Resource struct {
 	Name       string                 `json:"name"`
 	RAL        RAL                    `json:"ral"`
 	Attributes map[string]interface{} `json:"attributes"`
-	Raw        []byte                 `json:"raw"`
+	Changes    []Change               `json:"changes,omitempty"`
+}
+
+// Change describes how an attributed has changed after invoking
+// SetResource, showing the attributes value both before (`was`),
+// and after (`is`) the set has completed successfully.
+type Change struct {
+	Attribute string `json:"attr"`
+	Is        string `json:"is"`
+	Was       string `json:"was"`
 }
 
 // ProvidersResult represents a result from a get_providers call
@@ -53,4 +62,5 @@ type ResourcesResult struct {
 // ResourceResult represents a result from a get_resource call
 type ResourceResult struct {
 	Resource json.RawMessage `json:"resource"`
+	Changes  json.RawMessage `json:"changes,omitempty"`
 }
