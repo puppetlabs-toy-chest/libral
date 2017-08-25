@@ -79,8 +79,8 @@ fi
 
 # Add a wrapper to make sure we run with the right setup
 cat > ral/bin/ralsh <<'EOF'
-#! /bin/bash
-topdir=$(readlink --canonicalize $(dirname $0)/..)
+#! /bin/sh
+topdir=$(readlink -f $(dirname $0)/..)
 export RALSH_DATA_DIR=$topdir/data
 export RALSH_LIBEXEC_DIR=$topdir/bin
 exec $topdir/bin/ralsh.bin "$@"
