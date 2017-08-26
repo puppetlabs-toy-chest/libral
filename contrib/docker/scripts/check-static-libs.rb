@@ -1,4 +1,4 @@
-#! /usr/src/libral/build/bin/mruby
+#! /var/tmp/build/bin/mruby
 
 # Check for a static build that we only link to DSO's that we are ok with;
 # those are the libraries that will be present on any glibc-based system
@@ -8,7 +8,7 @@ ALLOWED=%w(linux-vdso.so.1 librt.so.1 libm.so.6 libpthread.so.0
            libc.so.6 libdl.so.2 /lib64/ld-linux-x86-64.so.2)
 
 # Where to find the binaries to check
-BINDIR="/usr/src/libral/build/bin"
+BINDIR="/var/tmp/build/bin"
 BINARIES=%w(ralsh mirb mruby)
 
 

@@ -3,11 +3,9 @@
 # Do the actual libral build. This assumes that all necessary tools,
 # including leatherman, have been set up already
 
-topdir=$(readlink --canonicalize $(dirname $0)/..)
-
 set -ex
 
-cd $topdir
+cd /usr/src
 
 source build_config.sh
 
@@ -20,14 +18,21 @@ if [ ! -d libral ]; then
     echo "Cloning libral"
     git clone https://github.com/puppetlabs/libral
 else
+    # When we build in containers in Travis, we use the checkout that
+    # Travis made on the host, and do not check anything out ourselves
     echo "Building from existing libral directory"
 fi
 
-rm -rf libral/build
-mkdir libral/build
-cd libral/build
+cd libral
+echo "Building commit $(git rev-parse HEAD)"
+src_dir=$(pwd)
 
-$CMAKE -DLIBRAL_STATIC=$STATIC ..
+cd /var/tmp
+rm -rf build
+mkdir build
+
+cd build
+$CMAKE -DLIBRAL_STATIC=$STATIC $src_dir
 
 make all test install
 
@@ -35,5 +40,5 @@ make all test install
 
 if [ "$STATIC" = "ON" ]
 then
-    $topdir/scripts/check-static-libs.rb
+    /usr/src/libral/contrib/docker/scripts/check-static-libs.rb
 fi

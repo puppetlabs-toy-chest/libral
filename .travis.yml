@@ -5,7 +5,7 @@ services:
 
 script:
   - docker pull $TARGET
-  - docker run -e 'MAKEFLAGS=-j2' $TARGET
+  - docker run -e 'MAKEFLAGS=-j2' -v "$TRAVIS_BUILD_DIR:/usr/src/libral" $TARGET /bin/bash /usr/src/libral/contrib/docker/scripts/build.sh
 
 env:
   matrix:
