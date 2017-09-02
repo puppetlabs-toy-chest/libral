@@ -9,36 +9,6 @@ die() {
 }
 
 # A provider for managing packages with apt tools
-is_suitable() {
-    type -p dpkg apt-get apt-cache > /dev/null && return 0 || return 1
-}
-
-describe() {
-    local suitable
-    is_suitable && suitable=true || suitable=false
-    cat <<EOF
----
-provider:
-  type: package
-  invoke: simple
-  actions: [list, find]
-  suitable: ${suitable}
-  attributes:
-    name:
-      desc: the name of the package
-    ensure:
-      desc: what state the package should be in
-      # Our type system is not strong enough to be more precise. ensure is
-      # either one of enum[present,installed,absent,purged,held,latest] or
-      # a version number (so string might be as tightly as this can be
-      # typed anyway
-      type: string
-    platform:
-      desc: the platform (architecture) for which the package was built
-      kind: r
-EOF
-}
-
 list() {
     echo '# simple'
     dpkg -l | awk '$1 ~ /ii/ { printf "name: %s\nensure: %s\nplatform: %s\n",$2,$3,$4}'
@@ -91,7 +61,6 @@ in
     list) list;;
     find) find;;
     update) update;;
-    describe) describe;;
     *)
         die "Unknown action: $ral_action"
 esac

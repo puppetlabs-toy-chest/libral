@@ -14,7 +14,8 @@ provider:
   type: package
   invoke: json
   actions: [set, get]
-  suitable: {suitable}
+  suitable:
+    commands: [dnf]
   attributes:
     name:
       desc: the name of the package

@@ -16,26 +16,6 @@ die() {
     exit 0
 }
 
-describe() {
-    type -p systemctl > /dev/null && suitable=true || suitable=false
-
-    cat <<EOF
----
-provider:
-  type: service
-  invoke: simple
-  actions: [list,find,update]
-  suitable: ${suitable}
-  attributes:
-    name:
-      type: string
-    ensure:
-      type: enum[running, stopped]
-    enable:
-      type: enum[true, false, mask]
-EOF
-}
-
 list() {
     echo '# simple'
     # This looks super-hairy, but is actually quite simple:
@@ -176,7 +156,6 @@ in
     list) list;;
     find) find;;
     update) update;;
-    describe) describe;;
     *)
         die "Unknown action: $ral_action"
 esac
