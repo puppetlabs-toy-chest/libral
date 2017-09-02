@@ -34,7 +34,7 @@ namespace libral {
                           const std::string& desc,
                           boost::optional<bool> suitable) {
 
-    auto spec = prov::spec::read(name, desc);
+    auto spec = prov::spec::read(*this, name, desc);
     err_ret(spec);
 
     if (suitable)
@@ -44,6 +44,6 @@ namespace libral {
 
   result<prov::spec>
   environment::parse_spec(const std::string& name, const YAML::Node &node) {
-    return prov::spec::read(name, node);
+    return prov::spec::read(*this, name, node);
   }
 }

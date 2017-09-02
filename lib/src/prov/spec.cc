@@ -2,6 +2,8 @@
 
 #include <leatherman/logging/logging.hpp>
 
+#include <libral/environment.hpp>
+
 using namespace leatherman::locale;
 
 namespace libral { namespace prov {
@@ -22,7 +24,8 @@ namespace libral { namespace prov {
     }
   }
 
-  result<spec> spec::read(const std::string& prov_name,
+  result<spec> spec::read(const environment& env,
+                          const std::string& prov_name,
                           const YAML::Node &node) {
     attr_spec_map attr_specs;
 
@@ -70,15 +73,14 @@ namespace libral { namespace prov {
     }
 
     spec spec(name, type, desc, std::move(attr_specs));
-    auto s = prov_node["suitable"].as<std::string>("false");
-    if (s != "true" && s != "false") {
-      return error(_("provider {1} (simple): metadata 'suitable' must be either 'true' or 'false' but was '{2}'", prov_name, s));
-    }
-    spec.suitable(s == "true");
+    auto suitable = read_suitable(env, prov_node["suitable"], prov_name);
+    err_ret(suitable);
+    spec.suitable(*suitable);
     return spec;
   }
 
-  result<spec> spec::read(const std::string& name,
+  result<spec> spec::read(const environment &env,
+                          const std::string& name,
                           const std::string &yaml) {
     YAML::Node node;
     try {
@@ -96,7 +98,7 @@ namespace libral { namespace prov {
       return error(_("provider[{1}]: metadata must be a map but isn't",
                      name));
     }
-    return spec::read(name, node);
+    return spec::read(env, name, node);
   }
 
   std::string
@@ -104,4 +106,37 @@ namespace libral { namespace prov {
     return type + "::" + name;
   }
 
+  result<bool>
+  spec::read_suitable(const environment&env,
+                      const YAML::Node& node, const std::string& prov_name) {
+    if (! node.IsDefined()) {
+      // Treat missing 'suitable:' entries as false
+      return false;
+    } else if (node.IsScalar()) {
+      auto s = node.as<std::string>("false");
+      if (s != "true" && s != "false") {
+        return error(_("provider {1}: metadata 'suitable' must be either 'true' or 'false' but was '{2}'", prov_name, s));
+      }
+      return (s == "true");
+    } else if (node.IsMap()) {
+      auto cmds = node["commands"];
+      if (cmds.IsSequence()) {
+        for (const auto& it : cmds) {
+          if (! it.IsScalar()) {
+            return error(_("provider {1}: the entries in 'suitable.commands' must all be strings", prov_name));
+          }
+          auto cmd = it.as<std::string>();
+          if (env.which(cmd).empty()) {
+            return false;
+          }
+        }
+        return true;
+      } else {
+        return error(_("provider {1}: metadata 'suitable.commands' must be an array of strings", prov_name));
+      }
+    } else {
+      return error(_("provider {1}: illegal format for 'suitable' metadata",
+                     prov_name));
+    }
+  }
 } }
