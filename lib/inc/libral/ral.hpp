@@ -45,7 +45,9 @@ namespace libral {
                        std::shared_ptr<provider>& prov);
     result<YAML::Node> parse_metadata(const std::string& path,
                                       const std::string& yaml) const;
+    result<std::string> get_metadata(command& cmd, const std::string& path) const;
     result<std::string> run_describe(command& cmd) const;
+
     std::vector<std::string> _data_dirs;
     target::sptr _target;
   };

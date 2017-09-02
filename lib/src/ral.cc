@@ -130,7 +130,8 @@ namespace libral {
     // Find external providers
     auto cb = [&result,&env,this](std::string const &path) {
       auto cmd = env.script(path);
-      auto res = run_describe(*cmd);
+      auto res = get_metadata(*cmd, path);
+
       if (! res) {
         LOG_WARNING("provider[{1}]: {2}", path, res.err().detail);
         return true;
@@ -236,6 +237,23 @@ namespace libral {
       return error(_("metadata must have toplevel 'provider' key containing a map"));
     }
     return node;
+  }
+
+  result<std::string> ral::get_metadata(command& cmd,
+                                        const std::string& path) const {
+    std::string yaml(path);
+    size_t pos = path.length() - strlen(".prov");
+    yaml.replace(pos, std::string::npos, ".yaml");
+
+    if (access(yaml.c_str(), R_OK) == 0) {
+      // External metadata
+      std::ifstream file(yaml);
+      std::ostringstream buf;
+      buf << file.rdbuf();
+      return buf.str();
+    } else {
+      return run_describe(cmd);
+    }
   }
 
   result<std::string> ral::run_describe(command& cmd) const {
