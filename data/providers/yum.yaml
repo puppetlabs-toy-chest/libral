@@ -1,0 +1,20 @@
+---
+provider:
+  type: package
+  invoke: json
+  actions: [set, get]
+  suitable:
+    commands: [yum, not dnf]
+  attributes:
+    name:
+      desc: the name of the package
+    ensure:
+      desc: what state the package should be in
+      # Our type system is not strong enough to be more precise. ensure is
+      # either one of enum[present,installed,absent,purged,held,latest] or
+      # a version number (so string might be as tightly as this can be
+      # typed anyway
+      type: string
+    platform:
+      desc: the platform (architecture) for which the package was built
+      kind: r
