@@ -109,6 +109,8 @@ namespace libral { namespace prov {
   result<bool>
   spec::read_suitable(const environment&env,
                       const YAML::Node& node, const std::string& prov_name) {
+    static const std::string op_not = "not ";
+
     if (! node.IsDefined()) {
       // Treat missing 'suitable:' entries as false
       return false;
@@ -121,13 +123,22 @@ namespace libral { namespace prov {
     } else if (node.IsMap()) {
       auto cmds = node["commands"];
       if (cmds.IsSequence()) {
-        for (const auto& it : cmds) {
-          if (! it.IsScalar()) {
+        for (auto it = cmds.begin(); it != cmds.end(); it++) {
+          if (! it->IsScalar()) {
             return error(_("provider {1}: the entries in 'suitable.commands' must all be strings", prov_name));
           }
-          auto cmd = it.as<std::string>();
-          if (env.which(cmd).empty()) {
-            return false;
+          auto cmd = it->as<std::string>();
+          size_t pos = 0;
+          if (cmd.find(op_not) == 0) {
+            // check that command is not there
+            pos = cmd.find_first_not_of(" \t\n", op_not.length());
+            if (!env.which(cmd.substr(pos)).empty()) {
+              return false;
+            }
+          } else {
+            if (env.which(cmd).empty()) {
+              return false;
+            }
           }
         }
         return true;
