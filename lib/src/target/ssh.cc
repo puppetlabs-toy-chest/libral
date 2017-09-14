@@ -27,19 +27,7 @@ namespace libral {
   }
 
   result<std::shared_ptr<augeas::handle>>
-  ssh::augeas(const std::vector<std::string>& data_dirs,
-              const std::vector<std::pair<std::string, std::string>>& xfms) {
-
-    std::stringstream buf;
-    bool first=true;
-
-    for (auto dir : data_dirs) {
-      if (!first)
-        buf << ":";
-      first=false;
-      buf << dir << "/lenses";
-    }
-
+  ssh::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
     auto reader = [xfms, this](::augeas* aug) {
       for (auto& xfm : xfms) {
         auto res = read(xfm.second);
@@ -81,7 +69,7 @@ namespace libral {
       }
     };
 
-    auto aug = aug::handle::make(buf.str(), reader, writer);
+    auto aug = aug::handle::make(reader, writer);
     err_ret( aug->load() );
 
     return aug;

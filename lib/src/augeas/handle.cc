@@ -10,8 +10,7 @@ using namespace leatherman::locale;
 
 namespace libral { namespace augeas {
 
-  handle::handle(const std::string& loadpath,
-         const callback& reader, const callback &writer)
+  handle::handle(const callback& reader, const callback &writer)
     : _reader(reader), _writer(writer) {
     // We do not report errors from aug_init. That's bad. Very bad.
 
@@ -19,7 +18,7 @@ namespace libral { namespace augeas {
     // write ourselves with aug_load or aug_save
     const char *root = (_reader != nullptr || _writer != nullptr)
       ? "/dev/null" : NULL;
-    _augeas = aug_init(root, loadpath.c_str(), AUG_NO_MODL_AUTOLOAD);
+    _augeas = aug_init(root, nullptr, AUG_NO_MODL_AUTOLOAD);
 
     // Set up default reader and writer
     if (_reader == nullptr) {

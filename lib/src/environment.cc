@@ -30,7 +30,7 @@ namespace libral {
 
   result<std::shared_ptr<augeas::handle>>
   environment::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
-    return _ral->target()->augeas(data_dirs(), xfms);
+    return _ral->target()->augeas(xfms);
   }
 
   result<prov::spec>

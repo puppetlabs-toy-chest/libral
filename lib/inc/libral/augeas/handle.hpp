@@ -102,15 +102,13 @@ namespace libral { namespace augeas {
      * is none) and that lenses generally expect that newline to be there,
      * and otherwise might fail on non-newline terminated input.
      */
-    static std::shared_ptr<handle> make(const std::string& loadpath,
-                                        const callback& reader = nullptr,
+    static std::shared_ptr<handle> make(const callback& reader = nullptr,
                                         const callback& writer = nullptr) {
-      return std::shared_ptr<handle>(new handle(loadpath, reader, writer));
+      return std::shared_ptr<handle>(new handle(reader, writer));
     }
 
   private:
-    handle(const std::string& loadpath,
-           const callback& reader,
+    handle(const callback& reader,
            const callback &writer);
 
     /* Checks _augeas for errors and return an error if there is one. */

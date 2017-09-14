@@ -32,19 +32,8 @@ namespace libral {
   }
 
   result<std::shared_ptr<augeas::handle>>
-  local::augeas(const std::vector<std::string>& data_dirs,
-                const std::vector<std::pair<std::string, std::string>>& xfms) {
-    std::stringstream buf;
-    bool first=true;
-
-    for (auto dir : data_dirs) {
-      if (!first)
-        buf << ":";
-      first=false;
-      buf << dir << "/lenses";
-    }
-
-    auto aug = aug::handle::make(buf.str());
+  local::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
+    auto aug = aug::handle::make();
     for (auto& xfm : xfms) {
       err_ret( aug->include(xfm.first, xfm.second) );
     }

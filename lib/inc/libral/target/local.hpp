@@ -13,8 +13,7 @@ namespace libral {
     libral::command::uptr script(const std::string& cmd) override;
 
     result<std::shared_ptr<augeas::handle>>
-    augeas(const std::vector<std::string>& data_dirs,
-           const std::vector<std::pair<std::string, std::string>>& xfms) override;
+    augeas(const std::vector<std::pair<std::string, std::string>>& xfms) override;
 
     bool executable(const std::string& file) override;
 

@@ -41,8 +41,7 @@ namespace libral {
      * file. Note that globs in filenames are currently not supported.
      */
     virtual result<std::shared_ptr<augeas::handle>>
-    augeas(const std::vector<std::string>& data_dirs,
-           const std::vector<std::pair<std::string, std::string>>& xfms) = 0;
+    augeas(const std::vector<std::pair<std::string, std::string>>& xfms) = 0;
 
     /**
      * Returns true if file is executable
