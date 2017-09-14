@@ -17,7 +17,7 @@ MRuby::Build.new do |conf|
   enable_debug
 
   # the gembox path is relative to core/mrbgems
-  conf.gembox '../../libral'
+  conf.gembox "#{Libral::SOURCE_DIR}/mruby/libral"
 
   libral_configure_toolchain(conf)
 

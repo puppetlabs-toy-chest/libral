@@ -46,10 +46,10 @@ MRuby::GemBox.new do |conf|
   conf.gem :core => "mruby-object-ext"
 
   # Use ObjectSpace class
-  # conf.gem :core => "mruby-objectspace"
+  conf.gem :core => "mruby-objectspace"
 
   # Use Fiber class
-  # conf.gem :core => "mruby-fiber"
+  conf.gem :core => "mruby-fiber"
 
   # Use Enumerator class (require mruby-fiber)
   conf.gem :core => "mruby-enumerator"
@@ -77,6 +77,9 @@ MRuby::GemBox.new do |conf|
   # Use Kernel module extension
   conf.gem :core => "mruby-kernel-ext"
 
+  # Use class/module extension
+  conf.gem :core => "mruby-class-ext"
+
   # Use mruby-compiler to build other mrbgems
   conf.gem :core => "mruby-compiler"
 
@@ -92,8 +95,9 @@ MRuby::GemBox.new do |conf|
   end
 
   # Libral-specific special sauce
-  conf.gem "#{MRUBY_ROOT}/../mruby-libral"
+  conf.gem "#{Libral::SOURCE_DIR}/mruby/mruby-libral"
 
   # Any GEM after this one will be built as a DSO
-  conf.gem :github => 'mattn/mruby-require'
+  # busted with 1.3.0
+  #conf.gem :github => 'mattn/mruby-require'
 end
