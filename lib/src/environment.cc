@@ -16,18 +16,7 @@ namespace libral {
 
   result<std::shared_ptr<augeas::handle>>
   environment::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
-
-    std::stringstream buf;
-    bool first=true;
-
-    for (auto dir : data_dirs()) {
-      if (!first)
-        buf << ":";
-      first=false;
-      buf << dir << "/lenses";
-    }
-
-    auto aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
+    auto aug = aug::handle::make(AUG_NO_MODL_AUTOLOAD);
     for (auto& xfm : xfms) {
       err_ret( aug->include(xfm.first, xfm.second) );
     }
