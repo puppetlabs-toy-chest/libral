@@ -111,6 +111,9 @@ MRuby::GemBox.new do |conf|
   # Onigmo regular expressions
   conf.gem :github => 'mattn/mruby-onig-regexp'
 
+  # ENV access
+  conf.gem :github => 'iij/mruby-env'
+
   # Bindings to augeas
   conf.gem :github => "hercules-team/mruby-augeas" do |g|
     libral_configure_mruby_augeas(g)
