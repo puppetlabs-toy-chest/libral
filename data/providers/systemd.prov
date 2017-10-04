@@ -71,7 +71,11 @@ find_state() {
     [ -z "$name" ] && die "find: missing a name"
 
     # See if we even have a unit file
-    out=$(systemctl list-unit-files -t service --no-pager --no-legend | egrep "${name}.service")
+    # Systemd versions around 208 (shipped with RHEL 7 GA) do not accept a
+    # pattern argument for list-unit-files so that we have to resort to grepping
+    # the full list (see issue #60)
+    out=$(systemctl list-unit-files -t service --no-pager --no-legend \
+              | egrep "${name}.service")
 
     if [ -n "$out" ]
     then
