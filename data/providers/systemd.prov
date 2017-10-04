@@ -71,7 +71,7 @@ find_state() {
     [ -z "$name" ] && die "find: missing a name"
 
     # See if we even have a unit file
-    out=$(systemctl list-unit-files -t service --no-pager --no-legend "${name}.service")
+    out=$(systemctl list-unit-files -t service --no-pager --no-legend | egrep "${name}.service")
 
     if [ -n "$out" ]
     then
