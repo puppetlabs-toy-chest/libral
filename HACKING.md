@@ -198,7 +198,7 @@ You can build the example client (`examples/go/listproviders.go`) as follows:
     cd libral/contrib/docker
     make el6-build-static-go
     cd ../../
-    docker run --rm -it -v ${PWD}:/usr/src/libral libral-build-go
+    docker run --rm -it -v ${PWD}:/usr/src/libral libral/el6-build-static-go
 ```
 
 This will place the built binary and a packaged archive (based on `statpack`) in the
