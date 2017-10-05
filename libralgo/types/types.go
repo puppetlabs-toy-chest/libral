@@ -59,6 +59,11 @@ type ResourcesResult struct {
 	Resources []json.RawMessage `json:"resources"`
 }
 
+// SetResourceResult represents a result from a set_resource call
+type SetResourceResult struct {
+	Result []json.RawMessage `json:"result"`
+}
+
 // ResourceResult represents a result from a get_resource call
 type ResourceResult struct {
 	Resource json.RawMessage `json:"resource"`

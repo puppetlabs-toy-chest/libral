@@ -116,19 +116,32 @@ func SetResource(typeName, resourceName string, desiredAttributes map[string]str
 		return types.Resource{}, err
 	}
 
+	var setResourceResult types.SetResourceResult
+	if err := json.Unmarshal([]byte(rawResource), &setResourceResult); err != nil {
+		return types.Resource{}, fmt.Errorf("Unable to unmarshal set resource result, error: %v, JSON: %+v", err, rawResource)
+	}
+
+	if len(setResourceResult.Result) == 0 {
+		return types.Resource{}, fmt.Errorf("No resource extracted from set resource result, JSON: %+v", rawResource)
+	}
+
+	if len(setResourceResult.Result) > 1 {
+		return types.Resource{}, fmt.Errorf("Multiple resources extracted from set resource result, JSON: %+v", rawResource)
+	}
+
 	var resourceResult types.ResourceResult
-	if err := json.Unmarshal([]byte(rawResource), &resourceResult); err != nil {
-		return types.Resource{}, fmt.Errorf("Error unmarshalling set resource JSON: %v", err)
+	if err := json.Unmarshal([]byte(setResourceResult.Result[0]), &resourceResult); err != nil {
+		return types.Resource{}, fmt.Errorf("Unable to unmarshal resource from set resource result, error: %v, JSON: %+v", err, setResourceResult.Result[0])
 	}
 
 	var resource types.Resource
 	if err := json.Unmarshal([]byte(resourceResult.Resource), &resource); err != nil {
-		return types.Resource{}, fmt.Errorf("Error unmarshalling set resource details JSON: %v", err)
+		return types.Resource{}, fmt.Errorf("Unable to unmarshal resource details from set resource result: %v, JSON: %+v", err, resourceResult.Resource)
 	}
 
 	var attributes map[string]interface{}
 	if err := json.Unmarshal([]byte(resourceResult.Resource), &attributes); err != nil {
-		return types.Resource{}, fmt.Errorf("Error unmarshalling set resource attributes JSON: %v", err)
+		return types.Resource{}, fmt.Errorf("Unable to unmarshal attributes: %v, JSON: %+v", err)
 	}
 	_, ok := attributes["ral"]
 	if ok {
@@ -270,23 +283,27 @@ func getResourceRaw(typeName, resourceName string) (string, error) {
 //
 // For example, setting ensure=present on the httpd package resource:
 //
-// 	 {
-// 	     "resource": {
-// 	         "name": "httpd",
-// 	         "ensure": "0:2.2.15-60.el6.centos.5",
-// 	         "ral": {
-// 	             "type": "package",
-// 	             "provider": "package::yum"
-// 	         }
-// 	     },
-// 	     "changes": [
-// 	         {
-// 	             "attr": "ensure",
-// 	             "is": "0:2.2.15-60.el6.centos.5",
-// 	             "was": "absent"
-// 	         }
-// 	     ]
-// 	 }
+// {
+//     "result": [
+//         {
+//             "resource": {
+//                 "name": "httpd",
+//                 "ensure": "0:2.2.15-60.el6.centos.5",
+//                 "ral": {
+//                     "type": "package",
+//                     "provider": "package::yum"
+//                 }
+//             },
+//             "changes": [
+//                 {
+//                     "attr": "ensure",
+//                     "is": "0:2.2.15-60.el6.centos.5",
+//                     "was": "absent"
+//                 }
+//             ]
+//         }
+//     ]
+// }
 func setResourceRaw(typeName, resourceName string, desiredAttributes map[string]string) (string, error) {
 	var resultC *C.char
 	defer C.free(unsafe.Pointer(resultC))
