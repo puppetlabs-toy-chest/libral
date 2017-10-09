@@ -46,9 +46,12 @@ list() {
     #       translate active/inactive to running/stopped
     #     - we then use join to put those two files together and
     #       extract only the columns we are interested in
-    join -j 1 -o 1.1,1.2,2.3 \
+    #     - instanced services are not currently supported so are omitted
+    #       (see issue #65)
+    join -a1 -j 1 -o 1.1,1.2,2.3 \
          <(systemctl list-unit-files --type service --full --all \
                      --no-pager --no-legend \
+               | egrep -v '@.service' \
                | egrep '\<(disabled|enabled|masked)[[:space:]]*$' \
                | sed -r -e 's/\<disabled\>/false/;s/\<enabled\>/true/' \
                         -e 's/\<masked\>/mask/' \
@@ -59,7 +62,7 @@ list() {
   | while read svc enable ensure
     do
         echo "name: ${svc%.service}"
-        echo "ensure: $ensure"
+        echo "ensure: ${ensure:-stopped}"
         echo "enable: $enable"
     done
 }
