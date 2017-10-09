@@ -70,14 +70,13 @@ namespace libral { namespace augeas {
      * the node at PATH if it doesn't exist yet.*/
     node make_node_seq_next(const std::string& path);
 
-    static std::shared_ptr<handle> make(const std::string& loadpath,
-                                        unsigned int flags) {
-      return std::shared_ptr<handle>(new handle(loadpath, flags));
+    static std::shared_ptr<handle> make(unsigned int flags) {
+      return std::shared_ptr<handle>(new handle(flags));
     }
 
   private:
-    handle(const std::string& loadpath, unsigned int flags)
-      : _augeas(aug_init(NULL, loadpath.c_str(), flags)) { };
+    handle(unsigned int flags)
+      : _augeas(aug_init(NULL, NULL, flags)) { };
 
     /* Checks _augeas for errors and return an error if there is one. */
     result<void> check_error() const;

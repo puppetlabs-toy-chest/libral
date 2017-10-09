@@ -31,6 +31,30 @@ namespace libral {
     return fs::absolute(fs::path(path)).native();
   }
 
+  void update_augeas_lens_lib(const std::vector<std::string>& data_dirs) {
+    // Append our lenses to AUGEAS_LENS_LIB. We do this in the environment
+    // rather than when we construct augeas handles because that ensures
+    // that external providers also use that setting
+    const std::string var = "AUGEAS_LENS_LIB";
+
+    std::stringstream buf;
+    bool first=true;
+
+    for (auto dir : data_dirs) {
+      if (!first)
+        buf << ":";
+      first=false;
+      buf << dir << "/lenses";
+    }
+
+    std::string value;
+    if (util::environment::get(var, value)) {
+      util::environment::set(var, value + ":" + buf.str());
+    } else {
+      util::environment::set(var, buf.str());
+    }
+  }
+
   std::shared_ptr<ral> ral::create(std::vector<std::string> data_dirs) {
     std::string env_data_dir;
 
@@ -68,6 +92,8 @@ namespace libral {
       util::environment::set("PATH", env_libexec_dir);
     }
     // FIXME: Check that mruby is there and warn otherwise
+
+    update_augeas_lens_lib(data_dirs);
 
     auto handle = new ral(data_dirs);
 
