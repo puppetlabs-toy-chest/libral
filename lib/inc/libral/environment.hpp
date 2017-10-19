@@ -28,6 +28,8 @@ namespace libral {
      */
     boost::optional<libral::command> command(const std::string& cmd);
 
+    boost::optional<libral::command> script(const std::string& cmd);
+
     /**
      * Creates an augeas handle that has the files described by \p xfms
      * loaded.

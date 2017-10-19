@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 
-#include <leatherman/execution/execution.hpp>
 #include <boost/filesystem.hpp>
 
 #include <leatherman/locale/locale.hpp>
@@ -14,7 +13,6 @@
 #include <cstdio>
 
 using namespace leatherman::locale;
-namespace exe = leatherman::execution;
 namespace fs = boost::filesystem;
 namespace json = leatherman::json_container;
 using json_container = json::JsonContainer;
@@ -128,7 +126,7 @@ namespace libral {
   }
 
   result<prov::spec> json_provider::describe(environment &env) {
-    auto name = fs::path(_path).filename().stem();
+    auto name = fs::path(_cmd.path()).filename().stem();
 
     return env.parse_spec(name.native(), _node);
   }
@@ -172,10 +170,7 @@ namespace libral {
                             const json_container& json) {
     auto inp = json.toString();
     ctx.log_debug("passing {1} on stdin", inp);
-    auto res = exe::execute(_path, { "ral_action=" + action },
-                            inp,
-                            0, { exe::execution_options::trim_output,
-                                exe::execution_options::merge_environment });
+    auto res = _cmd.execute({ "ral_action=" + action }, inp);
     if (!res.error.empty()) {
       // FIXME: this should really happen in a callback while the command
       // is running rather than after the command finished. For that, we'd

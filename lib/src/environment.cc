@@ -14,6 +14,11 @@ namespace libral {
     return command::create(cmd);
   }
 
+  boost::optional<libral::command>
+  environment::script(const std::string& cmd) {
+    return command::script(cmd);
+  }
+
   result<std::shared_ptr<augeas::handle>>
   environment::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
 

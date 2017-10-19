@@ -12,7 +12,6 @@
 #include <libral/simple_provider.hpp>
 #include <libral/json_provider.hpp>
 #include <leatherman/file_util/directory.hpp>
-#include <leatherman/execution/execution.hpp>
 #include <leatherman/logging/logging.hpp>
 #include <leatherman/util/environment.hpp>
 
@@ -20,7 +19,6 @@
 
 #include <yaml-cpp/yaml.h>
 
-namespace exe = leatherman::execution;
 using namespace leatherman::locale;
 namespace fs = boost::filesystem;
 namespace util = leatherman::util;
@@ -113,7 +111,8 @@ namespace libral {
 
     // Find external providers
     auto cb = [&result,&env,this](std::string const &path) {
-      auto res = run_describe(path);
+      auto cmd = env.script(path);
+      auto res = run_describe(*cmd);
       if (! res) {
         LOG_WARNING("provider[{1}]: {2}", path, res.err().detail);
         return true;
@@ -138,9 +137,9 @@ namespace libral {
       if (invoke == "simple" || invoke == "json") {
         provider *raw_prov;
         if (invoke == "simple") {
-          raw_prov = new simple_provider(path, node);
+          raw_prov = new simple_provider(*cmd, node);
         } else {
-          raw_prov = new json_provider(path, node);
+          raw_prov = new json_provider(*cmd, node);
         }
         auto prov = std::shared_ptr<provider>(raw_prov);
         if (init_provider(env, type_name, prov)) {
@@ -221,11 +220,9 @@ namespace libral {
     return node;
   }
 
-  result<std::string> ral::run_describe(const std::string& path) const {
-    if (access(path.c_str(), X_OK) == 0) {
-      auto res = exe::execute(path, { "ral_action=describe" },
-                              0, { exe::execution_options::trim_output,
-                                  exe::execution_options::merge_environment });
+  result<std::string> ral::run_describe(command& cmd) const {
+    if (access(cmd.path().c_str(), X_OK) == 0) {
+      auto res = cmd.execute({ "ral_action=describe" });
       if (!res.success) {
         if (res.output.empty()) {
           return error(_("ignored as it exited with status {1}", res.exit_code));
@@ -241,7 +238,7 @@ namespace libral {
     }
     // We only get here if path is not executable
     return error(_("file {1} looks like a provider but is not executable",
-                   path));
+                   cmd.path()));
   }
 
   boost::optional<std::string>

@@ -14,7 +14,7 @@ namespace libral {
     auto status = exe::execute(_cmd, args, 0, options);
 
     if (status.success)
-      return result<void>();
+      return libral::result<void>();
 
     if (status.output.empty()) {
       if (status.error.empty()) {
@@ -32,6 +32,27 @@ namespace libral {
     }
   }
 
+  command::result command::execute(const std::vector<std::string>& args) {
+    auto res = exe::execute(_cmd, args, 0, { exe::execution_options::trim_output,
+                                exe::execution_options::merge_environment });
+    return result(res.success, res.output, res.error, res.exit_code);
+  }
+
+
+  command::result command::execute(const std::vector<std::string>& args,
+                 const std::string& stdin) {
+    auto res = exe::execute(_cmd, args, stdin,
+                            0, { exe::execution_options::trim_output,
+                                exe::execution_options::merge_environment });
+    return result(res.success, res.output, res.error, res.exit_code);
+  }
+
+  bool command::each_line(std::vector<std::string> const& args,
+         std::function<bool(std::string&)> out_cb,
+         std::function<bool(std::string&)> err_cb) {
+    return leatherman::execution::each_line(_cmd, args, out_cb, err_cb);
+  }
+
   boost::optional<command> command::create(const std::string& cmd) {
     auto abs_cmd = exe::which(cmd);
     if (abs_cmd.empty()) {
@@ -39,5 +60,10 @@ namespace libral {
     } else {
       return command(abs_cmd);
     }
+  }
+
+  boost::optional<command> command::script(const std::string& cmd) {
+    // For remote targets, we need to upload cmd to the target first
+    return create(cmd);
   }
 }
