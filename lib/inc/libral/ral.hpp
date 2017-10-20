@@ -20,15 +20,25 @@ namespace libral {
     /* Create an instance of the RAL */
     static std::shared_ptr<ral> create(std::vector<std::string> data_dirs);
 
+    /* Connect to a remote (ssh) target. The target must be a string that
+     * the ssh command understands, i.e. 'ssh $target uptime' needs to work
+     */
+    result<void> connect(const std::string& _target);
+
     const std::vector<std::string>& data_dirs() const { return _data_dirs; }
 
     boost::optional<std::string>
     find_in_data_dirs(const std::string& file) const;
 
   protected:
+    friend class environment;
+
     ral(const std::vector<std::string>& data_dir);
 
-    environment make_env() { return environment(shared_from_this()); }
+    environment make_env();
+
+    target::sptr target() const { return _target; }
+
   private:
     bool init_provider(environment &env,
                        const std::string& name,
@@ -37,5 +47,6 @@ namespace libral {
                                       const std::string& yaml) const;
     result<std::string> run_describe(command& cmd) const;
     std::vector<std::string> _data_dirs;
+    target::sptr _target;
   };
 }

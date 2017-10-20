@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
-#include <boost/optional.hpp>
+#include <memory>
+
 #include <libral/result.hpp>
+#include <libral/target.hpp>
 
 namespace libral {
   /** A convenience wrapper around leatherman::execution for running simple
@@ -37,8 +39,7 @@ namespace libral {
       int exit_code = 0;
     };
 
-    /* Create a new command with absolute path cmd */
-    command(const std::string& cmd) : _cmd(cmd) { };
+    command(target::sptr tgt, const std::string& cmd) : _cmd(cmd), _tgt(tgt) { }
 
     /* Run the command with the given args. If the command exits with a
        non-zero exit code, return an error result */
@@ -58,6 +59,7 @@ namespace libral {
                    std::function<bool(std::string&)> stderr_callback = nullptr);
 
   private:
-    std::string _cmd;
+    std::string  _cmd;
+    target::sptr _tgt;
   };
 }

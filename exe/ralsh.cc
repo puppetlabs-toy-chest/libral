@@ -143,6 +143,8 @@ int main(int argc, char **argv) {
     po::options_description command_line_options("");
     command_line_options.add_options()
       ("explain,e", "print an explanation of TYPE, which must be provided")
+      ("target,t", po::value<std::string>(),
+       "run commands on target TARGET (ssh only)")
       ("help,h", "produce help message")
       ("include,I", po::value<std::vector<std::string>>(), "search directory '$arg/providers' for providers.")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
@@ -209,6 +211,18 @@ int main(int argc, char **argv) {
 
     // Do the actual work
     auto ral = lib::ral::create(data_dirs);
+    if (vm.count("target")) {
+      auto target = vm["target"].as<std::string>();
+      auto res = ral->connect(target);
+      if (res.is_err()) {
+        boost::nowide::cerr << color::red
+                            << _("failed to connect to {1}", target)
+                            << endl
+                            << res.err().detail
+                            << color::reset << endl;
+        return EXIT_ERROR;
+      }
+    }
     std::unique_ptr<lib::emitter> emp;
     if (vm.count("quiet")) {
       emp = std::unique_ptr<lib::emitter>(new lib::quiet_emitter());

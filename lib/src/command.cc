@@ -1,21 +1,15 @@
 #include <libral/command.hpp>
 
-#include <leatherman/execution/execution.hpp>
-#include <leatherman/locale/locale.hpp>
-
-using namespace leatherman::locale;
-namespace exe = leatherman::execution;
+#include <libral/target/base.hpp>
 
 namespace libral {
+
   bool command::executable() const {
-    return access(_cmd.c_str(), X_OK) == 0;
+    return _tgt->executable(_cmd);
   }
 
   result<void> command::run(const std::vector<std::string> &args) {
-    static const lth_util::option_set<exe::execution_options> options = {
-      exe::execution_options::trim_output,
-      exe::execution_options::merge_environment };
-    auto status = exe::execute(_cmd, args, 0, options);
+    auto status = _tgt->execute(_cmd, args);
 
     if (status.success)
       return libral::result<void>();
@@ -37,23 +31,18 @@ namespace libral {
   }
 
   command::result command::execute(const std::vector<std::string>& args) {
-    auto res = exe::execute(_cmd, args, 0, { exe::execution_options::trim_output,
-                                exe::execution_options::merge_environment });
-    return result(res.success, res.output, res.error, res.exit_code);
+    return _tgt->execute(_cmd, args);
   }
 
 
   command::result command::execute(const std::vector<std::string>& args,
-                 const std::string& stdin) {
-    auto res = exe::execute(_cmd, args, stdin,
-                            0, { exe::execution_options::trim_output,
-                                exe::execution_options::merge_environment });
-    return result(res.success, res.output, res.error, res.exit_code);
+                                         const std::string& stdin) {
+    return _tgt->execute(_cmd, args, &stdin);
   }
 
   bool command::each_line(std::vector<std::string> const& args,
          std::function<bool(std::string&)> out_cb,
          std::function<bool(std::string&)> err_cb) {
-    return leatherman::execution::each_line(_cmd, args, out_cb, err_cb);
+    return _tgt->each_line(_cmd, args, out_cb, err_cb);
   }
 }

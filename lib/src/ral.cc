@@ -11,6 +11,8 @@
 
 #include <libral/simple_provider.hpp>
 #include <libral/json_provider.hpp>
+#include <libral/target/base.hpp>
+
 #include <leatherman/file_util/directory.hpp>
 #include <leatherman/logging/logging.hpp>
 #include <leatherman/util/environment.hpp>
@@ -27,6 +29,19 @@ namespace libral {
 
   std::string absolute_path(const std::string& path) {
     return fs::absolute(fs::path(path)).native();
+  }
+
+  result<void> ral::connect(const std::string& target) {
+    auto tgt = target::make_ssh(target);
+    auto res = tgt->connect();
+    if (res.is_ok()) {
+      _target = tgt;
+    }
+    return res;
+  }
+
+  environment ral::make_env() {
+    return environment(shared_from_this());
   }
 
   std::shared_ptr<ral> ral::create(std::vector<std::string> data_dirs) {
@@ -72,7 +87,10 @@ namespace libral {
     return std::shared_ptr<ral>(handle);
   }
 
-  ral::ral(const std::vector<std::string>& data_dirs) : _data_dirs(data_dirs) { }
+  ral::ral(const std::vector<std::string>& data_dirs)
+    : _data_dirs(data_dirs), _target(target::make_local()) {
+    _target->connect();
+  }
 
   bool ral::init_provider(environment &env,
                           const std::string& name,

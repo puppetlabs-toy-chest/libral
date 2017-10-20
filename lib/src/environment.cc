@@ -1,10 +1,7 @@
 #include <libral/environment.hpp>
 
 #include <libral/ral.hpp>
-
-#include <leatherman/execution/execution.hpp>
-
-namespace exe = leatherman::execution;
+#include <libral/target/base.hpp>
 
 namespace libral {
 
@@ -15,40 +12,17 @@ namespace libral {
 
   libral::command::uptr
   environment::command(const std::string& cmd) {
-    auto abs_cmd = exe::which(cmd);
-    if (abs_cmd.empty()) {
-      return std::unique_ptr<libral::command>();
-    } else {
-      auto raw = new libral::command(abs_cmd);
-      return std::unique_ptr<libral::command>(raw);
-    }
+    return _ral->target()->command(cmd);
   }
 
   libral::command::uptr
   environment::script(const std::string& cmd) {
-    return command(cmd);
+    return _ral->target()->script(cmd);
   }
 
   result<std::shared_ptr<augeas::handle>>
   environment::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
-
-    std::stringstream buf;
-    bool first=true;
-
-    for (auto dir : data_dirs()) {
-      if (!first)
-        buf << ":";
-      first=false;
-      buf << dir << "/lenses";
-    }
-
-    auto aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
-    for (auto& xfm : xfms) {
-      err_ret( aug->include(xfm.first, xfm.second) );
-    }
-    err_ret( aug->load() );
-
-    return aug;
+    return _ral->target()->augeas(data_dirs(), xfms);
   }
 
   result<prov::spec>
