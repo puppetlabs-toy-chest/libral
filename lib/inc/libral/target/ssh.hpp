@@ -37,6 +37,8 @@ namespace libral {
                    std::function<bool(std::string&)> out_cb,
                    std::function<bool(std::string&)> err_cb) override;
   private:
+    result<std::string> tmpdir();
+
     command::result run(const std::string& file,
                         const std::vector<std::string>& args,
                         const std::string *stdin = nullptr);

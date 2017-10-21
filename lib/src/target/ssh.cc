@@ -106,15 +106,10 @@ namespace libral {
   }
 
   result<std::string> ssh::upload(const std::string& cmd) {
-    if (_tmpdir.empty()) {
-      // Do not use sudo on this, we manage the tmpdir as the normal user
-      auto res = run("ssh", { _target, "mktemp", "-t", "-d", "ralXXXXXX" });
-      if (! res.success) {
-        return error(res.error);
-      }
-      _tmpdir = res.output;
-    }
-    auto path = (fs::path(_tmpdir) / fs::path(cmd).filename()).native();
+    auto tmp = tmpdir();
+    err_ret(tmp);
+
+    auto path = (fs::path(tmp.ok()) / fs::path(cmd).filename()).native();
     auto res = run("scp", {"-pq", cmd, _target + ":" + path});
     if (! res.success) {
       return error(res.error);
@@ -183,6 +178,18 @@ namespace libral {
                              exe::execution_options::merge_environment });
       return command::result(res.success, res.output, res.error, res.exit_code);
     }
+  }
+
+  result<std::string> ssh::tmpdir() {
+    if (_tmpdir.empty()) {
+      // Do not use sudo on this, we manage the tmpdir as the normal user
+      auto res = run("ssh", { _target, "mktemp", "-t", "-d", "ralXXXXXX" });
+      if (! res.success) {
+        return error(res.error);
+      }
+      _tmpdir = res.output;
+    }
+    return _tmpdir;
   }
   }
 }
