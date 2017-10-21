@@ -221,7 +221,7 @@ namespace libral {
   }
 
   result<std::string> ral::run_describe(command& cmd) const {
-    if (access(cmd.path().c_str(), X_OK) == 0) {
+    if (cmd.executable()) {
       auto res = cmd.execute({ "ral_action=describe" });
       if (!res.success) {
         if (res.output.empty()) {

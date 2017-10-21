@@ -7,6 +7,10 @@ using namespace leatherman::locale;
 namespace exe = leatherman::execution;
 
 namespace libral {
+  bool command::executable() const {
+    return access(_cmd.c_str(), X_OK) == 0;
+  }
+
   result<void> command::run(const std::vector<std::string> &args) {
     static const lth_util::option_set<exe::execution_options> options = {
       exe::execution_options::trim_output,

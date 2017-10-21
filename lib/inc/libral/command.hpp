@@ -53,6 +53,8 @@ namespace libral {
     /* Create a new command backed by the script cmd. */
     static boost::optional<command> script(const std::string& cmd);
 
+    bool executable() const;
+
     bool each_line(std::vector<std::string> const& arguments,
                    std::function<bool(std::string&)> stdout_callback,
                    std::function<bool(std::string&)> stderr_callback = nullptr);
