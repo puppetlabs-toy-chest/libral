@@ -15,20 +15,16 @@ namespace libral {
 #include "mount.yaml"
       ;
 
-    bool suitable = env.is_local();
+    auto aug = env.augeas({ { "Mount_Fstab.lns", "/etc/fstab" },
+                            { "Mount_Fstab.lns", "/etc/mtab"  } });
+    err_ret(aug);
 
-    if (suitable) {
-      auto aug = env.augeas({ { "Mount_Fstab.lns", "/etc/fstab" },
-                              { "Mount_Fstab.lns", "/etc/mtab"  } });
-      err_ret(aug);
+    _aug = aug.ok();
 
-      _aug = aug.ok();
+    _cmd_mount = env.command("mount");
+    _cmd_umount = env.command("umount");
 
-      _cmd_mount = env.command("mount");
-      _cmd_umount = env.command("umount");
-
-      suitable = suitable && _cmd_mount && _cmd_umount;
-    }
+    auto suitable = _cmd_mount && _cmd_umount;
 
     return env.parse_spec("mount", desc, suitable);
   }
