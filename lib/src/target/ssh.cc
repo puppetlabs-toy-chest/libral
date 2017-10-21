@@ -155,14 +155,15 @@ namespace libral {
     return exe::each_line("ssh", actual, out_cb, err_cb);
   }
 
-  command::result ssh::run_ssh(const std::vector<std::string>& args) {
+  command::result ssh::run_ssh(const std::vector<std::string>& args,
+                               const std::string *stdin) {
     std::vector<std::string> actual;
     actual.push_back(_target);
     if (_sudo) {
       actual.push_back(sudo);
     }
     actual.insert(actual.end(), args.begin(), args.end());
-    return run("ssh", actual);
+    return run("ssh", actual, stdin);
   }
 
   command::result ssh::run(const std::string& file,
