@@ -5,7 +5,8 @@ provider:
     Manage ssh authorized keys in user's .ssh/authorized_keys files
   invoke: json
   actions: [set, get]
-  suitable: true
+  suitable:
+    commands: [mruby]
   attributes:
     name:
       desc: |
