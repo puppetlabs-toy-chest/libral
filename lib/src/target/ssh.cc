@@ -6,6 +6,7 @@
 
 namespace exe = leatherman::execution;
 namespace fs = boost::filesystem;
+namespace aug = libral::augeas;
 
 namespace libral {
   namespace target {
@@ -33,29 +34,62 @@ namespace libral {
   result<std::shared_ptr<augeas::handle>>
   ssh::augeas(const std::vector<std::string>& data_dirs,
               const std::vector<std::pair<std::string, std::string>>& xfms) {
-#if 0
+
     std::stringstream buf;
     bool first=true;
 
-    for (auto dir : data_dirs()) {
+    for (auto dir : data_dirs) {
       if (!first)
         buf << ":";
       first=false;
       buf << dir << "/lenses";
     }
 
-    // FIXME: set augeas root to something where we won't hurt anything
-    auto aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
-    for (auto& xfm : xfms) {
-      auto text = conn->read(xfm.second);
-      auto in = "/in" + xfm.second;
-      aug.set(in, text);
-      aug.store(xfm.first, in, "/files" + xfm.second);
-    }
-#endif
-    // FIXME: need to make aug.save() run aug.retrieve() and conn.write()
-    // Maybe also make aug.load() redirect reading files through conn
-    return not_implemented_error();
+    auto reader = [xfms, this](::augeas* aug) {
+      for (auto& xfm : xfms) {
+        auto res = read(xfm.second);
+        if (res) {
+          auto text = res.ok();
+          auto in = "/in" + xfm.second;
+          auto file = "/files" + xfm.second;
+
+          if (text.back() != '\n') {
+            text += "\n";
+          }
+          aug_set(aug, in.c_str(), text.c_str());
+          aug_text_store(aug, xfm.first.c_str(), in.c_str(), file.c_str());
+        }
+      }
+    };
+
+    auto writer = [xfms, this](::augeas *aug) {
+      for (auto& xfm : xfms) {
+        auto in = "/in" + xfm.second;
+        auto file = "/files" + xfm.second;
+        auto out = "/out" + xfm.second;
+        aug_text_retrieve(aug, xfm.first.c_str(), in.c_str(), file.c_str(),
+                          out.c_str());
+        const char *text_in, *text_out;
+        aug_get(aug, in.c_str(), &text_in);
+        aug_get(aug, out.c_str(), &text_out);
+        if (text_in != NULL && text_out != NULL &&
+            strcmp(text_in, text_out) != 0) {
+          // The text has changed
+          auto res = write(text_out, xfm.second);
+          if (! res) {
+            auto err = "/augeas" + file + "/error";
+            aug_set(aug, err.c_str(), "write_failed");
+            err += "/message";
+            aug_set(aug, err.c_str(), res.err().detail.c_str());
+          }
+        }
+      }
+    };
+
+    auto aug = aug::handle::make(buf.str(), reader, writer);
+    err_ret( aug->load() );
+
+    return aug;
   }
 
   bool ssh::executable(const std::string& file) {
