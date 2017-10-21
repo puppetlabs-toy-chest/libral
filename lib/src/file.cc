@@ -79,7 +79,7 @@ namespace libral {
     static const std::string desc =
 #include "file.yaml"
       ;
-    return env.parse_spec("file", desc);
+    return env.parse_spec("file", desc, env.is_local());
   }
 
   result<std::vector<resource>>

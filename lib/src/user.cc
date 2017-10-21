@@ -23,11 +23,16 @@ namespace libral {
 #include "user.yaml"
       ;
 
-    _cmd_useradd = env.command("useradd");
-    _cmd_usermod = env.command("usermod");
-    _cmd_userdel = env.command("userdel");
+    auto suitable = env.is_local();
 
-    auto suitable = _cmd_useradd && _cmd_usermod && _cmd_userdel;
+    if (suitable) {
+      _cmd_useradd = env.command("useradd");
+      _cmd_usermod = env.command("usermod");
+      _cmd_userdel = env.command("userdel");
+
+      suitable = suitable &&
+        _cmd_useradd && _cmd_usermod && _cmd_userdel;
+    }
 
     return env.parse_spec("user", desc, suitable);
   }

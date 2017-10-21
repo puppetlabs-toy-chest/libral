@@ -13,10 +13,15 @@ namespace libral {
 #include "group.yaml"
       ;
 
-    _cmd_groupadd = env.command("groupadd");
-    _cmd_groupmod = env.command("groupmod");
-    _cmd_groupdel = env.command("groupdel");
-    auto suitable = _cmd_groupadd && _cmd_groupmod && _cmd_groupdel;
+    auto suitable = env.is_local();
+
+    if (suitable) {
+      _cmd_groupadd = env.command("groupadd");
+      _cmd_groupmod = env.command("groupmod");
+      _cmd_groupdel = env.command("groupdel");
+      suitable = suitable &&
+        _cmd_groupadd && _cmd_groupmod && _cmd_groupdel;
+    }
 
     return env.parse_spec("group", desc, suitable);
   }

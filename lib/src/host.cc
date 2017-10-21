@@ -8,12 +8,16 @@ namespace libral {
 #include "host.yaml"
       ;
 
-    auto aug = env.augeas({ { "Hosts.lns", "/etc/hosts" } });
-    err_ret(aug);
+    bool suitable = env.is_local();
 
-    _aug = aug.ok();
+    if (suitable) {
+      auto aug = env.augeas({ { "Hosts.lns", "/etc/hosts" } });
+      err_ret(aug);
 
-    return env.parse_spec("host", desc, true);
+      _aug = aug.ok();
+    }
+
+    return env.parse_spec("host", desc, suitable);
   }
 
   result<aug::node>
