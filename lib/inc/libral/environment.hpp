@@ -30,6 +30,8 @@ namespace libral {
 
     libral::command::uptr script(const std::string& cmd);
 
+    std::string which(const std::string& cmd) const;
+
     /**
      * Creates an augeas handle that has the files described by \p xfms
      * loaded.

@@ -20,6 +20,10 @@ namespace libral {
     return _ral->target()->script(cmd);
   }
 
+  std::string environment::which(const std::string& cmd) const {
+    return _ral->target()->which(cmd);
+  }
+
   result<std::shared_ptr<augeas::handle>>
   environment::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
     return _ral->target()->augeas(data_dirs(), xfms);
