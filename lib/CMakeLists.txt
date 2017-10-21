@@ -37,6 +37,7 @@ set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/prov/spec.cc" "src/attr/spec.cc"
   "src/command.cc" "src/resource.cc" "src/context.cc"
   "src/environment.cc"
+  "src/target.cc" "src/target/local.cc" "src/target/ssh.cc"
   "src/emitter/puppet_emitter.cc"
   "src/emitter/json_emitter.cc")
 
