@@ -2,6 +2,8 @@
 
 #include <config.hpp>
 
+#include <fstream>
+
 #include <libral/mount.hpp>
 #include <libral/user.hpp>
 #include <libral/group.hpp>
