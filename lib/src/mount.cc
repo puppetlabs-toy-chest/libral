@@ -118,15 +118,19 @@ namespace libral {
 
   result<void>
   mount_provider::update_base(const update &upd) {
+    for (auto& k : { "device", "fstype" }) {
+      if (! upd[k]) {
+        return error(_("The mount {1} is missing the '{2}' field",
+                       upd.name(), k));
+      }
+    }
+
     auto bs = base(upd);
 
     err_ret( bs.erase() );
-    // FIXME: spec, file, and vfstype are mandatory, but we don't have a
-    // way to report that they are missing right now, so we just make up
-    // default values
-    err_ret( bs.set("spec", upd["device"], "NODEVICE") );
-    err_ret( bs.set("file", upd.name(), "NONAME") );
-    err_ret( bs.set("vfstype", upd["fstype"], "NOFSTYPE") );
+    err_ret( bs.set("spec", upd["device"]) );
+    err_ret( bs.set("file", upd.name()) );
+    err_ret( bs.set("vfstype", upd["fstype"]) );
     err_ret( bs.set("options", upd["options"], "defaults") );
     err_ret( bs.set("dump", upd["dump"], "0") );
     return bs.set("passno", upd["pass"], "0");
@@ -166,7 +170,7 @@ namespace libral {
 
     if (ensure == "present") {
       // make sure entry in fstab
-      update_fstab(upd, changes);
+      err_ret( update_fstab(upd, changes) );
     } else if (ensure == "absent") {
       // unmount, remove from fstab
       err_ret( unmount(upd.name(), state) );
@@ -177,10 +181,8 @@ namespace libral {
       err_ret( update_fstab(upd, changes) );
     } else if (ensure == "mounted") {
       // mount, make sure in fstab
-      update_fstab(upd, changes);
-      auto run_res = mount(upd.name(), state);
-      if (! run_res)
-        return run_res.err();
+      err_ret( update_fstab(upd, changes) );
+      err_ret( mount(upd.name(), state) );
     } else {
       return error(_("ensure has illegal value '{1}'", ensure));
     }
