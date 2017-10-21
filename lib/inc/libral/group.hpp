@@ -22,10 +22,10 @@ namespace libral {
   private:
     result<void> set(context &ctx, const update &upd);
 
-    boost::optional<command>     _cmd_groupadd;
-    boost::optional<command>     _cmd_groupmod;
-    boost::optional<command>     _cmd_groupdel;
-    std::string                  _data_dir;
+    command::uptr                 _cmd_groupadd;
+    command::uptr                 _cmd_groupmod;
+    command::uptr                 _cmd_groupdel;
+    std::string                   _data_dir;
   };
 
 }

@@ -58,8 +58,8 @@ namespace libral {
     result<void> flush();
 
     std::shared_ptr<augeas::handle> _aug;
-    boost::optional<command>     _cmd_mount;
-    boost::optional<command>     _cmd_umount;
+    command::uptr                   _cmd_mount;
+    command::uptr                   _cmd_umount;
   };
 
 }

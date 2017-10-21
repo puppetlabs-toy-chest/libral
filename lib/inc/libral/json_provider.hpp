@@ -14,8 +14,8 @@ namespace libral {
     using json_container = leatherman::json_container::JsonContainer;
     using json_keys = std::vector<leatherman::json_container::JsonContainerKey>;
 
-    json_provider(const command &cmd, YAML::Node &node)
-      : provider(), _cmd(cmd), _node(node) { };
+    json_provider(command::uptr& cmd, YAML::Node &node)
+      : provider(), _cmd(std::move(cmd)), _node(node) { };
 
     result<std::vector<resource>>
     get(context& ctx, const std::vector<std::string>& names,
@@ -23,7 +23,7 @@ namespace libral {
 
     result<void> set(context &ctx, const updates& upds) override;
 
-    const std::string& source() const override { return _cmd.path(); }
+    const std::string& source() const override { return _cmd->path(); }
   protected:
     result<prov::spec> describe(environment &env) override;
   private:
@@ -44,7 +44,7 @@ namespace libral {
                     const json_container& json,
                     const json_keys& key);
 
-    command _cmd;
-    YAML::Node _node;
+    command::uptr _cmd;
+    YAML::Node    _node;
   };
 }

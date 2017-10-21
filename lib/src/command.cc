@@ -56,18 +56,4 @@ namespace libral {
          std::function<bool(std::string&)> err_cb) {
     return leatherman::execution::each_line(_cmd, args, out_cb, err_cb);
   }
-
-  boost::optional<command> command::create(const std::string& cmd) {
-    auto abs_cmd = exe::which(cmd);
-    if (abs_cmd.empty()) {
-      return boost::none;
-    } else {
-      return command(abs_cmd);
-    }
-  }
-
-  boost::optional<command> command::script(const std::string& cmd) {
-    // For remote targets, we need to upload cmd to the target first
-    return create(cmd);
-  }
 }

@@ -26,9 +26,9 @@ namespace libral {
      * @return \c boost::none if no command \p cmd can be found, or a
      * command object to run this command.
      */
-    boost::optional<libral::command> command(const std::string& cmd);
+    libral::command::uptr command(const std::string& cmd);
 
-    boost::optional<libral::command> script(const std::string& cmd);
+    libral::command::uptr script(const std::string& cmd);
 
     /**
      * Creates an augeas handle that has the files described by \p xfms

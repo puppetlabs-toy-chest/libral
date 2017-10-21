@@ -57,9 +57,9 @@ namespace libral {
   private:
     result<void> set(context &ctx, const update& upd);
 
-    boost::optional<command>     _cmd_useradd;
-    boost::optional<command>     _cmd_usermod;
-    boost::optional<command>     _cmd_userdel;
+    command::uptr     _cmd_useradd;
+    command::uptr     _cmd_usermod;
+    command::uptr     _cmd_userdel;
   };
 
 }

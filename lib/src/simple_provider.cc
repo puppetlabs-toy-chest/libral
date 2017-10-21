@@ -62,7 +62,7 @@ namespace libral {
   }
 
   result<prov::spec> simple_provider::describe(environment &env) {
-    auto name = fs::path(_cmd.path()).filename().stem();
+    auto name = fs::path(_cmd->path()).filename().stem();
 
     return env.parse_spec(name.native(), _node);
   }
@@ -177,14 +177,14 @@ namespace libral {
       }
       return rslt.is_ok();
     };
-    auto r = _cmd.each_line(args, out_cb, err_cb);
+    auto r = _cmd->each_line(args, out_cb, err_cb);
     if (! r && rslt.is_ok()) {
       if (errmsg.empty()) {
         rslt = error(_("Something went wrong running %s ral_action=%s",
-                       _cmd.path(), action));
+                       _cmd->path(), action));
       } else {
         rslt = error(_("Something went wrong running %s ral_action=%s\n%s",
-                       _cmd.path(), action, errmsg));
+                       _cmd->path(), action, errmsg));
       }
     }
     return rslt;

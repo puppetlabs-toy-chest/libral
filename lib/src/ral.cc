@@ -137,9 +137,9 @@ namespace libral {
       if (invoke == "simple" || invoke == "json") {
         provider *raw_prov;
         if (invoke == "simple") {
-          raw_prov = new simple_provider(*cmd, node);
+          raw_prov = new simple_provider(cmd, node);
         } else {
-          raw_prov = new json_provider(*cmd, node);
+          raw_prov = new json_provider(cmd, node);
         }
         auto prov = std::shared_ptr<provider>(raw_prov);
         if (init_provider(env, type_name, prov)) {

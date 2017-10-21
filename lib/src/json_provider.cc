@@ -126,7 +126,7 @@ namespace libral {
   }
 
   result<prov::spec> json_provider::describe(environment &env) {
-    auto name = fs::path(_cmd.path()).filename().stem();
+    auto name = fs::path(_cmd->path()).filename().stem();
 
     return env.parse_spec(name.native(), _node);
   }
@@ -170,7 +170,7 @@ namespace libral {
                             const json_container& json) {
     auto inp = json.toString();
     ctx.log_debug("passing {1} on stdin", inp);
-    auto res = _cmd.execute({ "ral_action=" + action }, inp);
+    auto res = _cmd->execute({ "ral_action=" + action }, inp);
     if (!res.error.empty()) {
       // FIXME: this should really happen in a callback while the command
       // is running rather than after the command finished. For that, we'd

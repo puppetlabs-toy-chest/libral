@@ -9,8 +9,8 @@ namespace libral {
      convention */
   class simple_provider : public provider {
   public:
-    simple_provider(command& cmd, YAML::Node &node)
-      : provider(), _cmd(cmd), _node(node) { };
+    simple_provider(command::uptr& cmd, YAML::Node &node)
+      : provider(), _cmd(std::move(cmd)), _node(node) { };
 
     result<std::vector<resource>>
     get(context &ctx,
@@ -19,7 +19,7 @@ namespace libral {
 
     result<void> set(context &ctx, const updates& upds) override;
 
-    const std::string& source() const override { return _cmd.path(); }
+    const std::string& source() const override { return _cmd->path(); }
   protected:
     result<prov::spec> describe(environment &env) override;
   private:
@@ -31,7 +31,7 @@ namespace libral {
                std::function<result<bool>(std::string&, std::string&)> entry_cb,
                std::vector<std::string> args = {});
 
-    command _cmd;
-    YAML::Node _node;
+    command::uptr _cmd;
+    YAML::Node    _node;
   };
 }

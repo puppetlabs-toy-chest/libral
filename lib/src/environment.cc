@@ -2,6 +2,10 @@
 
 #include <libral/ral.hpp>
 
+#include <leatherman/execution/execution.hpp>
+
+namespace exe = leatherman::execution;
+
 namespace libral {
 
   namespace aug = libral::augeas;
@@ -9,14 +13,20 @@ namespace libral {
   const std::vector<std::string>&
   environment::data_dirs() const { return _ral->data_dirs(); }
 
-  boost::optional<libral::command>
+  libral::command::uptr
   environment::command(const std::string& cmd) {
-    return command::create(cmd);
+    auto abs_cmd = exe::which(cmd);
+    if (abs_cmd.empty()) {
+      return std::unique_ptr<libral::command>();
+    } else {
+      auto raw = new libral::command(abs_cmd);
+      return std::unique_ptr<libral::command>(raw);
+    }
   }
 
-  boost::optional<libral::command>
+  libral::command::uptr
   environment::script(const std::string& cmd) {
-    return command::script(cmd);
+    return command(cmd);
   }
 
   result<std::shared_ptr<augeas::handle>>

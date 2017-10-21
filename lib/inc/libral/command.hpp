@@ -10,6 +10,8 @@ namespace libral {
   class command {
   public:
 
+    using uptr = std::unique_ptr<command>;
+
     /**
      * Encapsulates return value from executing a process.
      */
@@ -35,6 +37,9 @@ namespace libral {
       int exit_code = 0;
     };
 
+    /* Create a new command with absolute path cmd */
+    command(const std::string& cmd) : _cmd(cmd) { };
+
     /* Run the command with the given args. If the command exits with a
        non-zero exit code, return an error result */
     libral::result<void> run(const std::vector<std::string>& args);
@@ -46,13 +51,6 @@ namespace libral {
 
     const std::string& path() const { return _cmd; }
 
-    /* Create a new command for running cmd, which will be looked up on the
-       PATH */
-    static boost::optional<command> create(const std::string& cmd);
-
-    /* Create a new command backed by the script cmd. */
-    static boost::optional<command> script(const std::string& cmd);
-
     bool executable() const;
 
     bool each_line(std::vector<std::string> const& arguments,
@@ -60,8 +58,6 @@ namespace libral {
                    std::function<bool(std::string&)> stderr_callback = nullptr);
 
   private:
-    /* Create a new command with absolute path cmd */
-    command(const std::string& cmd) : _cmd(cmd) { };
     std::string _cmd;
   };
 }
