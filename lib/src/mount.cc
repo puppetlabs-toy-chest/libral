@@ -31,7 +31,10 @@ namespace libral {
 
   aug::node mount_provider::base(const update &upd) {
     if (upd.present()) {
-      return _aug->make_node("/files/etc/fstab/*[file = '" + upd.name() + "']");
+      auto res =
+        _aug->make_node("/files/etc/fstab/*[file = '" + upd.name() + "']");
+      res.resolve();
+      return res;
     } else {
       return _aug->make_node_seq_next("/files/etc/fstab");
     }
