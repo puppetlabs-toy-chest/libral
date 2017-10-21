@@ -10,6 +10,26 @@ using namespace leatherman::locale;
 
 namespace libral { namespace augeas {
 
+  handle::handle(const std::string& loadpath,
+         const callback& reader, const callback &writer)
+    : _reader(reader), _writer(writer) {
+    // We do not report errors from aug_init. That's bad. Very bad.
+
+    // If we have a reader or writer, make sure we can't possibly read or
+    // write ourselves with aug_load or aug_save
+    const char *root = (_reader != nullptr || _writer != nullptr)
+      ? "/dev/null" : NULL;
+    _augeas = aug_init(root, loadpath.c_str(), AUG_NO_MODL_AUTOLOAD);
+
+    // Set up default reader and writer
+    if (_reader == nullptr) {
+      _reader = [this](::augeas *aug) { aug_load(aug); };
+    }
+    if (_writer == nullptr) {
+      _writer = [this](::augeas *aug) { aug_save(aug); };
+    }
+  };
+
   result<void>
   handle::include(const std::string& lens, const std::string& glob) {
     aug_transform(_augeas, lens.c_str(), glob.c_str(), 0);
@@ -17,12 +37,13 @@ namespace libral { namespace augeas {
   }
 
   result<void> handle::load(void) {
-    aug_load(this->_augeas);
+    _reader(this->_augeas);
     return check_error();
   }
 
   result<void> handle::save(void) {
-    aug_save(this->_augeas);
+    _writer(this->_augeas);
+
     auto r = check_error();
     if (!r) return r;
 

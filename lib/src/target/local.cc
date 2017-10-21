@@ -44,7 +44,7 @@ namespace libral {
       buf << dir << "/lenses";
     }
 
-    auto aug = aug::handle::make(buf.str(), AUG_NO_MODL_AUTOLOAD);
+    auto aug = aug::handle::make(buf.str());
     for (auto& xfm : xfms) {
       err_ret( aug->include(xfm.first, xfm.second) );
     }
