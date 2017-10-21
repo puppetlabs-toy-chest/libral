@@ -90,6 +90,16 @@ namespace libral { namespace augeas {
     extract_array(resource& res, const std::string& attr,
                   const std::string& label) const;
 
+    /**
+     * Turn the node's path into an absolute path, i.e., one that does not
+     * contain any match constructs anymore. This turns an expression like
+     * /files/etc/hosts/\*[ipaddr= '127.0.0.1'] into /files/etc/hosts/1
+     *
+     * It is an error if the original path does not match exactly one node,
+     * i.e. no node or more than one node
+     */
+    result<void> resolve();
+
   private:
     std::string append(const std::string& p2) const;
 

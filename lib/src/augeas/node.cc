@@ -94,4 +94,16 @@ namespace libral { namespace augeas {
     return result<void>();
   }
 
+  result<void> node::resolve() {
+    auto m = _aug->match(_path);
+    err_ret( m );
+    if (m.ok().size() != 1) {
+      return error(_("Expected {1} to match exactly one node, but it matched {2}",
+                     _path, m.ok().size()));
+    }
+    _path = m.ok().front().path();
+    return result<void>();
+  }
+
+
 } }
