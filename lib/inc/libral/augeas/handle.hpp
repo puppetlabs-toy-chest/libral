@@ -72,6 +72,8 @@ namespace libral { namespace augeas {
      * the node at PATH if it doesn't exist yet.*/
     node make_node_seq_next(const std::string& path);
 
+    void print(const std::string& path);
+
     /**
      * Returns a handle to a new augeas instance which will load lenses
      * from loadpath, a colon separated list of directories. The reader and

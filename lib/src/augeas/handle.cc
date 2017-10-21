@@ -182,4 +182,8 @@ namespace libral { namespace augeas {
     return result<void>();
   }
 
+  void handle::print(const std::string& path) {
+    aug_print(_augeas, stdout, path.c_str());
+  }
+
 } }
