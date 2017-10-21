@@ -36,6 +36,11 @@ namespace libral {
                            std::vector<std::string> const& args,
                            std::function<bool(std::string&)> out_cb,
                            std::function<bool(std::string&)> err_cb) = 0;
+
+    virtual result<std::string> read(const std::string& remote_path) = 0;
+
+    virtual result<void> write(const std::string& content,
+                               const std::string& remote_path) = 0;
   };
   }
 }

@@ -30,6 +30,12 @@ namespace libral {
                    std::vector<std::string> const& args,
                    std::function<bool(std::string&)> out_cb,
                    std::function<bool(std::string&)> err_cb) override;
+
+    result<std::string> read(const std::string& remote_path) override;
+
+    result<void> write(const std::string& content,
+                       const std::string& remote_path) override;
+
   };
   }
 }

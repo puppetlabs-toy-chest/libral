@@ -2,6 +2,9 @@
 
 #include <unistd.h>
 
+#include <sstream>
+#include <fstream>
+
 #include <leatherman/execution/execution.hpp>
 
 namespace exe = leatherman::execution;
@@ -88,5 +91,20 @@ namespace libral {
                         std::function<bool(std::string&)> err_cb) {
     return exe::each_line(cmd, args, out_cb, err_cb);
   }
+
+  result<std::string> local::read(const std::string& remote_path) {
+    std::ifstream file(remote_path);
+    std::ostringstream buf;
+    buf << file.rdbuf();
+    return buf.str();
+  }
+
+  result<void> local::write(const std::string& content,
+                            const std::string& remote_path) {
+    std::ofstream file(remote_path);
+    file << content;
+    return result<void>();
+  }
+
   }
 }

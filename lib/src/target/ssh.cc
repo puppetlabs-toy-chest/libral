@@ -180,6 +180,56 @@ namespace libral {
     }
   }
 
+  result<std::string> ssh::read(const std::string& remote_path) {
+    auto res = run_ssh({ "dd", "status=none", "if=" + remote_path });
+    if (! res.success) {
+      return error(res.output + "\n" + res.error);
+    }
+
+    return res.output;
+  }
+
+  result<void> ssh::write(const std::string& content,
+                          const std::string& remote_path) {
+    auto tmp = tmpdir();
+    err_ret( tmp );
+
+    auto tmppath =
+      (fs::path(tmp.ok()) / fs::path(remote_path).filename()).native();
+
+    std::vector<std::string> args;
+    args.push_back(_target);
+    if (_sudo) {
+      args.push_back(sudo);
+    }
+    args.push_back("dd");
+    args.push_back("status=none");
+    args.push_back("of=" + tmppath);
+    auto res = run("ssh", args, &content);
+
+    if (! res.success) {
+      return error(res.output + "\n" + res.error);
+    }
+
+    /* Even with all this cleverness, we will still destroy SELinux
+     * context; but checking if the tools are there etc. is too annoying to
+     * do that here. */
+    std::string script =
+      "r='" + remote_path + "'; t='" + tmppath + "';" +
+      R"shell(
+[ -f "$r" ] && ( chmod --reference="$r" "$t"; chown --quiet --reference="$r" "$t"; true);
+mv "$t" "$r"
+)shell";
+
+    res = run_ssh({ "/bin/sh" }, &script);
+
+    if (! res.success) {
+      return error(res.error);
+    }
+
+    return result<void>();
+  }
+
   result<std::string> ssh::tmpdir() {
     if (_tmpdir.empty()) {
       // Do not use sudo on this, we manage the tmpdir as the normal user
