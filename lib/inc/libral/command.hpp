@@ -39,7 +39,8 @@ namespace libral {
       int exit_code = 0;
     };
 
-    command(target::sptr tgt, const std::string& cmd) : _cmd(cmd), _tgt(tgt) { }
+    command(target::sptr tgt, const std::string& cmd, bool needs_upload=false)
+      : _cmd(cmd), _tgt(tgt), _needs_upload(needs_upload) { }
 
     /* Run the command with the given args. If the command exits with a
        non-zero exit code, return an error result */
@@ -52,14 +53,17 @@ namespace libral {
 
     const std::string& path() const { return _cmd; }
 
-    bool executable() const;
+    bool executable();
 
     bool each_line(std::vector<std::string> const& arguments,
                    std::function<bool(std::string&)> stdout_callback,
                    std::function<bool(std::string&)> stderr_callback = nullptr);
 
   private:
+    libral::result<void> upload();
+
     std::string  _cmd;
     target::sptr _tgt;
+    bool         _needs_upload;
   };
 }

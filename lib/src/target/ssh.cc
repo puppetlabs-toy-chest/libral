@@ -22,13 +22,8 @@ namespace libral {
   }
 
   libral::command::uptr ssh::script(const std::string& cmd) {
-    auto abs_cmd = upload(cmd);
-    if (abs_cmd.is_ok()) {
-      auto raw = new libral::command(shared_from_this(), abs_cmd.ok());
-      return libral::command::uptr(raw);
-    } else {
-      return libral::command::uptr();
-    }
+    auto raw = new libral::command(shared_from_this(), cmd, true);
+    return libral::command::uptr(raw);
   }
 
   result<std::shared_ptr<augeas::handle>>
