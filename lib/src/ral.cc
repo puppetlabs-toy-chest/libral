@@ -81,6 +81,8 @@ namespace libral {
       // This is extremely strange .. no path ?
       util::environment::set("PATH", env_libexec_dir);
     }
+    util::environment::reload_search_paths();
+
     // FIXME: Check that mruby is there and warn otherwise
 
     auto handle = new ral(data_dirs);
