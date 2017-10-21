@@ -7,7 +7,8 @@ namespace libral {
   namespace target {
   class ssh : public base {
   public:
-    ssh(const std::string& target) : _target(target) { }
+    ssh(const std::string& target, bool sudo = false, bool keep = false)
+      : _target(target), _sudo(sudo), _keep(keep) { }
     ~ssh();
 
     result<void> connect() override;
@@ -44,6 +45,8 @@ namespace libral {
 
     std::string _target;
     std::string _tmpdir;
+    bool _sudo;
+    bool _keep;
   };
   }
 }

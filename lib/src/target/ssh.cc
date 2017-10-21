@@ -65,6 +65,8 @@ namespace libral {
     return true;
   }
 
+  static const std::string sudo = "sudo";
+
   static const std::vector<std::string> ssh_opts = {
     "-o", "ControlMaster=auto",
     "-o", "ControlPersist=60s",
@@ -89,7 +91,7 @@ namespace libral {
   }
 
   ssh::~ssh() {
-    if (! _tmpdir.empty()) {
+    if (!_keep && ! _tmpdir.empty()) {
       run_ssh({"rm", "-rf", _tmpdir});
     }
   }
@@ -105,7 +107,8 @@ namespace libral {
 
   result<std::string> ssh::upload(const std::string& cmd) {
     if (_tmpdir.empty()) {
-      auto res = run_ssh({ "mktemp", "-t", "-d", "ralXXXXXX" });
+      // Do not use sudo on this, we manage the tmpdir as the normal user
+      auto res = run("ssh", { _target, "mktemp", "-t", "-d", "ralXXXXXX" });
       if (! res.success) {
         return error(res.error);
       }
@@ -128,6 +131,9 @@ namespace libral {
                                       const std::string *stdin) {
     std::vector<std::string> actual;
     actual.push_back(_target);
+    if (_sudo) {
+      actual.push_back(sudo);
+    }
     actual.push_back(cmd);
     for (auto& arg : args) {
       actual.push_back(arg);
@@ -141,6 +147,9 @@ namespace libral {
                       std::function<bool(std::string&)> err_cb) {
     std::vector<std::string> actual;
     actual.push_back(_target);
+    if (_sudo) {
+      actual.push_back(sudo);
+    }
     actual.push_back(cmd);
     actual.insert(actual.end(), args.begin(), args.end());
     return exe::each_line("ssh", actual, out_cb, err_cb);
@@ -149,6 +158,9 @@ namespace libral {
   command::result ssh::run_ssh(const std::vector<std::string>& args) {
     std::vector<std::string> actual;
     actual.push_back(_target);
+    if (_sudo) {
+      actual.push_back(sudo);
+    }
     actual.insert(actual.end(), args.begin(), args.end());
     return run("ssh", actual);
   }

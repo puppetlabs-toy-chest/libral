@@ -10,8 +10,9 @@ namespace libral {
     return std::shared_ptr<local>(new local());
   }
 
-  std::shared_ptr<base> make_ssh(const std::string& target) {
-    return std::shared_ptr<ssh>(new ssh(target));
+  std::shared_ptr<base> make_ssh(const std::string& target,
+                                 bool sudo, bool keep) {
+    return std::shared_ptr<ssh>(new ssh(target, sudo, keep));
   }
   }
 }

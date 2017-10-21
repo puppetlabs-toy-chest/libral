@@ -31,8 +31,8 @@ namespace libral {
     return fs::absolute(fs::path(path)).native();
   }
 
-  result<void> ral::connect(const std::string& target) {
-    auto tgt = target::make_ssh(target);
+  result<void> ral::connect(const std::string& target, bool sudo, bool keep) {
+    auto tgt = target::make_ssh(target, sudo, keep);
     auto res = tgt->connect();
     if (res.is_ok()) {
       _local = false;

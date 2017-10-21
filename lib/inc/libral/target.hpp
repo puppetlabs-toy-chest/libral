@@ -13,7 +13,7 @@ namespace libral {
 
   sptr make_local();
 
-  sptr make_ssh(const std::string& target);
+  sptr make_ssh(const std::string& target, bool sudo = false, bool keep = false);
 
   }
 }

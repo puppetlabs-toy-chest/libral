@@ -145,6 +145,8 @@ int main(int argc, char **argv) {
       ("explain,e", "print an explanation of TYPE, which must be provided")
       ("target,t", po::value<std::string>(),
        "run commands on target TARGET (ssh only)")
+      ("sudo,s", "use sudo when running on a target")
+      ("keep,k", "keep the tempdir on a target")
       ("help,h", "produce help message")
       ("include,I", po::value<std::vector<std::string>>(), "search directory '$arg/providers' for providers.")
       ("log-level,l", po::value<log_level>()->default_value(log_level::warning, "warn"), "Set logging level.\nSupported levels are: none, trace, debug, info, warn, error, and fatal.")
@@ -203,6 +205,13 @@ int main(int argc, char **argv) {
       boost::nowide::cerr << "error: " << "you can not specify --json and --explain at the same time" << endl;
       boost::nowide::cerr << "error: " << "running 'ralsh --json' will contain explanations for all providers" << endl;
     }
+
+    if ((vm.count("sudo") || vm.count("keep")) && ! vm.count("target")) {
+      boost::nowide::cerr << color::yellow
+         << "warning: using --keep or --sudo without --target has no effect"
+                          << color::reset << endl;
+    }
+
     // Figure out our include path
     std::vector<std::string> data_dirs;
     if (vm.count("include")) {
@@ -213,7 +222,7 @@ int main(int argc, char **argv) {
     auto ral = lib::ral::create(data_dirs);
     if (vm.count("target")) {
       auto target = vm["target"].as<std::string>();
-      auto res = ral->connect(target);
+      auto res = ral->connect(target, vm.count("sudo"), vm.count("keep"));
       if (res.is_err()) {
         boost::nowide::cerr << color::red
                             << _("failed to connect to {1}", target)

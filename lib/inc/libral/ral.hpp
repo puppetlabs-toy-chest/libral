@@ -23,7 +23,8 @@ namespace libral {
     /* Connect to a remote (ssh) target. The target must be a string that
      * the ssh command understands, i.e. 'ssh $target uptime' needs to work
      */
-    result<void> connect(const std::string& _target);
+    result<void> connect(const std::string& _target,
+                         bool sudo = false, bool keep = false);
 
     const std::vector<std::string>& data_dirs() const { return _data_dirs; }
 
