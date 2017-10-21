@@ -39,6 +39,9 @@ namespace libral {
     command::result run(const std::string& file,
                         const std::vector<std::string>& args,
                         const std::string *stdin = nullptr);
+
+    command::result run_ssh(const std::vector<std::string>& args);
+
     std::string _target;
     std::string _tmpdir;
   };

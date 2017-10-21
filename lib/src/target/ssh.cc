@@ -80,7 +80,7 @@ namespace libral {
 
   result<void> ssh::connect() {
     static const std::string token = "inlikeflynn";
-    auto res = run("ssh", { _target, "/bin/echo", token });
+    auto res = run_ssh({ "/bin/echo", token });
     if (res.success && res.output == token) {
       return result<void>();
     } else {
@@ -90,12 +90,12 @@ namespace libral {
 
   ssh::~ssh() {
     if (! _tmpdir.empty()) {
-      run("ssh", { _target, "rm", "-rf", _tmpdir});
+      run_ssh({"rm", "-rf", _tmpdir});
     }
   }
 
   std::string ssh::which(const std::string& cmd) {
-    auto res = run("ssh", { _target, "which", cmd });
+    auto res = run_ssh({ "which", cmd });
     if (res.success) {
       return res.output;
     } else {
@@ -105,7 +105,7 @@ namespace libral {
 
   result<std::string> ssh::upload(const std::string& cmd) {
     if (_tmpdir.empty()) {
-      auto res = run("ssh", { _target, "mktemp", "-t", "-d", "ralXXXXXX"});
+      auto res = run_ssh({ "mktemp", "-t", "-d", "ralXXXXXX" });
       if (! res.success) {
         return error(res.error);
       }
@@ -116,7 +116,7 @@ namespace libral {
     if (! res.success) {
       return error(res.error);
     }
-    res = run("ssh", {_target, "chmod", "a+x", path });
+    res = run_ssh({ "chmod", "a+x", path });
     if (! res.success) {
       return error(res.error);
     }
@@ -142,19 +142,22 @@ namespace libral {
     std::vector<std::string> actual;
     actual.push_back(_target);
     actual.push_back(cmd);
-    for (auto& arg : args) {
-      actual.push_back(arg);
-    }
+    actual.insert(actual.end(), args.begin(), args.end());
     return exe::each_line("ssh", actual, out_cb, err_cb);
+  }
+
+  command::result ssh::run_ssh(const std::vector<std::string>& args) {
+    std::vector<std::string> actual;
+    actual.push_back(_target);
+    actual.insert(actual.end(), args.begin(), args.end());
+    return run("ssh", actual);
   }
 
   command::result ssh::run(const std::string& file,
                            const std::vector<std::string>& args,
                            const std::string *stdin) {
     std::vector<std::string> actual = ssh_opts;
-    for (auto& arg : args) {
-      actual.push_back(arg);
-    }
+    actual.insert(actual.end(), args.begin(), args.end());
 
     if (stdin == nullptr) {
       auto res = exe::execute(file, actual, 20,
