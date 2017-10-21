@@ -39,6 +39,8 @@ namespace libral {
 
     target::sptr target() const { return _target; }
 
+    bool is_local() const { return _local; }
+
   private:
     bool init_provider(environment &env,
                        const std::string& name,
@@ -50,5 +52,6 @@ namespace libral {
 
     std::vector<std::string> _data_dirs;
     target::sptr _target;
+    bool _local;
   };
 }

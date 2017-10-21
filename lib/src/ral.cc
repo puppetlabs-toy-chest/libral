@@ -35,6 +35,7 @@ namespace libral {
     auto tgt = target::make_ssh(target);
     auto res = tgt->connect();
     if (res.is_ok()) {
+      _local = false;
       _target = tgt;
     }
     return res;
@@ -88,7 +89,7 @@ namespace libral {
   }
 
   ral::ral(const std::vector<std::string>& data_dirs)
-    : _data_dirs(data_dirs), _target(target::make_local()) {
+    : _data_dirs(data_dirs), _target(target::make_local()), _local(true) {
     _target->connect();
   }
 

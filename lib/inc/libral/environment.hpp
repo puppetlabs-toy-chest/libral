@@ -32,6 +32,8 @@ namespace libral {
 
     std::string which(const std::string& cmd) const;
 
+    bool is_local() const;
+
     /**
      * Creates an augeas handle that has the files described by \p xfms
      * loaded.

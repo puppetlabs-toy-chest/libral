@@ -24,6 +24,10 @@ namespace libral {
     return _ral->target()->which(cmd);
   }
 
+  bool environment::is_local() const {
+    return _ral->is_local();
+  }
+
   result<std::shared_ptr<augeas::handle>>
   environment::augeas(const std::vector<std::pair<std::string, std::string>>& xfms) {
     return _ral->target()->augeas(data_dirs(), xfms);
