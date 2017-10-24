@@ -44,8 +44,7 @@ specified by prefixing the line with `LEVEL:`. Possible levels are `debug`,
 
 ## Actions
 
-Providers can implement the following actions. Only `describe` must be
-supported.
+Providers can implement the following actions.
 
 * `describe` - describe the provider by outputting YAML metadata
 * `list` - list all instances
@@ -54,6 +53,11 @@ supported.
   resource. This action is only called if at least one attribute needs to
   be changed from the value reported by `find name=NAME`, and only
   attributes that have to be changed will be passed to `update`.
+
+The `describe` action is used to retrieve metadata about the provider. If
+the provider `script.prov` is accompanied by a file `script.yaml`
+containing the metadata, the `describe` action will never be invoked. If no
+such YAML file exists, the provider must support the `describe` action.
 
 You can run a provider from the command line with the following
 invocations:

@@ -34,8 +34,7 @@ specified by prefixing the line with `LEVEL:`. Possible levels are `debug`,
 
 ## Actions
 
-Providers can implement the following actions. Only `describe` must be
-supported.
+Providers can implement the following actions.
 
 * `describe` - describe the provider by outputting YAML metadata
 * `get` - list one or more resources
@@ -57,6 +56,11 @@ inputs described for each action:
 ```
 
 ### The describe action
+
+The `describe` action is used to retrieve metadata about the provider. If
+the provider `script.prov` is accompanied by a file `script.yaml`
+containing the metadata, the `describe` action will never be invoked. If no
+such YAML file exists, the provider must support the `describe` action.
 
 When the describe action is invoked, `stdin` is empty and the provider
 should not try to read from it.

@@ -18,13 +18,31 @@ The entries under `provider` have the following meaning:
 * `type`: the name of the provider's underlying type
 * `invoke`: the calling convention the provider uses. Must be either
   [simple](invoke-simple.md) or [json](invoke-json.md)
-* `actions`: an array listing the actions this provider supports; possible
-  entries in the array are `list`, `find` and `update`
-* `suitable`: either `true` or `false` indicating whether the provider can
-be used on the current system
+* `actions`: an array listing the actions this provider supports; the
+  possible values depend on the calling convention: for the simple calling
+  convention, they are any combination of `list`, `find` and `update`, and
+  for the JSON calling convention they are either `set` or `get` (or both)
+* `suitable`: indicates whether the provider can be used on the target
+  system (see below)
 
 In addition to this data, a provider also needs to describe its attributes
 as defined in [this document](attributes.md).
+
+## Expressing suitability
+
+The `suitable` attribute in the provider metadata can either be the boolean
+`true` or `false`, or a list of commands that must be or must not be
+available. For the latter, the `suitable` attribute would look like:
+
+```yaml
+...
+  suitable:
+    commands: [yum, not dnf]
+...
+```
+
+This indicates that the provider will be suitable if the `yum` command is
+present, and the `dnf` command is not present.
 
 <!--
 #### Digression on suitable/default (later)
