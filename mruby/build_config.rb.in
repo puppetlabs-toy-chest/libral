@@ -45,9 +45,24 @@ def libral_configure_mirb(gem)
   end
 end
 
-def libral_configure_toolchain(conf)
+MRuby::Build.new do |conf|
+  toolchain :gcc
+
+  enable_cxx_abi
+
+  enable_debug
+
+  # the gembox path is relative to core/mrbgems
+  conf.gembox "#{Libral::SOURCE_DIR}/mruby/libral"
+
+  # C compiler settings
   conf.cc.command = Libral::CC
   conf.cxx.command = Libral::CXX
   conf.linker.command = Libral::CXX
   conf.archiver.command = Libral::AR
+  conf.cc do |cc|
+    cc.flags.flatten!
+    cc.flags << "-fPIC"
+    cc.flags.reject! { |x| ["-std=gnu99", "-Wdeclaration-after-statement"].include?(x) }
+  end
 end

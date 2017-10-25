@@ -7,11 +7,7 @@ set(MRUBY_TARBALL "${CMAKE_CURRENT_SOURCE_DIR}/mruby-${MRUBY_VERSION}.tar.gz")
 # The directory into which we unpack the source tarball
 set(MRUBY_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/mruby-${MRUBY_VERSION}")
 
-configure_file("${PROJECT_SOURCE_DIR}/mruby/build_setup.rb.in"
-  "${PROJECT_BINARY_DIR}/mruby/build_setup.rb")
-
 set(MRUBY_SOURCE_DIR "${PROJECT_SOURCE_DIR}/mruby")
-file(GLOB_RECURSE MRUBY_FILES build_config.rb libral.gembox *.rake *.rb *.c *.h)
 
 add_custom_command(COMMENT "Unpack mruby"
   OUTPUT "${MRUBY_SOURCES}"
@@ -23,14 +19,17 @@ add_custom_command(COMMENT "Unpack mruby"
 add_custom_target(mruby_unpack
   DEPENDS "${MRUBY_SOURCES}")
 
+configure_file("${PROJECT_SOURCE_DIR}/mruby/build_config.rb.in"
+  "${PROJECT_BINARY_DIR}/mruby/build_config.rb")
+
 add_custom_command(OUTPUT "${MRUBY}"
   COMMENT "Build mruby"
-  DEPENDS "${MRUBY_FILES}"
+  DEPENDS "${MRUBY_TARBALL}" "${PROJECT_BINARY_DIR}/mruby/build_config.rb"
   WORKING_DIRECTORY "${MRUBY_SOURCES}"
   COMMAND "rake"
           "MRUBY_BUILD_DIR=${PROJECT_BINARY_DIR}/mruby"
           "INSTALL_DIR=${PROJECT_BINARY_DIR}/bin"
-          "MRUBY_CONFIG=${PROJECT_SOURCE_DIR}/mruby/build_config.rb")
+          "MRUBY_CONFIG=${PROJECT_BINARY_DIR}/mruby/build_config.rb")
 
 add_custom_target("mruby" DEPENDS "${MRUBY}")
 
