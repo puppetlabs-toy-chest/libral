@@ -23,6 +23,8 @@ MRuby::Build.new do |conf|
 
   # C compiler settings
   conf.cc do |cc|
-    cc.flags << %w|-fPIC|
+    cc.flags.flatten!
+    cc.flags << "-fPIC"
+    cc.flags.reject! { |x| ["-std=gnu99", "-Wdeclaration-after-statement"].include?(x) }
   end
 end
