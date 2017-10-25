@@ -64,6 +64,8 @@ MRuby::Build.new do |conf|
   end
   conf.cxx.command = Libral::CXX
   conf.cxx.flags = Libral::CXX_FLAGS
+  # mruby core has some implicit fallthroughs in vm.c
+  conf.cxx.flags << "-Wno-implicit-fallthrough"
   conf.linker.command = Libral::CXX
   conf.archiver.command = Libral::AR
 end
