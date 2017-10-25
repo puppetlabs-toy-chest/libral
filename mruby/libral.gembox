@@ -89,6 +89,19 @@ MRuby::GemBox.new do |conf|
   # JSON parser and generator
   conf.gem :github => 'iij/mruby-iijson'
 
+  # YAML parser
+  conf.gem :github => "lutter/mruby-yaml", :branch => "upd" do |g|
+    # libyaml is pretty unclean when we build it - suppress
+    # those warnings to avoid freaking people out
+    g.cc.flags += ["-Wno-discarded-qualifiers", "-Wno-format",
+                   "-Wno-declaration-after-statement",
+                   "-Wno-pointer-sign",
+                   "-Wno-tautological-compare",
+                   "-Wno-unused-but-set-variable",
+                   "-Wno-unused-value",
+                   "-Wno-enum-compare"]
+  end
+
   # Bindings to augeas
   conf.gem :github => "hercules-team/mruby-augeas" do |g|
     libral_configure_mruby_augeas(g)
