@@ -37,4 +37,14 @@ add_dependencies(mruby mruby_unpack)
 
 add_dependencies(libral mruby)
 
+set(CLEAN_FILES "${PROJECT_BINARY_DIR}/mruby/host"
+  "${PROJECT_BINARY_DIR}/bin/mirb"
+  "${PROJECT_BINARY_DIR}/bin/mruby"
+  "${PROJECT_BINARY_DIR}/bin/mruby-strip"
+  "${PROJECT_BINARY_DIR}/bin/mrbc"
+  "${PROJECT_BINARY_DIR}/bin/mrdb")
+
+set_directory_properties(PROPERTIES
+  ADDITIONAL_MAKE_CLEAN_FILES "${CLEAN_FILES}")
+
 install(PROGRAMS ${MRUBY} ${MIRB} DESTINATION "${LIBRAL_LIBEXEC_DIR}")
