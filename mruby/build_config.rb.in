@@ -5,7 +5,10 @@ module Libral
   PREFIX="@CMAKE_INSTALL_PREFIX@"
 
   CC="@CMAKE_C_COMPILER@"
+
   CXX="@CMAKE_CXX_COMPILER@"
+  CXX_FLAGS="@LIBRAL_CXX_FLAGS@".split
+
   AR="@CMAKE_AR@"
 
   AUGEAS_INCLUDE_DIRS="@AUGEAS_INCLUDE_DIRS@".split(";")
@@ -54,13 +57,13 @@ MRuby::Build.new do |conf|
   # the gembox path is relative to core/mrbgems
   conf.gembox "#{Libral::SOURCE_DIR}/mruby/libral"
 
-  # C compiler settings
-  conf.cc.command = Libral::CC
-  conf.cxx.command = Libral::CXX
-  conf.linker.command = Libral::CXX
-  conf.archiver.command = Libral::AR
+  # Compiler settings
   conf.cc do |cc|
-    cc.flags.flatten!
+    cc.command = Libral::CC
     cc.flags << "-fPIC"
   end
+  conf.cxx.command = Libral::CXX
+  conf.cxx.flags = Libral::CXX_FLAGS
+  conf.linker.command = Libral::CXX
+  conf.archiver.command = Libral::AR
 end
