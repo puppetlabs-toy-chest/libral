@@ -22,7 +22,8 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}
   ${LIBXML2_INCLUDE_DIRS}
-  ${LEATHERMAN_INCLUDE_DIRS})
+  ${LEATHERMAN_INCLUDE_DIRS}
+  ${MRUBY_INCLUDE_DIRS})
 
 link_directories(
   ${Boost_LIBRARY_DIRS}
@@ -41,19 +42,25 @@ set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/emitter/puppet_emitter.cc"
   "src/emitter/json_emitter.cc")
 
-## An object target is generated that can be used by both the library and test executable targets.
-## Without the intermediate target, unexported symbols can't be tested.
+## An object target is generated that can be used by both the library and
+## test executable targets.  Without the intermediate target, unexported
+## symbols can't be tested.
 add_library(libprojectsrc OBJECT ${PROJECT_SOURCES})
 set_target_properties(libprojectsrc PROPERTIES POSITION_INDEPENDENT_CODE true)
 
 add_library(libral $<TARGET_OBJECTS:libprojectsrc>)
+add_dependencies(libral mruby)
 
 set(LIBVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+# We need to link to mruby before augeas, otherwise augeas picks up onigmo
+# regular expression routines, which leads to SEGV's in static builds
 set(LIBTARGETS
   ${LEATHERMAN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${MRUBY_LIBRARY}
   ${AUGEAS_LIBRARIES})
+
 target_link_libraries(libral ${LIBTARGETS})
 set_target_properties(libral PROPERTIES VERSION "${LIBVERSION}")
 
@@ -61,6 +68,7 @@ if (NOT LIBRAL_STATIC)
   # When we build against static libs, too many of them are built without
   # -fPIC and can not be linked into libral.so
   add_library(libral_shared SHARED $<TARGET_OBJECTS:libprojectsrc>)
+  add_dependencies(libral_shared mruby)
   set_target_properties(libral_shared PROPERTIES VERSION "${LIBVERSION}"
     OUTPUT_NAME libral PREFIX "" SUFFIX ".so")
   target_link_libraries(libral_shared ${LIBTARGETS})

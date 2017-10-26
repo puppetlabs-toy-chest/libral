@@ -9,6 +9,11 @@ set(MRUBY_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/mruby-${MRUBY_VERSION}")
 
 set(MRUBY_SOURCE_DIR "${PROJECT_SOURCE_DIR}/mruby")
 
+# We should really process mruby/host/lib/libmruby.flags.mak and pull that
+# out of there
+set(MRUBY_INCLUDE_DIRS "${MRUBY_SOURCES}/include" CACHE INTERNAL "")
+set(MRUBY_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/host/lib/libmruby.a;${CMAKE_CURRENT_BINARY_DIR}/host/mrbgems/mruby-yaml/yaml-0.1.7/build/lib/libyaml.a" CACHE INTERNAL "")
+
 add_custom_command(COMMENT "Unpack mruby"
   OUTPUT "${MRUBY_SOURCES}"
   DEPENDS "${MRUBY_TARBALL}"
@@ -34,8 +39,6 @@ add_custom_command(OUTPUT "${MRUBY}"
 add_custom_target("mruby" DEPENDS "${MRUBY}")
 
 add_dependencies(mruby mruby_unpack)
-
-add_dependencies(libral mruby)
 
 set(CLEAN_FILES "${PROJECT_BINARY_DIR}/mruby/host"
   "${PROJECT_BINARY_DIR}/bin/mirb"

@@ -63,7 +63,7 @@ MRuby::Build.new do |conf|
     cc.flags << "-fPIC"
   end
   conf.cxx.command = Libral::CXX
-  conf.cxx.flags = Libral::CXX_FLAGS
+  conf.cxx.flags = Libral::CXX_FLAGS + ["-fPIC"]
   # mruby core has some implicit fallthroughs in vm.c
   conf.cxx.flags << "-Wno-implicit-fallthrough"
   conf.linker.command = Libral::CXX
