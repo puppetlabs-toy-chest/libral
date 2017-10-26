@@ -130,7 +130,31 @@ static void print_explanation(lib::provider& prov) {
   }
 }
 
+std::string progname(const char* argv0) {
+  const char *progname = rindex(argv0, '/');
+  if (progname == NULL) {
+    progname = argv0;
+  } else {
+    progname += 1;
+  }
+  return progname;
+}
+
+
+extern "C" {
+  int prog_mruby(int argc, char **argv);
+  int prog_mirb(int argc, char **argv);
+}
+
 int main(int argc, char **argv) {
+  std::string name = progname(argv[0]);
+
+  if (name == "mruby") {
+    return prog_mruby(argc, argv);
+  } else if (name == "mirb") {
+    return prog_mirb(argc, argv);
+  }
+
   try {
     // Fix args on Windows to be UTF-8
     boost::nowide::args arg_utf8(argc, argv);

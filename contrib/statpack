@@ -27,7 +27,6 @@ githash=$(cd $srcdir && git describe --always)
 rm -rf ral
 mkdir -p ral/bin
 cp ./bin/ralsh ral/bin/ralsh.bin
-cp ./bin/mruby ./bin/mirb ral/bin
 
 cat > ral/README <<EOF
 This is a statically linked build of https://github.com/puppetlabs/libral.
@@ -76,6 +75,8 @@ if [ -n "$UPX" ]
 then
     $UPX -qq ral/bin/*
 fi
+ln ral/bin/ralsh.bin ral/bin/mirb
+ln ral/bin/ralsh.bin ral/bin/mruby
 
 # Add a wrapper to make sure we run with the right setup
 cat > ral/bin/ralsh <<'EOF'

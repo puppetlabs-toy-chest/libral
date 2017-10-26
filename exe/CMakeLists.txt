@@ -11,14 +11,23 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIRS}
     ${LEATHERMAN_INCLUDE_DIRS}
+    ${MRUBY_INCLUDE_DIRS}
 )
-
-add_executable(ralsh ralsh.cc)
-target_link_libraries(ralsh libral)
 
 link_directories(
   ${Boost_LIBRARY_DIRS}
   ${YAMLCPP_LIBRARY_DIRS})
+
+add_executable(ralsh ralsh.cc mruby.c mirb.c)
+target_link_libraries(ralsh libral)
+
+add_custom_command(
+  TARGET ralsh
+  POST_BUILD
+  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin"
+  COMMAND ln;-f;ralsh;mirb
+  COMMAND ln;-f;ralsh;mruby
+)
 
 leatherman_install(ralsh)
 
