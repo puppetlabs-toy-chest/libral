@@ -89,6 +89,9 @@ MRuby::GemBox.new do |conf|
   # JSON parser and generator
   conf.gem :github => 'iij/mruby-iijson'
 
+  # File.fnmatch() & Dir.glob()
+  conf.gem :github => 'gromnitsky/mruby-dir-glob'
+
   # YAML parser
   conf.gem :github => "lutter/mruby-yaml", :branch => "upd" do |g|
     # libyaml is pretty unclean when we build it - suppress
