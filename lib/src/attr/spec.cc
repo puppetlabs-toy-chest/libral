@@ -1,6 +1,7 @@
 #include <libral/attr/spec.hpp>
 
-#include <boost/regex.hpp>
+#include <algorithm>
+
 #include <boost/algorithm/string.hpp>
 
 #include <leatherman/logging/logging.hpp>
@@ -178,9 +179,7 @@ namespace libral { namespace attr {
                             const std::string& type_str,
                             const std::string& kind_str) {
 
-    // FIXME: we would like to use std::regex here. But that is busted in
-    // gcc 4.8, and we are stuck on that for CentOS 6
-    static const boost::regex array_rx("array\\s*\\[\\s*string\\s*\\]\\s*");
+    static const std::string s_string_array = "array[string]";
     static const std::string s_enum = "enum";
 
     auto kind = kind::create(kind_str);
@@ -188,14 +187,16 @@ namespace libral { namespace attr {
       return kind.err();
 
     std::string ts = type_str;
-    boost::trim(ts);
+    ts.erase(std::remove_if(ts.begin(), ts.end(),
+                            [](unsigned char x){return std::isspace(x);}),
+             ts.end());
 
     attr::data_type dt;
     if (ts == "boolean") {
       dt = boolean_type();
     } else if (ts == "string") {
       dt = string_type();
-    } else if (boost::regex_match(ts, array_rx)) {
+    } else if (ts == s_string_array) {
       dt = array_type();
     } else if (boost::starts_with(ts, s_enum)) {
       /* Take 'enum[<option> (, <option>)*] apart */
