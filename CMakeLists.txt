@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.2.2)
 project(libral VERSION 0.0.1)
 
 # Whether to build a static executable. Only works with pl-build-tools for
-# now since Fedora is missing augeas-static, icu-static, and yaml-cpp-static
+# now since Fedora is missing augeas-static and icu-static
 option(LIBRAL_STATIC "Build a static executable")
 
 # The default data dir. Providers should be placed into
@@ -29,9 +29,6 @@ endif()
 enable_testing()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-option(YAMLCPP_STATIC "Use yaml-cpp's static libraries" ${LIBRAL_STATIC})
-find_package(YAMLCPP REQUIRED)
 
 # Leatherman setup
 SET(LEATHERMAN_COMPONENTS locale catch nowide logging execution json_container)

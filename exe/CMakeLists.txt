@@ -15,8 +15,7 @@ include_directories(
 )
 
 link_directories(
-  ${Boost_LIBRARY_DIRS}
-  ${YAMLCPP_LIBRARY_DIRS})
+  ${Boost_LIBRARY_DIRS})
 
 add_executable(ralsh ralsh.cc mruby.c mirb.c)
 target_link_libraries(ralsh libral)

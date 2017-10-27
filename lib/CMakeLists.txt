@@ -20,14 +20,12 @@ include_directories(
   ${PROJECT_BINARY_DIR}/inc
   ${AUGEAS_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${YAMLCPP_INCLUDE_DIRS}
   ${LIBXML2_INCLUDE_DIRS}
   ${LEATHERMAN_INCLUDE_DIRS}
   ${MRUBY_INCLUDE_DIRS})
 
 link_directories(
-  ${Boost_LIBRARY_DIRS}
-  ${YAMLCPP_LIBRARY_DIRS})
+  ${Boost_LIBRARY_DIRS})
 
 set(PROJECT_SOURCES "src/libral.cc" "src/augeas/handle.cc" "src/augeas/node.cc"
   "src/ral.cc"

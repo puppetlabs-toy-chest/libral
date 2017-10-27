@@ -1,9 +1,9 @@
 #include <libral/prov/spec.hpp>
 
 #include <leatherman/logging/logging.hpp>
-#include <yaml-cpp/yaml.h>
 
 #include <libral/environment.hpp>
+#include <libral/mruby.hpp>
 
 using namespace leatherman::locale;
 
@@ -28,58 +28,62 @@ namespace libral { namespace prov {
 
   result<bool>
   read_suitable(const environment&env,
-                const YAML::Node& node, const std::string& prov_name);
+                mruby& mrb, mrb_value& prov_node,
+                const std::string& prov_name);
 
   result<spec> spec::read(const environment &env,
                           const std::string &prov_name,
                           const std::string &yaml) {
-    YAML::Node node;
-    try {
-      node = YAML::Load(yaml);
-    } catch (YAML::Exception& e) {
-      return error(
-        _("metadata is not valid yaml: {1}", e.what()));
-    }
-    if (!node) {
-      return error(_("metadata is not valid yaml"));
-    }
-    if (!node.IsMap()) {
-      return error(_("metadata must be a map but isn't"));
+    auto mrb = mruby::open();
+    if (mrb.is_err()) {
+      return mrb.err();
     }
 
-    auto prov_node = node["provider"];
-    if (! prov_node) {
+    struct RClass *yaml_class = mrb->module_get("YAML");
+    auto hash = mrb->funcall(yaml_class, "load", yaml);
+    if (! hash) {
+      return error(_("failed to parse provider metadata: {1}",
+                     hash.err().detail));
+    }
+
+    if (! mrb_hash_p(*hash)) {
+       return error(_("metadata must be a map but isn't"));
+    }
+
+    auto prov_node = mrb->hash_get(*hash, "provider");
+    if (mrb_nil_p(prov_node)) {
       return error(_("could not find 'provider' entry in YAML"));
     }
 
-    auto invoke = prov_node["invoke"].as<std::string>("(none)");
+    auto invoke = mrb->hash_get_string(prov_node, "invoke", "(none)");
 
-    auto type_node = prov_node["type"];
-    if (! type_node) {
+    auto type_node = mrb->hash_get(prov_node, "type");
+    if (mrb_nil_p(type_node)) {
       return error(_("missing 'type' attribute"));
     }
-    auto name = prov_node["name"].as<std::string>(prov_name);
-    auto type = prov_node["type"].as<std::string>();
-    auto desc = prov_node["desc"].as<std::string>("");
+    auto name = mrb->hash_get_string(prov_node, "name", prov_name);
+    auto type = mrb->hash_get_string(prov_node, "type");
+    auto desc = mrb->hash_get_string(prov_node, "desc");
 
-    auto attrs_node = prov_node["attributes"];
-    if (! attrs_node) {
+    auto attrs_node = mrb->hash_get(prov_node, "attributes");
+    if (mrb_nil_p(attrs_node)) {
       return error(_("could not find entry 'provider.attributes' in YAML"));
     }
 
-    if (! attrs_node.IsMap()) {
-      // FIXME: would like to say what it is, but there's no simple way to
-      // turn the YAML::NodeType into a name
+    if (! mrb_hash_p(attrs_node)) {
       return error(_("expected 'provider.attributes' to be a hash but it's something else"));
     }
 
     attr_spec_map attr_specs;
-    for (auto it : attrs_node) {
-      auto name = it.first.as<std::string>();
-      auto spec_node = it.second;
-      auto desc = spec_node["desc"].as<std::string>("(missing description)");
-      auto type = spec_node["type"].as<std::string>("string");
-      auto kind = spec_node["kind"].as<std::string>("rw");
+    auto keys = mrb->hash_keys(attrs_node);
+    for (int i=0; i < mrb->ary_len(keys); i++) {
+      auto key = ary_elt(keys, i);
+      auto value = mrb->hash_get(attrs_node, key);
+      auto name = mrb->as_string(key);
+      auto desc = mrb->hash_get_string(value, "desc",
+                                       "(missing description)");
+      auto type = mrb->hash_get_string(value, "type", "string");
+      auto kind = mrb->hash_get_string(value, "kind", "rw");
 
       auto attr = attr::spec::create(name, desc, type, kind);
       if (!attr) {
@@ -92,8 +96,12 @@ namespace libral { namespace prov {
       return error(_("no attribute 'name' has been defined, but that is mandatory"));
     }
 
+    if (mrb->has_exc()) {
+      return mrb->exc_as_error();
+    }
+
     spec spec(name, type, desc, invoke, std::move(attr_specs));
-    auto suitable = read_suitable(env, prov_node["suitable"], prov_name);
+    auto suitable = read_suitable(env, *mrb, prov_node, prov_name);
     err_ret(suitable);
     spec.suitable(*suitable);
     return spec;
@@ -106,26 +114,31 @@ namespace libral { namespace prov {
 
   result<bool>
   read_suitable(const environment&env,
-                const YAML::Node& node, const std::string& prov_name) {
+                mruby& mrb, mrb_value& prov_node,
+                const std::string& prov_name) {
     static const std::string op_not = "not ";
+    mrb_value suitable = mrb.hash_get(prov_node, "suitable");
 
-    if (! node.IsDefined()) {
+    if (mrb_nil_p(suitable)) {
       // Treat missing 'suitable:' entries as false
       return false;
-    } else if (node.IsScalar()) {
-      auto s = node.as<std::string>("false");
+    } else if (mrb.bool_p(suitable)) {
+      return mrb_bool(suitable);
+    } else if (mrb_string_p(suitable)) {
+      auto s = mrb.as_string(suitable, "false");
       if (s != "true" && s != "false") {
         return error(_("provider {1}: metadata 'suitable' must be either 'true' or 'false' but was '{2}'", prov_name, s));
       }
       return (s == "true");
-    } else if (node.IsMap()) {
-      auto cmds = node["commands"];
-      if (cmds.IsSequence()) {
-        for (auto it = cmds.begin(); it != cmds.end(); it++) {
-          if (! it->IsScalar()) {
+    } else if (mrb_hash_p(suitable)) {
+      auto cmds = mrb.hash_get(suitable, "commands");
+      if (mrb_array_p(cmds)) {
+        for (int i=0; i < mrb.ary_len(cmds); i++) {
+          auto mrb_cmd = ary_elt(cmds, i);
+          if (! mrb_string_p(mrb_cmd)) {
             return error(_("provider {1}: the entries in 'suitable.commands' must all be strings", prov_name));
           }
-          auto cmd = it->as<std::string>();
+          auto cmd = mrb.as_string(mrb_cmd);
           size_t pos = 0;
           if (cmd.find(op_not) == 0) {
             // check that command is not there
