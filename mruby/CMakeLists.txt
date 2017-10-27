@@ -12,7 +12,7 @@ set(MRUBY_SOURCE_DIR "${PROJECT_SOURCE_DIR}/mruby")
 # We should really process mruby/host/lib/libmruby.flags.mak and pull that
 # out of there
 set(MRUBY_INCLUDE_DIRS "${MRUBY_SOURCES}/include" CACHE INTERNAL "")
-set(MRUBY_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/host/lib/libmruby.a;${CMAKE_CURRENT_BINARY_DIR}/host/mrbgems/mruby-yaml/yaml-0.1.7/build/lib/libyaml.a" CACHE INTERNAL "")
+set(MRUBY_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/host/lib/libmruby.a;${CMAKE_CURRENT_BINARY_DIR}/host/mrbgems/mruby-yaml/yaml-0.1.7/build/lib/libyaml.a;dl" CACHE INTERNAL "")
 
 add_custom_command(COMMENT "Unpack mruby"
   OUTPUT "${MRUBY_SOURCES}"
@@ -30,6 +30,7 @@ configure_file("${PROJECT_SOURCE_DIR}/mruby/build_config.rb.in"
 add_custom_command(OUTPUT "${MRUBY}"
   COMMENT "Build mruby"
   DEPENDS "${MRUBY_TARBALL}" "${PROJECT_BINARY_DIR}/mruby/build_config.rb"
+          "${MRUBY_SOURCE_DIR}/libral.gembox"
   WORKING_DIRECTORY "${MRUBY_SOURCES}"
   COMMAND "rake"
           "MRUBY_BUILD_DIR=${PROJECT_BINARY_DIR}/mruby"

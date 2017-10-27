@@ -74,6 +74,9 @@ MRuby::GemBox.new do |conf|
   # Generate mruby-strip command
   conf.gem :core => "mruby-bin-strip"
 
+  # Generate mrbc command
+  conf.gem :core => "mruby-bin-mrbc"
+
   # Use Kernel module extension
   conf.gem :core => "mruby-kernel-ext"
 
@@ -118,5 +121,5 @@ MRuby::GemBox.new do |conf|
 
   # Any GEM after this one will be built as a DSO
   # busted with 1.3.0
-  #conf.gem :github => 'mattn/mruby-require'
+  conf.gem :github => 'mattn/mruby-require'
 end
