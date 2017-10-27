@@ -2,8 +2,6 @@
 
 #include "provider.hpp"
 
-#include <yaml-cpp/yaml.h>
-
 #include <leatherman/json_container/json_container.hpp>
 
 namespace libral {
@@ -14,8 +12,8 @@ namespace libral {
     using json_container = leatherman::json_container::JsonContainer;
     using json_keys = std::vector<leatherman::json_container::JsonContainerKey>;
 
-    json_provider(command::uptr& cmd, YAML::Node &node)
-      : provider(), _cmd(std::move(cmd)), _node(node) { };
+    json_provider(command::uptr& cmd, prov::spec &spec)
+      : provider(spec), _cmd(std::move(cmd)) { };
 
     result<std::vector<resource>>
     get(context& ctx, const std::vector<std::string>& names,
@@ -24,8 +22,6 @@ namespace libral {
     result<void> set(context &ctx, const updates& upds) override;
 
     const std::string& source() const override { return _cmd->path(); }
-  protected:
-    result<prov::spec> describe(environment &env) override;
   private:
     result<json_container>
     run_action(context& ctx,
@@ -45,6 +41,5 @@ namespace libral {
                     const json_keys& key);
 
     command::uptr _cmd;
-    YAML::Node    _node;
   };
 }

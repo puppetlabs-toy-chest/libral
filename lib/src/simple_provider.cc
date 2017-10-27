@@ -61,12 +61,6 @@ namespace libral {
     return result<void>();
   }
 
-  result<prov::spec> simple_provider::describe(environment &env) {
-    auto name = fs::path(_cmd->path()).filename().stem();
-
-    return env.parse_spec(name.native(), _node);
-  }
-
   result<std::vector<resource>>
   simple_provider::get(context &ctx,
       const std::vector<std::string>& names,

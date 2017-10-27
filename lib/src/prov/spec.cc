@@ -1,6 +1,7 @@
 #include <libral/prov/spec.hpp>
 
 #include <leatherman/logging/logging.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include <libral/environment.hpp>
 
@@ -9,8 +10,9 @@ using namespace leatherman::locale;
 namespace libral { namespace prov {
 
   spec::spec(const std::string& name, const std::string& type,
-             const std::string& desc, attr_spec_map&& attr_specs)
-    : _name(name), _type(type), _desc(desc),
+             const std::string& desc, const std::string& invoke,
+             attr_spec_map&& attr_specs)
+    : _name(name), _type(type), _desc(desc), _invoke(invoke),
       _qname(make_qname(name, type)),
       _attr_specs(std::move(attr_specs)) { };
 
@@ -24,20 +26,37 @@ namespace libral { namespace prov {
     }
   }
 
-  result<spec> spec::read(const environment& env,
-                          const std::string& prov_name,
-                          const YAML::Node &node) {
-    attr_spec_map attr_specs;
+  result<bool>
+  read_suitable(const environment&env,
+                const YAML::Node& node, const std::string& prov_name);
+
+  result<spec> spec::read(const environment &env,
+                          const std::string &prov_name,
+                          const std::string &yaml) {
+    YAML::Node node;
+    try {
+      node = YAML::Load(yaml);
+    } catch (YAML::Exception& e) {
+      return error(
+        _("metadata is not valid yaml: {1}", e.what()));
+    }
+    if (!node) {
+      return error(_("metadata is not valid yaml"));
+    }
+    if (!node.IsMap()) {
+      return error(_("metadata must be a map but isn't"));
+    }
 
     auto prov_node = node["provider"];
     if (! prov_node) {
-      return error(_("provider[{1}]: could not find 'provider' entry in YAML",
-                     prov_name));
+      return error(_("could not find 'provider' entry in YAML"));
     }
+
+    auto invoke = prov_node["invoke"].as<std::string>("(none)");
 
     auto type_node = prov_node["type"];
     if (! type_node) {
-      return error(_("provider[{1}]: missing 'type' attribute", prov_name));
+      return error(_("missing 'type' attribute"));
     }
     auto name = prov_node["name"].as<std::string>(prov_name);
     auto type = prov_node["type"].as<std::string>();
@@ -45,15 +64,16 @@ namespace libral { namespace prov {
 
     auto attrs_node = prov_node["attributes"];
     if (! attrs_node) {
-      return error(_("provider[{1}]: could not find entry 'provider.attributes' in YAML", prov_name));
+      return error(_("could not find entry 'provider.attributes' in YAML"));
     }
 
     if (! attrs_node.IsMap()) {
       // FIXME: would like to say what it is, but there's no simple way to
       // turn the YAML::NodeType into a name
-      return error(_("provider[{1}]: expected 'provider.attributes' to be a hash but it's something else", prov_name));
+      return error(_("expected 'provider.attributes' to be a hash but it's something else"));
     }
 
+    attr_spec_map attr_specs;
     for (auto it : attrs_node) {
       auto name = it.first.as<std::string>();
       auto spec_node = it.second;
@@ -69,36 +89,14 @@ namespace libral { namespace prov {
     }
 
     if (attr_specs.find("name") == attr_specs.end()) {
-      return error(_("provider[{1}]: no attribute 'name' has been defined, but that is mandatory", prov_name));
+      return error(_("no attribute 'name' has been defined, but that is mandatory"));
     }
 
-    spec spec(name, type, desc, std::move(attr_specs));
+    spec spec(name, type, desc, invoke, std::move(attr_specs));
     auto suitable = read_suitable(env, prov_node["suitable"], prov_name);
     err_ret(suitable);
     spec.suitable(*suitable);
     return spec;
-  }
-
-  result<spec> spec::read(const environment &env,
-                          const std::string& name,
-                          const std::string &yaml) {
-    YAML::Node node;
-    try {
-      node = YAML::Load(yaml);
-    } catch (YAML::Exception& e) {
-      return error(
-        _("provider[{1}]: metadata is not valid yaml: {2}",
-          name, e.what()));
-    }
-    if (!node) {
-      return error(_("provider[{1}]: metadata is not valid yaml",
-                     name));
-    }
-    if (!node.IsMap()) {
-      return error(_("provider[{1}]: metadata must be a map but isn't",
-                     name));
-    }
-    return spec::read(env, name, node);
   }
 
   std::string
@@ -107,8 +105,8 @@ namespace libral { namespace prov {
   }
 
   result<bool>
-  spec::read_suitable(const environment&env,
-                      const YAML::Node& node, const std::string& prov_name) {
+  read_suitable(const environment&env,
+                const YAML::Node& node, const std::string& prov_name) {
     static const std::string op_not = "not ";
 
     if (! node.IsDefined()) {

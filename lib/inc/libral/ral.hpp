@@ -4,8 +4,6 @@
 #include <memory>
 #include <boost/optional.hpp>
 
-#include <yaml-cpp/yaml.h>
-
 #include <libral/result.hpp>
 #include <libral/provider.hpp>
 #include <libral/environment.hpp>
@@ -46,8 +44,6 @@ namespace libral {
     bool init_provider(environment &env,
                        const std::string& name,
                        std::shared_ptr<provider>& prov);
-    result<YAML::Node> parse_metadata(const std::string& path,
-                                      const std::string& yaml) const;
     result<std::string> get_metadata(command& cmd, const std::string& path) const;
     result<std::string> run_describe(command& cmd) const;
 

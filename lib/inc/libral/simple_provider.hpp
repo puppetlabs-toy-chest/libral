@@ -2,15 +2,13 @@
 
 #include "provider.hpp"
 
-#include <yaml-cpp/yaml.h>
-
 namespace libral {
   /* A provider backed by an executable that follows the 'simple' calling
      convention */
   class simple_provider : public provider {
   public:
-    simple_provider(command::uptr& cmd, YAML::Node &node)
-      : provider(), _cmd(std::move(cmd)), _node(node) { };
+    simple_provider(command::uptr& cmd, prov::spec& spec)
+      : provider(spec), _cmd(std::move(cmd)) { };
 
     result<std::vector<resource>>
     get(context &ctx,
@@ -20,8 +18,6 @@ namespace libral {
     result<void> set(context &ctx, const updates& upds) override;
 
     const std::string& source() const override { return _cmd->path(); }
-  protected:
-    result<prov::spec> describe(environment &env) override;
   private:
     result<std::vector<resource>> find(context& ctx, const std::string &name);
     result<std::vector<resource>> instances(context& ctx);
@@ -32,6 +28,5 @@ namespace libral {
                std::vector<std::string> args = {});
 
     command::uptr _cmd;
-    YAML::Node    _node;
   };
 }

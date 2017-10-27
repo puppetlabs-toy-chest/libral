@@ -29,6 +29,8 @@ namespace libral {
   class provider : public std::enable_shared_from_this<provider> {
   public:
     provider() { };
+    provider(prov::spec& spec) : _spec(spec) { }
+
     virtual ~provider() = default;
 
     /**
@@ -146,7 +148,7 @@ namespace libral {
      * do any provider-internal initialization and check whether the
      * provider is suitable for this system.
      */
-    virtual result<prov::spec> describe(environment &env) = 0;
+    virtual result<prov::spec> describe(environment &env);
   private:
     /* This gets only intitialized when we call prepare, and we therefore
      * must allow for it to be none for a while

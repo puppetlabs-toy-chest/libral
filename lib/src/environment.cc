@@ -45,9 +45,4 @@ namespace libral {
       spec.ok().suitable(*suitable);
     return spec;
   }
-
-  result<prov::spec>
-  environment::parse_spec(const std::string& name, const YAML::Node &node) {
-    return prov::spec::read(*this, name, node);
-  }
 }

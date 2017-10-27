@@ -90,11 +90,20 @@ namespace libral {
     return s_builtin;
   }
 
-  result<void> provider::prepare(environment &env) {
-    auto res = describe(env);
-    err_ret(res);
+  result<prov::spec> provider::describe(environment &env) {
+    if (!_spec) {
+      return error(_("Internal error: spec should have been given in the constructor"));
+    }
+    return *_spec;
+  }
 
-    _spec = res.ok();
+  result<void> provider::prepare(environment &env) {
+    if (! _spec) {
+      auto res = describe(env);
+      err_ret(res);
+
+      _spec = res.ok();
+    }
     return result<void>();
   }
 

@@ -21,8 +21,6 @@
 
 #include <boost/filesystem.hpp>
 
-#include <yaml-cpp/yaml.h>
-
 using namespace leatherman::locale;
 namespace fs = boost::filesystem;
 namespace util = leatherman::util;
@@ -142,41 +140,29 @@ namespace libral {
         return true;
       }
 
-      auto parsed = parse_metadata(path, *res);
-      if (!parsed) {
-        LOG_ERROR("provider[{1}]: {2}", path, parsed.err().detail);
+      auto name = fs::path(cmd->path()).filename().stem().native();
+      auto spec = env.parse_spec(name, *res);
+      if (!spec) {
+        LOG_ERROR("provider[{1}]: {2}", path, spec.err().detail);
         return true;
       }
 
-      YAML::Node node = *parsed;
-      auto meta = node["provider"];
-      auto type_name = meta["type"].as<std::string>("(none)");
-      if (type_name == "(none)") {
-        LOG_ERROR("provider[{1}]: missing a type name under 'provider.type'",
-                  path);
-        return true;
-      }
-
-      auto invoke = meta["invoke"].as<std::string>("(none)");
-      if (invoke == "simple" || invoke == "json") {
-        provider *raw_prov;
-        if (invoke == "simple") {
-          raw_prov = new simple_provider(cmd, node);
-        } else {
-          raw_prov = new json_provider(cmd, node);
-        }
-        auto prov = std::shared_ptr<provider>(raw_prov);
-        if (init_provider(env, type_name, prov)) {
-          LOG_INFO(_("provider[{1}] ({2}) for {3} loaded",
-                     path, invoke, type_name));
-          result.push_back(std::move(prov));
-        }
-      } else if (invoke == "(none)") {
-        LOG_ERROR("provider[{1}]: no calling convention given under 'provider.invoke'",
-                  path);
+      provider *raw_prov;
+      auto invoke = spec->invoke();
+      if (invoke == "simple") {
+        raw_prov = new simple_provider(cmd, *spec);
+      } else if (invoke == "json") {
+        raw_prov = new json_provider(cmd, *spec);
       } else {
-        LOG_ERROR("provider[{1}]: unknown calling convention '{2}'",
-                  path, invoke);
+        LOG_ERROR("provider[{1}]: unknown calling convention '{2}', expected 'simple' or 'json'", path, invoke);
+        return true;
+      }
+
+      auto prov = std::shared_ptr<provider>(raw_prov);
+      if (init_provider(env, spec->type_name(), prov)) {
+        LOG_INFO(_("provider[{1}] ({2}) for {3} loaded",
+                   path, invoke, spec->type_name()));
+        result.push_back(std::move(prov));
       }
       return true;
     };
@@ -221,27 +207,6 @@ namespace libral {
       return prov;
     else
       return boost::none;
-  }
-
-  result<YAML::Node>
-  ral::parse_metadata(const std::string& path, const std::string& yaml) const {
-    YAML::Node node;
-    try {
-      node = YAML::Load(yaml);
-    } catch (YAML::Exception& e) {
-      return error(_("metadata is not valid yaml: {1}", e.what()));
-    }
-    if (!node) {
-      return error(_("metadata is not valid yaml"));
-    }
-    if (!node.IsMap()) {
-      return error(_("metadata must be a yaml map"));
-    }
-    auto meta = node["provider"];
-    if (!meta || !meta.IsMap()) {
-      return error(_("metadata must have toplevel 'provider' key containing a map"));
-    }
-    return node;
   }
 
   result<std::string> ral::get_metadata(command& cmd,

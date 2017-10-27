@@ -1,7 +1,6 @@
 #pragma once
 
 #include <boost/optional.hpp>
-#include <yaml-cpp/yaml.h>
 
 #include <libral/attr/spec.hpp>
 
@@ -37,7 +36,9 @@ namespace libral {
     /**
      * Returns the description of the provider
      */
-    const std::string& desc() const {return _desc; }
+    const std::string& desc() const { return _desc; }
+
+    const std::string& invoke() const { return _invoke; }
 
     /**
      * Returns true if the provider is suitable, i.e., can be used
@@ -46,16 +47,6 @@ namespace libral {
     bool suitable() const { return _suitable; }
 
     void suitable(bool s) { _suitable = s; }
-
-    /**
-     * Reads a provider specification from a parsed YAML representation
-     *
-     * @param name the provider name, used in error messages
-     * @param node the parsed YAML document
-     */
-    static result<spec> read(const libral::environment& env,
-                             const std::string& name,
-                             const YAML::Node &node);
 
     /**
      * Reads a provider specification from a string that must contain valid YAML
@@ -74,16 +65,14 @@ namespace libral {
 
   private:
     spec(const std::string& name, const std::string& type,
-         const std::string& desc, attr_spec_map&& attr_specs);
+         const std::string& desc, const std::string& invoke,
+         attr_spec_map&& attr_specs);
     std::string make_qname(const std::string& name, const std::string& type);
-
-    static result<bool>
-    read_suitable(const environment& env,
-                  const YAML::Node& node, const std::string& prov_name);
 
     std::string   _name;
     std::string   _type;
     std::string   _desc;
+    std::string   _invoke;
     std::string   _qname;
     bool          _suitable;
 

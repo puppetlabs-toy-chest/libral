@@ -58,9 +58,6 @@ namespace libral {
                                   const std::string& desc,
                                   boost::optional<bool> suitable = boost::none);
 
-    result<prov::spec>
-    parse_spec(const std::string& name, const YAML::Node &node);
-
   protected:
     friend class ral;
 
