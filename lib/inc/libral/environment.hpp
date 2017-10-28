@@ -56,7 +56,7 @@ namespace libral {
      */
     result<prov::spec> parse_spec(const std::string& name,
                                   const std::string& desc,
-                                  boost::optional<bool> suitable = boost::none);
+                                  bool suitable = true);
 
   protected:
     friend class ral;

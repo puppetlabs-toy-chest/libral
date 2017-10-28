@@ -5,6 +5,8 @@ provider:
   type: user
   desc: |
     Manage users with useradd/usermod/userdel
+  suitable:
+    commands: [useradd, usermod, userdel]
   attributes:
     name:
       desc: the username

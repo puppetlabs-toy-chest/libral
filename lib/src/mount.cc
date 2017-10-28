@@ -24,9 +24,7 @@ namespace libral {
     _cmd_mount = env.command("mount");
     _cmd_umount = env.command("umount");
 
-    auto suitable = _cmd_mount && _cmd_umount;
-
-    return env.parse_spec("mount", desc, suitable);
+    return env.parse_spec("mount", desc);
   }
 
   aug::node mount_provider::base(const update &upd) {

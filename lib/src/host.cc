@@ -13,7 +13,7 @@ namespace libral {
 
     _aug = aug.ok();
 
-    return env.parse_spec("host", desc, true);
+    return env.parse_spec("host", desc);
   }
 
   result<aug::node>

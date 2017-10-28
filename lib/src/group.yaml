@@ -5,6 +5,8 @@ provider:
   type: group
   desc: |
     Manage groups with groupadd/groupmod/groupdel
+  suitable:
+    commands: [groupadd, groupdel, groupmod]
   attributes:
     name:
       desc: the groupname

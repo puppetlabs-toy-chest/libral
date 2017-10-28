@@ -36,13 +36,7 @@ namespace libral {
   result<prov::spec>
   environment::parse_spec(const std::string& name,
                           const std::string& desc,
-                          boost::optional<bool> suitable) {
-
-    auto spec = prov::spec::read(*this, name, desc);
-    err_ret(spec);
-
-    if (suitable)
-      spec.ok().suitable(*suitable);
-    return spec;
+                          bool suitable) {
+    return prov::spec::read(*this, name, desc, suitable);
   }
 }

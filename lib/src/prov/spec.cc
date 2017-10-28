@@ -11,9 +11,10 @@ namespace libral { namespace prov {
 
   spec::spec(const std::string& name, const std::string& type,
              const std::string& desc, const std::string& invoke,
+             bool suitable,
              attr_spec_map&& attr_specs)
     : _name(name), _type(type), _desc(desc), _invoke(invoke),
-      _qname(make_qname(name, type)),
+      _qname(make_qname(name, type)), _suitable(suitable),
       _attr_specs(std::move(attr_specs)) { };
 
   boost::optional<const attr::spec&>
@@ -33,7 +34,8 @@ namespace libral { namespace prov {
 
   result<spec> spec::read(const environment &env,
                           const std::string &prov_name,
-                          const std::string &yaml) {
+                          const std::string &yaml,
+                          bool suitable) {
     auto mrb = mruby::open();
     if (mrb.is_err()) {
       return mrb.err();
@@ -100,11 +102,13 @@ namespace libral { namespace prov {
       return mrb->exc_as_error();
     }
 
-    spec spec(name, type, desc, invoke, std::move(attr_specs));
-    auto suitable = read_suitable(env, *mrb, prov_node, prov_name);
-    err_ret(suitable);
-    spec.suitable(*suitable);
-    return spec;
+    if (suitable) {
+      auto s = read_suitable(env, *mrb, prov_node, prov_name);
+      err_ret( s );
+
+      suitable = s.ok();
+    }
+    return spec(name, type, desc, invoke, suitable, std::move(attr_specs));
   }
 
   std::string
@@ -120,8 +124,7 @@ namespace libral { namespace prov {
     mrb_value suitable = mrb.hash_get(prov_node, "suitable");
 
     if (mrb_nil_p(suitable)) {
-      // Treat missing 'suitable:' entries as false
-      return false;
+      return error(_("missing 'provider.suitable' entry"));
     } else if (mrb.bool_p(suitable)) {
       return mrb_bool(suitable);
     } else if (mrb_string_p(suitable)) {

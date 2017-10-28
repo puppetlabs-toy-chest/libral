@@ -5,6 +5,7 @@ provider:
   type: host
   desc: |
     Manage mount points using the mount command on Linux.
+  suitable: true
   attributes:
     name:
       desc: the host name

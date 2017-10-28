@@ -5,6 +5,8 @@ provider:
   type: mount
   desc: |
     Manage mount points using the mount command on Linux.
+  suitable:
+    commands: [mount, umount]
   attributes:
     name:
       desc: the mount point

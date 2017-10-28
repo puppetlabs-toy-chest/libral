@@ -46,17 +46,20 @@ namespace libral {
      */
     bool suitable() const { return _suitable; }
 
-    void suitable(bool s) { _suitable = s; }
-
     /**
      * Reads a provider specification from a string that must contain valid YAML
      *
+     * @param env the environment
      * @param name the provider name, used in error messages
      * @param yaml the YAML text
+     * @param suitable initial indication of suitability; the provider is
+     *                 ultimately suitable if this flag is true and the
+     *                 metadata indicates that it is suitable
      */
     static result<spec> read(const libral::environment &env,
                              const std::string& name,
-                             const std::string &yaml);
+                             const std::string &yaml,
+                             bool suitable);
 
     attr_spec_map::const_iterator attr_begin() const
       { return _attr_specs.cbegin(); }
@@ -66,6 +69,7 @@ namespace libral {
   private:
     spec(const std::string& name, const std::string& type,
          const std::string& desc, const std::string& invoke,
+         bool suitable,
          attr_spec_map&& attr_specs);
     std::string make_qname(const std::string& name, const std::string& type);
 
