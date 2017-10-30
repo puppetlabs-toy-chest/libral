@@ -38,7 +38,7 @@ then
     dnf install -y git gcc-c++ cmake make gettext boost-devel \
       curl-devel yaml-cpp-devel augeas-devel ruby rake bison  \
       rubygem-bundler rubygem-yard rubygem-rake-compiler      \
-      ruby-devel redhat-rpm-config
+      ruby-devel redhat-rpm-config readline-devel
     dnf clean all
 elif [ $BUILD_TYPE = el6-build-static ]
 then

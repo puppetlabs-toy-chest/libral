@@ -17,8 +17,15 @@ include_directories(
 link_directories(
   ${Boost_LIBRARY_DIRS})
 
+if (LIBRAL_STATIC)
+  set(READLINE_LIBS readline.a ncurses.a tinfo.a)
+else(LIBRAL_STATIC)
+  set(READLINE_LIBS readline)
+endif(LIBRAL_STATIC)
+
+add_definitions("-DENABLE_READLINE")
 add_executable(ralsh ralsh.cc mruby.c mirb.c)
-target_link_libraries(ralsh libral)
+target_link_libraries(ralsh libral ${READLINE_LIBS})
 
 add_custom_command(
   TARGET ralsh

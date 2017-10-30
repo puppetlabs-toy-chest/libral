@@ -19,7 +19,7 @@ module Libral
 
   # Whether to enable or disable readline in static builds of mirb
   # For now, we always enable it as that's a little friendlier to users.
-  ENABLE_READLINE = false
+  ENABLE_READLINE = true
 end
 
 def libral_configure_mruby_augeas(gem)
