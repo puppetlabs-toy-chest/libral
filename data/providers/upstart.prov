@@ -1,0 +1,154 @@
+#! /bin/bash
+
+# A provider for SysV-style init systems
+
+# Very important so that sorting goes right
+export LANG=C
+
+svc_path=/etc/init
+
+# die MESSAGE
+# Print an error message and exit
+die() {
+    echo "ral_error: $1"
+    echo "ral_eom"
+    exit 0
+}
+
+is_suitable() {
+    [ -d /etc/init ] || return 1
+    type -p service initctl > /dev/null || return 1
+    # Do not use this provider if systemd is installed
+    type -p systemctl > /dev/null && return 1
+    return 0
+}
+
+describe() {
+    local suitable
+    is_suitable && suitable=true || suitable=false
+    cat <<EOF
+---
+provider:
+  type: service
+  invoke: simple
+  actions: [list,find,update]
+  suitable: ${suitable}
+  attributes:
+    name:
+      type: string
+    ensure:
+      type: enum[running, stopped]
+    enable:
+      type: enum[true, false]
+EOF
+}
+
+# Determine the state of the resource with name $name
+find_state() {
+    [ -z "$name" ] && die "find: missing a name"
+
+    if [ -f "/etc/init/${name}.conf" ]; then
+        egrep "start/running" <(initctl status docker) >/dev/null 2>&1
+        [ $? -eq 0 ] && is_ensure=running || is_ensure=stopped
+        egrep "manual" "/etc/init/${name}.override" >/dev/null 2>&1
+        [ $? -eq 0 ] && is_enable=false || is_enable=true
+    else
+        is_unknown=true
+    fi
+}
+
+list() {
+    local name is_ensure is_enable
+
+    echo '# simple'
+
+    for svc in $svc_path/*.conf
+    do
+        name=$(basename $svc .conf)
+        find_state
+        echo "name: $name"
+        echo "ensure: $is_ensure"
+        echo "enable: $is_enable"
+    done
+}
+
+find() {
+    echo "# simple"
+    find_state
+    echo "name: $name"
+    if [ -z "$is_unknown" ]
+    then
+        echo "ensure: $is_ensure"
+        echo "enable: $is_enable"
+    else
+        echo "ral_unknown: true"
+    fi
+}
+
+# Convenience wrapper to make supporting noop easier
+run() {
+    if [ -z "$ral_noop" ]
+    then
+        msg=$("$@" 2>&1)
+        rc=$?
+        if [ $rc != 0 ]; then
+            die "$msg"
+        fi
+    fi
+}
+
+update() {
+    echo '# simple'
+    echo 'ral_derive: true'
+    find_state
+
+    if [ -n "$is_unknown" ]
+    then
+        echo "ral_unknown: true"
+        exit 0
+    fi
+
+    # Check enablement
+    if [ -n "$enable" ]
+    then
+        case $enable
+        in
+            true)
+                run chkconfig --level 0123456 $name on
+                ;;
+            false)
+                run chkconfig --level 0123456 $name off
+                ;;
+            *) die "illegal value for enable: '$enable'"
+               ;;
+        esac
+    fi
+
+    if [ -n "$ensure" ]
+    then
+        case $ensure
+        in
+            running)
+                run service $name start
+                ;;
+            stopped)
+                run service $name stop
+                ;;
+            *)
+                die "illegal value for ensure: '$ensure'"
+                ;;
+        esac
+    fi
+}
+
+eval "$@"
+
+case "$ral_action"
+in
+    list) list;;
+    find) find;;
+    update) update;;
+    describe) describe;;
+    *)
+        die "Unknown action: $ral_action"
+esac
