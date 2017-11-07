@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# A provider for SysV-style init systems
+# A provider for upstart systems
 
 # Very important so that sorting goes right
 export LANG=C
@@ -48,7 +48,7 @@ find_state() {
     [ -z "$name" ] && die "find: missing a name"
 
     if [ -f "/etc/init/${name}.conf" ]; then
-        egrep "start/running" <(initctl status docker) >/dev/null 2>&1
+        egrep "start/running" <(initctl status ${name}) >/dev/null 2>&1
         [ $? -eq 0 ] && is_ensure=running || is_ensure=stopped
         egrep "manual" "/etc/init/${name}.override" >/dev/null 2>&1
         [ $? -eq 0 ] && is_enable=false || is_enable=true
@@ -114,10 +114,10 @@ update() {
         case $enable
         in
             true)
-                run chkconfig --level 0123456 $name on
+                run rm /etc/init/${name}.override
                 ;;
             false)
-                run chkconfig --level 0123456 $name off
+                run echo "manual" > /etc/init/${name}.override
                 ;;
             *) die "illegal value for enable: '$enable'"
                ;;
@@ -129,10 +129,10 @@ update() {
         case $ensure
         in
             running)
-                run service $name start
+                run initctl start $name 
                 ;;
             stopped)
-                run service $name stop
+                run initctl stop $name
                 ;;
             *)
                 die "illegal value for ensure: '$ensure'"
