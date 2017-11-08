@@ -179,7 +179,7 @@ To start a new provider, follow these steps:
   - [X] group (groupXXX)
   - [X] host
   - [ ] package (besides dnf and yum)
-  - [ ] service (besides systemd and sysv)
+  - [ ] service (besides systemd, upstart and sysv)
   - [X] user (userXXX)
 - even more core providers
   - [ ] interface
