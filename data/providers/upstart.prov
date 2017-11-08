@@ -48,7 +48,7 @@ find_state() {
     [ -z "$name" ] && die "find: missing a name"
 
     if [ -f "/etc/init/${name}.conf" ]; then
-        egrep "start/running" <(initctl status ${name}) >/dev/null 2>&1
+        initctl status ${name} 2>/dev/null | egrep "start/running" >/dev/null 2>&1
         [ $? -eq 0 ] && is_ensure=running || is_ensure=stopped
         egrep "manual" "/etc/init/${name}.override" >/dev/null 2>&1
         [ $? -eq 0 ] && is_enable=false || is_enable=true
