@@ -18,8 +18,11 @@ die() {
 is_suitable() {
     [ -d /etc/init ] || return 1
     type -p service initctl > /dev/null || return 1
-    # Do not use this provider if systemd is installed
+    # Do not use this provider if systemd or chkconfig are installed
+    # Red Hat-based distros have chkconfig, and that should be used even
+    # though it looks like an upstart system, too
     type -p systemctl > /dev/null && return 1
+    type -p chkconfig > /dev/null && return 1
     return 0
 }
 
@@ -129,7 +132,7 @@ update() {
         case $ensure
         in
             running)
-                run initctl start $name 
+                run initctl start $name
                 ;;
             stopped)
                 run initctl stop $name
