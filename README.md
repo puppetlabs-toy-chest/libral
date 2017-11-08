@@ -88,6 +88,10 @@ you can try things out by running `ralsh`:
     ralsh service crond
     # make a change for the better
     ralsh service crond ensure=stopped
+
+    # Do the same against a remote system to which you have ssh access
+    ralsh -t ahost
+    ralsh -t ahost package sudo
 ```
 
 The default output from `ralsh` is meant for human consumption and looks a
