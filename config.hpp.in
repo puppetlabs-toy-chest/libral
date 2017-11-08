@@ -5,3 +5,5 @@
 #define LIBRAL_LIBEXEC_DIR "@LIBRAL_LIBEXEC_DIR@"
 
 #cmakedefine HAS_SUGGEST_OVERRIDE 1
+
+#cmakedefine USE_FIXED_LAYOUT

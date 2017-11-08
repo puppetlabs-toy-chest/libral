@@ -26,7 +26,7 @@ githash=$(cd $srcdir && git describe --always)
 # Assemble stuff in ral/
 rm -rf ral
 mkdir -p ral/bin
-cp ./bin/ralsh ral/bin/ralsh.bin
+cp ./bin/ralsh ral/bin
 
 cat > ral/README <<EOF
 This is a statically linked build of https://github.com/puppetlabs/libral.
@@ -75,18 +75,8 @@ if [ -n "$UPX" ]
 then
     $UPX -qq ral/bin/*
 fi
-ln ral/bin/ralsh.bin ral/bin/mirb
-ln ral/bin/ralsh.bin ral/bin/mruby
-
-# Add a wrapper to make sure we run with the right setup
-cat > ral/bin/ralsh <<'EOF'
-#! /bin/sh
-topdir=$(readlink -f $(dirname $0)/..)
-export RALSH_DATA_DIR=$topdir/data
-export RALSH_LIBEXEC_DIR=$topdir/bin
-exec $topdir/bin/ralsh.bin "$@"
-EOF
-chmod a+x ral/bin/ralsh
+ln ral/bin/ralsh ral/bin/mirb
+ln ral/bin/ralsh ral/bin/mruby
 
 tarball=ralsh-$(date +%Y-%m-%dT%H.%M)-$githash.tgz
 tar czf $tarball ral

@@ -82,6 +82,10 @@ add_subdirectory(lib)
 add_subdirectory(exe)
 add_subdirectory(ruby)
 
+# Whether we should assume that our data dir etc. are at a fixed location
+# relative to the executable (for static builds)
+set(USE_FIXED_LAYOUT ${LIBRAL_STATIC})
+
 configure_file("${PROJECT_SOURCE_DIR}/bin/dev.in"
                "${PROJECT_BINARY_DIR}/bin/dev")
 configure_file("${PROJECT_SOURCE_DIR}/config.hpp.in"

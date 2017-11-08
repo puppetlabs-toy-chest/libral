@@ -140,6 +140,25 @@ std::string progname(const char* argv0) {
   return progname;
 }
 
+void append_to_env(const std::string& var, const fs::path& path) {
+  std::string value;
+  if (util::environment::get(var, value)) {
+    util::environment::set(var, value + ":" + path.native());
+  } else {
+    util::environment::set(var, path.native());
+  }
+}
+
+void use_fixed_layout(const char *argv0, const std::string& progname) {
+#ifdef USE_FIXED_LAYOUT
+  auto topdir = fs::canonical(fs::path(argv0).parent_path().parent_path());
+  append_to_env("RALSH_DATA_DIR", (topdir / "data").native());
+  append_to_env("RALSH_LIBEXEC_DIR", (topdir / "bin").native());
+  if (progname == "mruby" || progname == "mirb") {
+    append_to_env("AUGEAS_LENS_LIB", (topdir / "data/lenses").native());
+  }
+#endif
+}
 
 extern "C" {
   int prog_mruby(int argc, char **argv);
@@ -148,6 +167,8 @@ extern "C" {
 
 int main(int argc, char **argv) {
   std::string name = progname(argv[0]);
+
+  use_fixed_layout(argv[0], name);
 
   if (name == "mruby") {
     return prog_mruby(argc, argv);
