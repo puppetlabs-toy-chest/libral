@@ -193,6 +193,7 @@ To start a new provider, follow these steps:
   - [ ] yumrepo
 - [ ] add a remote provider (using an HTTP API)
 - [ ] adapt providers to multiple OS (maybe using mount)
+- [X] add support for running providers over ssh (see [this PR for details](https://github.com/puppetlabs/libral/pull/67))
 - [ ] noop mode
 - [ ] expand the type system to cover as much of Puppet 4 as is reasonable
 
@@ -224,7 +225,5 @@ meaning (or should it?)
   * manage different things that are somewhat similar, like system packages
     and gems, or local users and LDAP users ? This would push this
     modelling decision into a layer above libral.
-- Wouldn't it be better to make providers responsible for `noop` mode
-  rather than making it part of the framework ?
 - Would it be better to make providers responsible for event generation
   rather than doing that in the framework ?
