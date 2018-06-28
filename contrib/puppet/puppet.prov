@@ -1,0 +1,53 @@
+#! /usr/bin/env mruby
+# -*- ruby -*-
+
+
+class Group
+  def describe(ctx)
+    puts <<EOS
+---
+provider:
+  type: group
+  desc: |
+    Puppet group
+  invoke: json
+  actions: [get]
+  suitable: true
+  attributes:
+    name:
+      desc: "The name of the group"
+    ensure:
+      type: enum[absent, present]
+    gid:
+      desc: "The group ID"
+EOS
+  end
+
+  def get(ctx, names)
+      output = `puppet resource group --to_yaml`
+      lines = output.split("\n")
+      resources = {}
+      lines.each do |line|
+        unless line == "group:"
+	  key, value = line.split(":", 2)
+	  if (value.nil? || value.empty?) and !key.nil?
+	    $name = key.strip
+	    resources[$name] = {}
+	  else
+            unless $name.nil? or key.nil?
+	      resources[$name][key.strip] = value.strip.gsub("'", '')
+            end
+	  end
+	end
+      end
+      resources.collect do |name, resource|
+        {
+          "name" => name,
+          "ensure" => resource["ensure"],
+          "gid" => resource["gid"],
+        }
+      end
+  end
+end
+
+Ral::CLI::run(Group)
