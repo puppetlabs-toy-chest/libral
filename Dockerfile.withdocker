@@ -1,0 +1,14 @@
+FROM puppet/libral
+MAINTAINER Gareth Rushgrove "gareth@puppet.com"
+
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y wget ca-certificates && \
+    wget -O docker.sh https://experimental.docker.com/ && \
+    bash docker.sh && \
+    apt-get remove --purge -y wget && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm docker.sh
+
+ENV DOCKER_HOST='tcp://docker:2375'

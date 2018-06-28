@@ -1,0 +1,73 @@
+#! /usr/bin/env mruby
+# -*- ruby -*-
+
+class Remote
+  def describe(ctx)
+    puts <<EOS
+---
+provider:
+  type: package
+  invoke: json
+  actions: [get]
+  suitable: true
+  attributes:
+    name:
+      desc: The resource name.
+    scope:
+      desc: The resource scope.
+    ensure:
+      type: string
+EOS
+  end
+
+  def get(ctx, name)
+    packages = []
+    list_packages.each do |line|
+      name,version = line.split(',')
+      hostname = `hostname`.strip
+      packages << format_package(name, "#{hostname} (local)", version)
+    end
+    list_containers.each do |container_id|
+      list_packages(container_id).each do |line|
+        name,version = line.split(',')
+        packages << format_package(name, container_id, version)
+      end
+    end
+    # In our blunt example here we could also list_hosts (which might use nmap)
+    # and list_ec2_instances which could use the EC2 API. As discussed elsewhere
+    # this would work, but pushes the responsibility for these lists down to
+    # every provider. Better would be for the provider to have a dependency on
+    # a relevant type which can provide that information in the context
+    packages
+  end
+
+  private
+
+  def format_package(name, scope, version)
+    {'scope' => scope, 'name' => name, 'ensure' => version}
+  end
+
+
+  # This and the following method both just shell out rather than use
+  # a proper Ruby Docker client. This was just to avoid the gem dependency
+  # for the purposes of this PoC.
+  def list_containers
+    `docker ps -q`.split("\n")
+  end
+
+  def list_packages(scope=nil)
+    dpkg_command = 'dpkg-query -W -f \'${Package},${Version}\n\''
+    command = if scope
+                "docker exec #{scope} #{dpkg_command}"
+              else
+                dpkg_command
+              end
+    raw = `#{command}`
+    raw.split("\n")
+  end
+end
+
+# This is a script that gets run. This call kicks off processing of ARGV
+# and dispatching to the appropriate methods according to libral's JSON
+# calling convention
+Ral::CLI::run(Remote)
